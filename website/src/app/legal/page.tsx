@@ -146,7 +146,7 @@ const LegalPage: React.FC = () => {
                     variants={itemVariants}
                   >
                     <a
-                      href="/"
+                      href="/website/public"
                       className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

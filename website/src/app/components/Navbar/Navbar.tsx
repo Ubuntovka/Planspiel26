@@ -36,7 +36,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link
-              href="/"
+              href="/website/public"
               className="flex items-center transition-all duration-300 hover:scale-105"
             >
               <img
