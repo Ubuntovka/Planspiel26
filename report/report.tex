@@ -2,15 +2,19 @@
 
 \usepackage{setspace}
 \usepackage[margin=2cm]{geometry}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{enumitem}
 
 %opening
 
-\doublespacing
+
 \begin{document}
 
 %\maketitle
 
 \begin{titlepage}
+\begin{doublespace}
 \begin{center}
 	\Huge\textbf{Title} 
 \end{center}
@@ -25,6 +29,7 @@
 	Winter semester 2025-2026 \\ [8cm] 
 	\today
 \end{center}
+\end{doublespace}
 \end{titlepage}
 
 \begin{abstract}
@@ -42,6 +47,72 @@ Citation example: \cite{newman2015building}
 
 \section{Main section}
 
+\title{Monthly Meeting Notes}
+\author{Report Author: Juho Lee}
+\date{October 2025}
+
+\maketitle
+
+\section*{Summary of Meetings}
+\begin{longtable}{|p{3cm}|p{2.5cm}|p{2.5cm}|p{6cm}|}
+\hline
+\textbf{Meeting Name} & \textbf{Date} & \textbf{Category} & \textbf{Agenda} \\
+\hline
+First Meeting & 14-Oct-25 & ad-hoc & Build a team, decide on a communication tool. \\
+\hline
+Team Name & 17-Oct-25 & online & Decide on team name \& logo. \\
+\hline
+Team Logo & 19-Oct-25 & online & Finalize logo design. \\
+\hline
+Topic Decision & 21-Oct-25 & ad-hoc & Review topic presentations and set topic priority.\\
+\hline
+Website Design \& Build & 26-Oct-25 & online & Plan website structure, assign roles, configure tech stack. \\
+\hline
+Vision, Mission, Values \& Planning & 28-Oct-25 & regular & Define vision, mission, values; schedule weekly offline meetings; confirm tech stack. \\
+\hline
+First Topic Expert Meeting & 30-Oct-25 & topic expert & Clarify product requirements; define target users; discuss AI and cost considerations. \\
+\hline
+Vision, Mission, Report Content Finalization & 30-Oct-25 & regular & Assign report sections; set deadlines; finalize LaTeX setup and workflow. \\
+\hline
+\end{longtable}
+
+\section*{Meeting Highlights}
+
+\subsection*{First Meeting (Oct 14, 2025)}
+\textbf{Agenda:} Build a team, decide on a communication tool.\\
+\textbf{Discussion:} Team initially used WhatsApp; It was noted that having a linear conversation could reduce work efficiency over time, so it was decided to use a channel-based communication tool, such as Slack or Discord. The team preferred the discord as a result of familiarity.\\
+\textbf{Decision:} Use Discord as main communication channel.
+
+\subsection*{Team Name \& Logo (Oct 17 \& 19, 2025)}
+\textbf{Agenda:} Decide on team name and logo.\\
+\textbf{Discussion:} Starting with the name Webinch (Web in Chemnitz), Name refined from Devinch (Development in Chemnitz) to \textbf{Devinche}, referencing Leonardo Da Vinch. Logo options discussed; final design chosen emphasizing typography and aesthetic improvements.\\
+\textbf{Decision:} Team name and logo finalized.
+
+\subsection*{Topic Decision (Oct 21, 2025)}
+\textbf{Agenda:} Review topic expert presentations and prioritize topics.\\
+\textbf{Discussion:} Priorities were adjusted after the presentations, and the team showed interest in developing a web-based diagram editor. The initial priority order was Across → Chatbots → Enfield → WebXR, but after reviewing the experts' presentations, it was updated to Enfield → Across → Chatbots and WebXR.\\
+\textbf{Decision:} Topic priority: Enfield → Across → Chatbots, WebXR.\\
+\textbf{Action Items:} Valeria select Enfield at 10:00 AM; Prepare detailed plan(team).
+
+\subsection*{Website Design \& Build (Oct 26, 2025)}
+\textbf{Agenda:} Plan website design and structure, assign roles.\\
+\textbf{Discussion:} Figma template created; tech stack selected (React, TypeScript, Next.js).\\
+\textbf{Decision:} All members participate; Ibtisam to configure initial setup; initial website completion as soon as possible.
+
+\subsection*{Vision, Mission, Values \& Planning (Oct 28, 2025)}
+\textbf{Agenda:} Define vision, mission, values; confirm tech stack; schedule meetings; plan reports.\\
+\textbf{Discussion:} The team discussed the project’s vision, mission, and values. Rocket shared preliminary definitions, and Rocket and Valeria suggested using a Da Vinci quote or artwork for inspiration. Juho and Rocket proposed the mission statement, *“Turning complexity into simplicity”*, which was agreed upon by all members. The vision was refined with ideas, and set as Creativity, Simplicity, and Robustness. Ibtisam proposed the technology stack: React and Next.js with TailwindCSS, Python (for AI if needed), and MongoDB, which the team accepted. The team also agreed to hold two fixed weekly offline meetings and share progress via LinkedIn and the Devinche Instagram account.\\
+\textbf{Decision:} Mission: "Turning complexity into simplicity"; Values: Creativity, Simplicity, Robustness; Tech stack confirmed; project updates via social media; Valeria to set social media accounts and write blog posts.
+
+\subsection*{First Topic Expert Meeting (Oct 30, 2025)}
+\textbf{Agenda:} Re-explain topic, Q\&A.\\
+\textbf{Discussion:} The team revisited the project requirements, focusing on the WAM editor. The editor should allow clients to draw WAM diagrams while existing libraries such as JointJS cannot be used. The system should support additional AI WAM elements in the future, initially designed for federated web and extendable to represent AI. Users should be able to create diagrams themselves, with an AI assistant also capable of generating them. Exported RDF diagrams must represent all relationships, and the focus is on system engineers who need to plan and understand system architecture while keeping it understandable for non-technical stakeholders. Security aspects are considered to maintain trust. Cost considerations include displaying AI-related operations and estimated additional costs, though precise estimation is not required at this stage.\\
+\textbf{Action Items:} Research JointJS alternatives; plan RDF and AI integration; cost estimation methods.
+
+\subsection*{Vision, Mission, Report Content Finalization (Oct 30, 2025)}
+\textbf{Agenda:} Finalize report scope and responsibilities.\\
+\textbf{Discussion:} LaTeX was chosen as the platform for collaborative report writing, allowing all team members to contribute efficiently through the Planspiel GitLab repository. The team confirmed the adoption of a SCRUM workflow with two-week sprints to manage tasks and ensure steady progress. Responsibilities for each section of the report were clearly assigned to individual members, with deadlines set to maintain accountability.\\
+\textbf{Decision:} Report structure finalized; team members to complete sections by Nov 4; favicon design(Valeria); LaTeX Setup(Mariia); Update website with submitted content(Ibtisam);
 
 \bibliographystyle{plain}
 \bibliography{bibfile.bib}
