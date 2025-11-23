@@ -1,34 +1,42 @@
-
-import express, { Application, Request, Response } from 'express';
-import dotenv from 'dotenv'
-import helmet from 'helmet'
-import cors from 'cors'
-import bodyParser from 'body-parser'
+import express, { Application } from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
+import config from './config/config';
 
-import userRoutes from './api/routes/exampleRoutes';
+import exampleRoutes from './api/routes/exampleRoutes';
 import errorHandler from './middleware/error.middleware';
 
 const app: Application = express();
-const port: number = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+const port: number = config.port;
 
-dotenv.config()
+
+// Security & parsing middleware
 app.use(helmet());
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use('/api', userRoutes);
+// Routes
+app.use('/api', exampleRoutes);
+
+// Errors
 app.use(errorHandler);
 
-// const mongoUrl = process.env.MONGODB_URL;
-// if (!mongoUrl) {
-//   throw new Error('MONGODB_URL is not defined');
-// }
-// mongoose.connect(mongoUrl)
-//   .then(() => console.log('MongoDB connected'))
-//   .catch(err => console.error('MongoDB connection error:', err));
+// Connect to Mongo and start server
+async function start() {
+  try {
+    await mongoose.connect(config.mongoUri);
+    console.log('MongoDB connected');
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+    app.listen(port, () => {
+      console.log(`Server is running on http://localhost:${port}`);
+    });
+  } catch (err) {
+    console.error('Failed to connect to MongoDB:', err);
+    process.exit(1);
+  }
+}
+
+start();

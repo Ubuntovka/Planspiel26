@@ -6,7 +6,8 @@
   "scripts": {
     "start": "ts-node index.ts",
     "dev": "nodemon index.ts",
-    "test": "jest"
+    "test": "jest",
+    "db:init": "ts-node scripts/dbInit.ts"
   },
   "keywords": [],
   "author": "",
