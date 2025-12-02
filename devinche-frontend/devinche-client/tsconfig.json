@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "src/features/diagram-feature/hooks.js", "src/features/diagram-feature/ui/DiagramCanvas.jsx", "src/features/diagram-feature/lib/utils.js", "src/features/diagram-feature/data/initialElements.js", "src/features/diagram-feature/ui/controls/ContextMenu.jsx"  ],
   "exclude": ["node_modules"]
 }
