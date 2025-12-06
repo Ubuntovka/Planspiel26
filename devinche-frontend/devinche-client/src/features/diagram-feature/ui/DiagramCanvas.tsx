@@ -1,7 +1,7 @@
 import { ReactFlow, Background, Controls, Panel } from "@xyflow/react";
 import ContextMenu from "./controls/ContextMenu";
 import type { DiagramNode, DiagramEdge, ContextMenuState } from "@/types/diagram";
-import type { NodeTypes, EdgeTypes, NodeChange, EdgeChange, Connection } from "@xyflow/react";
+import { NodeTypes, EdgeTypes, NodeChange, EdgeChange, Connection, ConnectionMode } from "@xyflow/react";
 
 interface DiagramCanvasProps {
   flowWrapperRef: React.RefObject<HTMLDivElement>;
@@ -45,7 +45,7 @@ const DiagramCanvas = ({
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
         onPaneClick={onPaneClick}
-        // connectionMode="loose"
+        connectionMode={ConnectionMode.Loose}
         fitView
       >
         {/* <Panel position="top-center">top-center panel</Panel> */}
