@@ -1,4 +1,6 @@
-const DataProviderNode = ({ data }) => {
+import type { NodeProps } from "@/types/diagram";
+
+const DataProviderNode = ({ data }: NodeProps) => {
   return (
     <div className="relative w-16 h-16">
       <div className="absolute inset-x-0 top-0 h-4 w-12 border border-black bg-white rounded-full mx-auto z-10"></div>
@@ -9,3 +11,4 @@ const DataProviderNode = ({ data }) => {
 };
 
 export default DataProviderNode;
+

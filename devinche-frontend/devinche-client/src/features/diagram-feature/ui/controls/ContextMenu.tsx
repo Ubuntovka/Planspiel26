@@ -2,8 +2,13 @@
 import React, { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { v4 as uuidv4 } from 'uuid';
+import type { ContextMenuState } from "@/types/diagram";
 
-export default function ContextMenu({ id, type = "node", top, left, right, bottom, ...props }) {
+interface ContextMenuProps extends ContextMenuState {
+  onClick?: () => void;
+}
+
+export default function ContextMenu({ id, type = "node", top, left, right, bottom, onClick, ...props }: ContextMenuProps) {
   const { getNode, setNodes, addNodes, setEdges, deleteElements } = useReactFlow();
 
   const duplicateNode = useCallback(() => {

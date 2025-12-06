@@ -1,14 +1,25 @@
-// Example nodes. Feel free to add or remove them.
+import type { DiagramNode, DiagramEdge } from "@/types/diagram";
 
-export const initialNodes = [
+// Example nodes. Feel free to add or remove them.
+export const initialNodes: DiagramNode[] = [
   {
     id: "n1",
     type: "processUnitNode",
     position: { x: 0, y: 0 },
     data: { label: "Process Unit" },
   },
-  { id: "n2", position: { x: 0, y: 100 }, data: { label: "Node 2" } },
-  { id: "n3", position: { x: 0, y: 200 }, data: { label: "Node 3" } },
+  { 
+    id: "n2", 
+    type: "default",
+    position: { x: 0, y: 100 }, 
+    data: { label: "Node 2" } 
+  },
+  { 
+    id: "n3", 
+    type: "default",
+    position: { x: 0, y: 200 }, 
+    data: { label: "Node 3" } 
+  },
   {
     id: "n4",
     type: "dataProviderNode",
@@ -53,7 +64,14 @@ export const initialNodes = [
     parentId: 'A',
     extent: 'parent',
   },
-
 ];
 
-export const initialEdges = [{ id: "n2-n3", source: "n2", target: "n3", type: "step" }];
+export const initialEdges: DiagramEdge[] = [
+//   { 
+//     id: "n2-n3", 
+//     source: "n2", 
+//     target: "n3", 
+//     type: "step" 
+//   }
+];
+
