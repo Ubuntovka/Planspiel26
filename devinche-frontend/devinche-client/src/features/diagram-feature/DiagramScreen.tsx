@@ -9,9 +9,9 @@ import ApplicationNode from "./ui/nodes/ApplicationNode";
 import ResizableNode from "./ui/nodes/ResizableNode";
 import SecurityRealm from "./ui/nodes/SecurityRealm";
 import StepEdge from "./ui/edges/StepEdge";
+import type { NodeTypes, EdgeTypes } from '@xyflow/react';
 
-
-const nodeTypes = {
+const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
     dataProviderNode: DataProviderNode,
     applicationNode: ApplicationNode,
@@ -19,7 +19,7 @@ const nodeTypes = {
     securityRealm: SecurityRealm
 };
 
-const edgeTypes = {
+const edgeTypes: EdgeTypes = {
     step: StepEdge, 
 };
 
@@ -58,3 +58,4 @@ const DiagramScreen = () => {
 }
 
 export default DiagramScreen;
+

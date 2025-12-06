@@ -1,8 +1,9 @@
 // Refer: https://reactflow.dev/examples/grouping/parent-child-relation
 
 import { NodeResizer } from "@xyflow/react";
+import type { NodeProps } from "@/types/diagram";
 
-const SecurityRealm = ({ data, selected }) => {
+const SecurityRealm = ({ data, selected }: NodeProps) => {
   return (
     <div className="relative border bg-white w-full h-full rounded-xl">
       <NodeResizer
@@ -14,9 +15,9 @@ const SecurityRealm = ({ data, selected }) => {
       <div className="flex items-center justify-center p-2.5 h-full">
         {data.label}
       </div>
-
     </div>
   );
 };
 
 export default SecurityRealm;
+
