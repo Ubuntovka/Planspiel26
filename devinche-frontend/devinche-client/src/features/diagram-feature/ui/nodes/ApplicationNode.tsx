@@ -1,7 +1,8 @@
 // Standard node with handle, resizer
 import { Position, Handle, NodeResizer } from "@xyflow/react";
+import type { NodeProps } from "@/types/diagram";
 
-const ApplicationNode = ({ data, selected }) => {
+const ApplicationNode = ({ data, selected }: NodeProps) => {
   return (
     <div className="relative border bg-white w-full h-full rounded-xl">
       <NodeResizer
@@ -22,3 +23,4 @@ const ApplicationNode = ({ data, selected }) => {
 };
 
 export default ApplicationNode;
+

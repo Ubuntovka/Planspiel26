@@ -2,8 +2,9 @@
 // refer: https://reactflow.dev/examples/nodes/node-resizer
 import { memo } from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
+import type { NodeProps } from "@/types/diagram";
 
-const ResizableNodeSelected = ({ data, selected }) => {
+const ResizableNodeSelected = ({ data, selected }: NodeProps) => {
   return (
     <div className='relative border w-full h-full bg-gray-300'>
       <NodeResizer
@@ -20,3 +21,4 @@ const ResizableNodeSelected = ({ data, selected }) => {
 };
 
 export default memo(ResizableNodeSelected);
+

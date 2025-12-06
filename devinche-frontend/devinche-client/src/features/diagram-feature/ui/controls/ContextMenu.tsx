@@ -1,8 +1,13 @@
 import { useCallback, useMemo } from "react";
 import { useReactFlow } from "@xyflow/react"; 
 import { v4 as uuidv4 } from 'uuid';
+import type { ContextMenuState } from "@/types/diagram";
 
-export default function ContextMenu({ id, type = "node", top, left, right, bottom, ...props }) {
+interface ContextMenuProps extends ContextMenuState {
+  onClick?: () => void;
+}
+
+export default function ContextMenu({ id, type = "node", top, left, right, bottom, onClick, ...props }: ContextMenuProps) {
   const { getNode, getEdges, addNodes, deleteElements } = useReactFlow();
 
   // Get node/edge data
@@ -11,7 +16,7 @@ export default function ContextMenu({ id, type = "node", top, left, right, botto
       const node = getNode(id);
       if (node) {
         // 1. width and height of the node
-        return `Width: ${node.measured.width ?? 'N/A'}px, Height: ${node.measured.height ?? 'N/A'}px`;
+        return `Width: ${node.measured?.width ?? 'N/A'}px, Height: ${node.measured?.height ?? 'N/A'}px`;
       }
     } else if (type === "edge") {
       // Find edge using getEdges(), return source/target ID
