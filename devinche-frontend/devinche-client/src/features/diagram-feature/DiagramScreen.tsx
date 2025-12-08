@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { ReactFlowProvider } from '@xyflow/react';
 import { useDiagram } from './hooks';
@@ -10,52 +10,61 @@ import ResizableNode from "./ui/nodes/ResizableNode";
 import SecurityRealm from "./ui/nodes/SecurityRealm";
 import StepEdge from "./ui/edges/StepEdge";
 import type { NodeTypes, EdgeTypes } from '@xyflow/react';
+import Exports from './ui/exports/Exports';
 
 const nodeTypes: NodeTypes = {
-    processUnitNode: ProcessUnitNode,
-    dataProviderNode: DataProviderNode,
-    applicationNode: ApplicationNode,
-    resizableNode: ResizableNode,
-    securityRealm: SecurityRealm
+  processUnitNode: ProcessUnitNode,
+  dataProviderNode: DataProviderNode,
+  applicationNode: ApplicationNode,
+  resizableNode: ResizableNode,
+  securityRealm: SecurityRealm,
 };
 
 const edgeTypes: EdgeTypes = {
-    step: StepEdge, 
+  step: StepEdge,
 };
 
 const DiagramScreen = () => {
-    const { 
-        nodes, 
-        edges, 
-        menu, 
-        flowWrapperRef,
-        onNodesChange, 
-        onEdgesChange, 
-        onConnect,
-        onNodeContextMenu,
-        onEdgeContextMenu,
-        onPaneClick,
-    } = useDiagram();
+  const { 
+    nodes, 
+    edges, 
+    menu, 
+    flowWrapperRef,
+    onNodesChange, 
+    onEdgesChange, 
+    onConnect,
+    onNodeContextMenu,
+    onEdgeContextMenu,
+    onPaneClick,
+    onFlowInit,
+    exportToJson,
+    exportToRdf,
+    importFromJson
+  } = useDiagram();
 
-    return (
-        <ReactFlowProvider>
-            <DiagramCanvas
-                flowWrapperRef={flowWrapperRef}
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onNodeContextMenu={onNodeContextMenu}
-                onEdgeContextMenu={onEdgeContextMenu}
-                onPaneClick={onPaneClick}
-                menu={menu}
-            />
-        </ReactFlowProvider>
-    );
-}
+  return (
+    <ReactFlowProvider>
+      <div className="relative w-screen h-screen">
+        <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} importFromJson={importFromJson}/>
+
+        <DiagramCanvas
+          flowWrapperRef={flowWrapperRef}
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeContextMenu={onNodeContextMenu}
+          onEdgeContextMenu={onEdgeContextMenu}
+          onPaneClick={onPaneClick}
+          menu={menu}
+          onFlowInit={onFlowInit}
+        />
+      </div>
+    </ReactFlowProvider>
+  );
+};
 
 export default DiagramScreen;
-

@@ -1,0 +1,25 @@
+{
+  "nodes": [
+    {
+      "id": "n2",
+      "type": "default",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "data": {
+        "label": "Imported"
+      },
+      "measured": {
+        "width": 150,
+        "height": 40
+      }
+    }
+  ],
+  "edges": [],
+  "viewport": {
+    "x": 456.1914893617021,
+    "y": 364.2234042553191,
+    "zoom": 1.4106382978723404
+  }
+}
