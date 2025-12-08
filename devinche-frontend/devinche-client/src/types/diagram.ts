@@ -39,6 +39,7 @@ export interface UseDiagramReturn {
   onNodeContextMenu: (event: React.MouseEvent, node: Node) => void;
   onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: () => void;
+  closeMenu: () => void,
 }
 
 // Node component props

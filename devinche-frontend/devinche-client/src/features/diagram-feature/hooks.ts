@@ -76,6 +76,11 @@ export const useDiagram = (): UseDiagramReturn => {
         setMenu({ id: edge.id, type: 'edge', top, left, right, bottom });
     }, []);
 
+    // onPaneClick과 close menu를 분리 중.
+    const closeMenu = useCallback(() => {
+        setMenu(null);
+    }, []);
+
     const onPaneClick = useCallback(() => {
         setMenu(null);
     }, []);
@@ -91,6 +96,7 @@ export const useDiagram = (): UseDiagramReturn => {
         onNodeContextMenu,
         onEdgeContextMenu,
         onPaneClick,
+        closeMenu
     };
 };
 
