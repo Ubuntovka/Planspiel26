@@ -46,6 +46,8 @@ export interface UseDiagramReturn {
   exportToRdf: () => string;
   importFromJson: (json: string) => void;
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
+  selectedEdgeType: string;
+  setSelectedEdgeType: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // Node component props

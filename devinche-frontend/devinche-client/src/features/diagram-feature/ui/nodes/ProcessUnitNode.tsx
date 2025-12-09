@@ -1,11 +1,12 @@
 import type { NodeProps } from "@/types/diagram";
 import {Handle, Position } from "@xyflow/react";
 
-export function ProcessUnitNode({ data }: NodeProps) {
+export function ProcessUnitNode({ data, selected }: NodeProps) {
+  const strokeColor = selected ? 'var(--editor-accent)' : 'var(--editor-text)';
   return (
     <div className="relative w-full h-full">
         <svg width="87" height="87" viewBox="0 0 87 87" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="43.6147" cy="43.7823" r="41.6676" stroke="black" strokeWidth="2.87363"/>
+            <circle cx="43.6147" cy="43.7823" r="41.6676" stroke={strokeColor} strokeWidth="2.87363"/>
         </svg>
 
         <Handle type="source" position={Position.Top} id="top-source"/>

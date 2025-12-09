@@ -24,6 +24,7 @@ export const useDiagram = (): UseDiagramReturn => {
     const [edges, setEdges] = useState<DiagramEdge[]>(initialEdges);
     const [menu, setMenu] = useState<ContextMenuState | null>(null);
     const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
+    const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
 
     // reactflow initial state handler
@@ -87,14 +88,14 @@ export const useDiagram = (): UseDiagramReturn => {
 
         const newEdge: DiagramEdge = {
             ...params,
-            id: params.source + '-' + params.target,
-            // type: "step", 
+            id: `${params.source}-${params.target}-${Date.now()}`,
+            type: selectedEdgeType,
             source: params.source,
             target: params.target,
             markerEnd: { type: MarkerType.ArrowClosed, color: '#808080' },
         };
         setEdges((eds) => addEdge(newEdge, eds) as DiagramEdge[]);
-    }, []);
+    }, [selectedEdgeType]);
 
     // 4. Node context menu handler
     const onNodeContextMenu = useCallback(
@@ -155,6 +156,8 @@ export const useDiagram = (): UseDiagramReturn => {
         exportToRdf, 
         importFromJson,
         setNodes,
+        selectedEdgeType,
+        setSelectedEdgeType,
     };
 };
 

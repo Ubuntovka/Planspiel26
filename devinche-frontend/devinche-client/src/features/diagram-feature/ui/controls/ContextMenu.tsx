@@ -98,52 +98,75 @@ export default function ContextMenu({
 
   return (
     <div
-      style={{ top, left, right, bottom }}
-      className="absolute bg-white border border-gray-300 rounded-xl shadow-2xl p-3 z-50 flex flex-col gap-2 min-w-[200px]"
+      className="absolute rounded-lg shadow-2xl p-3 z-50 flex flex-col gap-2 min-w-[240px]"
+      style={{ 
+        top, 
+        left, 
+        right, 
+        bottom,
+        backgroundColor: 'var(--editor-panel-bg)',
+        border: '1px solid var(--editor-border)',
+        boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+      }}
       {...props}
     >
       {/* --- Info section --- */}
-      <div className="flex items-center space-x-2 border-b pb-2 mb-2 border-gray-200">
-        <span className="text-blue-500 w-4 h-4 flex items-center justify-center">
+      <div className="flex items-center space-x-2 pb-2 mb-2" style={{ borderBottom: '1px solid var(--editor-border)' }}>
+        <span className="w-4 h-4 flex items-center justify-center" style={{ color: 'var(--editor-accent)' }}>
           {type === "node" ? <IconNode /> : <IconEdge />}
         </span>
-        <h3 className="text-sm font-semibold text-gray-800 capitalize m-0 p-0">
+        <h3 className="text-sm font-semibold capitalize m-0 p-0" style={{ color: 'var(--editor-text)' }}>
           {type}
         </h3>
       </div>
       
       {/* ID  */}
-      <div className="text-xs text-gray-500 flex flex-col gap-1">
+      <div className="text-xs flex flex-col gap-1" style={{ color: 'var(--editor-text-secondary)' }}>
         <span className="font-medium">ID:</span>
-        <span className="truncate max-w-full font-mono bg-gray-50 text-gray-700 px-2 py-0.5 rounded">
+        <span className="truncate max-w-full font-mono px-2 py-1 rounded" style={{ 
+          backgroundColor: 'var(--editor-bg)',
+          color: 'var(--editor-text)',
+          border: '1px solid var(--editor-border)'
+        }}>
           {id}
         </span>
       </div>
 
       {/* dynamic data */}
       {elementData.length > 0 && (
-        <div className="pt-2 border-t border-gray-100 flex flex-col gap-1.5">
+        <div className="pt-2 flex flex-col gap-1.5" style={{ borderTop: '1px solid var(--editor-border)' }}>
           {elementData.map((item, index) => (
-            <div key={index} className="flex items-center justify-between text-xs text-gray-600">
+            <div key={index} className="flex items-center justify-between text-xs" style={{ color: 'var(--editor-text-secondary)' }}>
               <span className="flex items-center space-x-1 font-medium">
-                <span className="text-gray-500 w-4 h-4 flex items-center justify-center">
+                <span className="w-4 h-4 flex items-center justify-center" style={{ color: 'var(--editor-text-muted)' }}>
                   {item.icon}
                 </span>
                 <span>{item.label}:</span>
               </span>
-              <span className="font-semibold text-gray-800">
+              <span className="font-semibold" style={{ color: 'var(--editor-text)' }}>
                 {item.value}
-                {item.unit && <span className="ml-1 text-gray-500 font-normal">{item.unit}</span>}
+                {item.unit && <span className="ml-1 font-normal" style={{ color: 'var(--editor-text-secondary)' }}>{item.unit}</span>}
               </span>
             </div>
           ))}
         </div>
       )}
       
-      <div className="pt-2 border-t border-gray-200 mt-1 flex flex-col gap-1">
+      <div className="pt-2 mt-1 flex flex-col gap-1.5" style={{ borderTop: '1px solid var(--editor-border)' }}>
         {type === "node" && (
           <button
-            className="flex items-center justify-center px-3 py-1.5 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
+            className="flex items-center justify-center px-3 py-2 text-sm rounded-md transition duration-150 hover:cursor-pointer font-medium border border-transparent"
+            style={{ color: 'var(--editor-text)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+              e.currentTarget.style.color = 'var(--editor-accent)';
+              e.currentTarget.style.borderColor = 'var(--editor-accent)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--editor-text)';
+              e.currentTarget.style.borderColor = 'transparent';
+            }}
             onClick={() => {
               duplicateNode();
               onClick?.();
@@ -153,7 +176,16 @@ export default function ContextMenu({
           </button>
         )}
         <button
-          className="flex items-center justify-center px-3 py-1.5 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
+          className="flex items-center justify-center px-3 py-2 text-sm rounded-md transition duration-150 hover:cursor-pointer font-medium border border-transparent"
+          style={{ color: 'var(--editor-error)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+            e.currentTarget.style.borderColor = 'var(--editor-error)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.borderColor = 'transparent';
+          }}
           onClick={() => {
             deleteItem();
             onClick?.();

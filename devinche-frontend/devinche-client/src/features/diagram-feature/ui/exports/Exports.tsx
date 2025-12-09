@@ -1,4 +1,5 @@
 import { exportDiagramToPng } from './exportToPng';
+import { Download, Upload, FileJson, Image, FileCode } from 'lucide-react';
 
 interface ExportsPropsType {
     exportToJson: () => string | null;
@@ -66,29 +67,104 @@ const Exports = ({ exportToJson, flowWrapperRef, exportToRdf, importFromJson }: 
     };
 
     return (
-        <>
-            <div className="w-fit bg-white border border-black p-5 hover:cursor-pointer rounded-xl absolute top-4 right-4 z-10 flex">
-                <button className="block w-full border border-black text-black" onClick={handleDownloadJson}>
-                    Export JSON
-                </button>
-                <button className="block w-full border border-black text-black" onClick={handleDownloadPng}>
-                    Export PNG
-                </button>
-                <button className="block w-full border border-black text-black" onClick={handleDownloadRdf}>
-                    Export RDF
-                </button>
+        <div 
+            className="absolute top-16 right-4 z-10 backdrop-blur-sm rounded-lg shadow-2xl p-3 flex flex-col gap-2 min-w-[200px]"
+            style={{ 
+                backgroundColor: 'var(--editor-panel-bg)',
+                border: '1px solid var(--editor-border)',
+                boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+            }}
+        >
+            <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider mb-1" style={{ 
+                color: 'var(--editor-text-secondary)',
+                borderBottom: '1px solid var(--editor-border)'
+            }}>
+                Export / Import
+            </div>
+            
+            <button 
+                onClick={handleDownloadJson}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 border border-transparent"
+                style={{ color: 'var(--editor-text)' }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                    e.currentTarget.style.color = 'var(--editor-accent)';
+                    e.currentTarget.style.borderColor = 'var(--editor-accent)';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--editor-text)';
+                    e.currentTarget.style.borderColor = 'transparent';
+                }}
+            >
+                <FileJson size={16} style={{ color: 'var(--editor-text-muted)' }} />
+                <span>Export JSON</span>
+            </button>
+            
+            <button 
+                onClick={handleDownloadPng}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 border border-transparent"
+                style={{ color: 'var(--editor-text)' }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                    e.currentTarget.style.color = 'var(--editor-success)';
+                    e.currentTarget.style.borderColor = 'var(--editor-success)';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--editor-text)';
+                    e.currentTarget.style.borderColor = 'transparent';
+                }}
+            >
+                <Image size={16} style={{ color: 'var(--editor-text-muted)' }} />
+                <span>Export PNG</span>
+            </button>
+            
+            <button 
+                onClick={handleDownloadRdf}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 border border-transparent"
+                style={{ color: 'var(--editor-text)' }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                    e.currentTarget.style.color = 'var(--editor-info)';
+                    e.currentTarget.style.borderColor = 'var(--editor-info)';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--editor-text)';
+                    e.currentTarget.style.borderColor = 'transparent';
+                }}
+            >
+                <FileCode size={16} style={{ color: 'var(--editor-text-muted)' }} />
+                <span>Export RDF</span>
+            </button>
 
-                <label className="block w-full text-sm text-black">
-                    <span className="block mb-1">Import JSON</span>
+            <div className="pt-2 mt-1" style={{ borderTop: '1px solid var(--editor-border)' }}>
+                <label 
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 border border-transparent cursor-pointer"
+                    style={{ color: 'var(--editor-text)' }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                        e.currentTarget.style.color = 'var(--editor-warning)';
+                        e.currentTarget.style.borderColor = 'var(--editor-warning)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = 'var(--editor-text)';
+                        e.currentTarget.style.borderColor = 'transparent';
+                    }}
+                >
+                    <Upload size={16} style={{ color: 'var(--editor-text-muted)' }} />
+                    <span className="flex-1">Import JSON</span>
                     <input
-                    type="file"
-                    accept="application/json"
-                    onChange={handleImportJson}
-                    className="block w-full text-xs"
+                        type="file"
+                        accept="application/json"
+                        onChange={handleImportJson}
+                        className="hidden"
                     />
                 </label>
             </div>
-        </>
+        </div>
     )
 }
 

@@ -1,8 +1,58 @@
 @import "tailwindcss";
 @import '@xyflow/react/dist/style.css';
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light Theme Colors */
+  --editor-bg: #ffffff;
+  --editor-surface: #f8f9fa;
+  --editor-surface-hover: #e9ecef;
+  --editor-border: #dee2e6;
+  --editor-border-light: #ced4da;
+  --editor-text: #212529;
+  --editor-text-secondary: #495057;
+  --editor-text-muted: #6c757d;
+  --editor-accent: #0d6efd;
+  --editor-accent-hover: #0b5ed7;
+  --editor-accent-active: #0a58ca;
+  --editor-success: #198754;
+  --editor-warning: #ffc107;
+  --editor-error: #dc3545;
+  --editor-info: #0dcaf0;
+  --editor-panel-bg: rgba(248, 249, 250, 0.95);
+  --editor-shadow: rgba(0, 0, 0, 0.1);
+  --editor-shadow-lg: rgba(0, 0, 0, 0.15);
+  /* Grid color - darker for light theme */
+  --editor-grid: #adb5bd;
+  
+  --background: var(--editor-bg);
+  --foreground: var(--editor-text);
+}
+
+[data-theme="dark"] {
+  /* Dark Theme Colors */
+  --editor-bg: #1e1e1e;
+  --editor-surface: #252526;
+  --editor-surface-hover: #2a2d2e;
+  --editor-border: #3e3e42;
+  --editor-border-light: #454545;
+  --editor-text: #cccccc;
+  --editor-text-secondary: #858585;
+  --editor-text-muted: #6a6a6a;
+  --editor-accent: #007acc;
+  --editor-accent-hover: #1a8cd8;
+  --editor-accent-active: #005a9e;
+  --editor-success: #4ec9b0;
+  --editor-warning: #dcdcaa;
+  --editor-error: #f48771;
+  --editor-info: #4fc1ff;
+  --editor-panel-bg: rgba(37, 37, 38, 0.95);
+  --editor-shadow: rgba(0, 0, 0, 0.3);
+  --editor-shadow-lg: rgba(0, 0, 0, 0.5);
+  /* Grid color - lighter for dark theme */
+  --editor-grid: #3e3e42;
+  
+  --background: var(--editor-bg);
+  --foreground: var(--editor-text);
 }
 
 @theme inline {
@@ -12,15 +62,142 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--editor-bg);
+  color: var(--editor-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom scrollbar styling - Modern Editor Style */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--editor-border);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--editor-border-light);
+  background-clip: padding-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* React Flow customizations - Modern Editor Style */
+.react-flow__controls {
+  background: var(--editor-panel-bg) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--editor-border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 16px var(--editor-shadow-lg) !important;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  border-bottom: 1px solid var(--editor-border) !important;
+  transition: all 0.15s ease !important;
+  background: transparent !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--editor-surface-hover) !important;
+}
+
+.react-flow__controls-button:active {
+  background: var(--editor-accent) !important;
+}
+
+.react-flow__controls-button svg {
+  fill: var(--editor-text-secondary) !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.react-flow__controls-button:hover svg {
+  fill: var(--editor-text) !important;
+}
+
+.react-flow__controls-button:active svg {
+  fill: white !important;
+}
+
+/* React Flow Background - Modern Editor Style */
+.react-flow__background {
+  background: var(--editor-bg) !important;
+}
+
+.react-flow__background-pattern {
+  stroke: var(--editor-grid) !important;
+}
+
+/* Enhanced grid visibility */
+.react-flow__background-pattern line {
+  stroke: var(--editor-grid) !important;
+}
+
+/* React Flow Node Selection */
+.react-flow__node.selected {
+  outline: 2px solid var(--editor-accent) !important;
+  outline-offset: 2px;
+}
+
+/* React Flow Edge Selection */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--editor-accent) !important;
+  stroke-width: 2px !important;
+}
+
+/* React Flow Connection Line */
+.react-flow__connection-line {
+  stroke: var(--editor-accent) !important;
+}
+
+/* React Flow Handle */
+.react-flow__handle {
+  background: var(--editor-accent) !important;
+  border: 2px solid var(--editor-bg) !important;
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.react-flow__handle:hover {
+  background: var(--editor-accent-hover) !important;
+  transform: scale(1.2);
+}
+
+/* React Flow Mini Map */
+.react-flow__minimap {
+  background: var(--editor-panel-bg) !important;
+  border: 1px solid var(--editor-border) !important;
+  border-radius: 8px !important;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
