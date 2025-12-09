@@ -1,8 +1,17 @@
-import { ReactFlow, Background, Controls, Panel} from "@xyflow/react";
-import ContextMenu from "./controls/ContextMenu";
-import PalettePanel from "./palette/PalettePanel";
-import type { DiagramNode, DiagramEdge, ContextMenuState } from "@/types/diagram";
-import { NodeTypes, EdgeTypes, NodeChange, EdgeChange, Connection, ConnectionMode } from "@xyflow/react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  ConnectionMode,
+  type ReactFlowInstance,
+  type NodeTypes,
+  type EdgeTypes,
+  type NodeChange,
+  type EdgeChange,
+  type Connection,
+} from '@xyflow/react';
+import ContextMenu from './controls/ContextMenu';
+import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram';
 
 interface DiagramCanvasProps {
   flowWrapperRef: React.RefObject<HTMLDivElement>;
@@ -17,7 +26,7 @@ interface DiagramCanvasProps {
   onEdgeContextMenu: (event: React.MouseEvent, edge: any) => void;
   onPaneClick: () => void;
   menu: ContextMenuState | null;
-  setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
+  onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
 }
 
 const DiagramCanvas = ({
@@ -33,10 +42,10 @@ const DiagramCanvas = ({
   onEdgeContextMenu,
   onPaneClick,
   menu,
-    setNodes,
+  onFlowInit,
 }: DiagramCanvasProps) => {
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "#ffffff" }} ref={flowWrapperRef}>
+    <div style={{ width: '100vw', height: '100vh', background: '#ffffff' }} ref={flowWrapperRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -50,16 +59,14 @@ const DiagramCanvas = ({
         onPaneClick={onPaneClick}
         connectionMode={ConnectionMode.Loose}
         fitView
+        onInit={onFlowInit}
       >
-        {/* <Panel position="top-center">top-center panel</Panel> */}
         <Background />
         <Controls />
         {menu && <ContextMenu onClick={onPaneClick} {...menu} />}
-          <PalettePanel flowWrapperRef={flowWrapperRef} setNodes={setNodes} />
       </ReactFlow>
     </div>
   );
 };
 
 export default DiagramCanvas;
-
