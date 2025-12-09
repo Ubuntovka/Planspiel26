@@ -35,8 +35,10 @@ export const initialNodes: DiagramNode[] = [
   {
     id: 'n6',
     type: 'securityRealmNode',
-    data: { label: null },
+    data: { label: "A" },
     position: { x: -400, y: -100 },
+    width: 91,
+    height: 91,
   },
   {
     id: 'n7',
@@ -47,11 +49,11 @@ export const initialNodes: DiagramNode[] = [
 ];
 
 export const initialEdges: DiagramEdge[] = [
-//   { 
-//     id: "n2-n3", 
-//     source: "n2", 
-//     target: "n3", 
-//     type: "step" 
-//   }
+  {
+    id: "n2-n3",
+    source: "n2",
+    target: "n3",
+    type: "invocation"
+  }
 ];
 

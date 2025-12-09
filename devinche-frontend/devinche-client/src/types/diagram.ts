@@ -1,4 +1,4 @@
-import type { Node, Edge, Connection, NodeChange, EdgeChange } from '@xyflow/react';
+import type { Node, Edge, Connection, NodeChange, EdgeChange, ReactFlowInstance } from '@xyflow/react';
 
 // Extended node type with our custom data structure
 export interface DiagramNode extends Node {
@@ -39,6 +39,11 @@ export interface UseDiagramReturn {
   onNodeContextMenu: (event: React.MouseEvent, node: Node) => void;
   onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: () => void;
+  closeMenu: () => void,
+  onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
+  exportToJson: () => string | null;
+  exportToRdf: () => string;
+  importFromJson: (json: string) => void;
 }
 
 // Node component props
@@ -63,3 +68,8 @@ export interface EdgeProps {
   [key: string]: any;
 }
 
+
+export interface SecurityRealmData {
+  label?: string
+  [key: string]: any;
+}
