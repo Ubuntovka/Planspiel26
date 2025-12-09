@@ -1,4 +1,4 @@
-import { ReactFlow, Background, Controls, Panel } from "@xyflow/react";
+import { ReactFlow, Background, Controls, Panel, BackgroundVariant } from "@xyflow/react";
 import ContextMenu from "./controls/ContextMenu";
 import type { DiagramNode, DiagramEdge, ContextMenuState } from "@/types/diagram";
 import { NodeTypes, EdgeTypes, NodeChange, EdgeChange, Connection, ConnectionMode } from "@xyflow/react";
@@ -49,7 +49,9 @@ const DiagramCanvas = ({
         fitView
       >
         {/* <Panel position="top-center">top-center panel</Panel> */}
-        <Background />
+        <Background variant={BackgroundVariant.Lines} gap={10} color="#f1f1f1" id="1" />
+        <Background variant={BackgroundVariant.Lines} gap={100} color="#ccc" id="2" />
+        <Controls />
         <Controls />
         {menu && <ContextMenu onClick={onPaneClick} {...menu} />}
       </ReactFlow>
