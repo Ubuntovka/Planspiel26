@@ -153,8 +153,8 @@ export const useDiagram = (): UseDiagramReturn => {
         onFlowInit,
         exportToJson,
         exportToRdf, 
-        importFromJson
-
+        importFromJson,
+        setNodes,
     };
 };
 

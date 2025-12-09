@@ -1,4 +1,5 @@
 import type { Node, Edge, Connection, NodeChange, EdgeChange, ReactFlowInstance } from '@xyflow/react';
+import type React from 'react';
 
 // Extended node type with our custom data structure
 export interface DiagramNode extends Node {
@@ -44,6 +45,7 @@ export interface UseDiagramReturn {
   exportToJson: () => string | null;
   exportToRdf: () => string;
   importFromJson: (json: string) => void;
+  setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
 }
 
 // Node component props
