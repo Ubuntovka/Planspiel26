@@ -7,17 +7,21 @@ import { ProcessUnitNode } from "./ui/nodes/ProcessUnitNode";
 import DataProviderNode from "./ui/nodes/DataProviderNode";
 import ApplicationNode from "./ui/nodes/ApplicationNode";
 import ResizableNode from "./ui/nodes/ResizableNode";
-import SecurityRealm from "./ui/nodes/SecurityRealm";
+import SecurityRealm from "./ui/nodes/SecurityRealmNode";
+import ServiceNode from "./ui/nodes/ServiceNode";
+import IdentityProviderNode from "./ui/nodes/IdentityProviderNode";
 import StepEdge from "./ui/edges/StepEdge";
 import type { NodeTypes, EdgeTypes } from '@xyflow/react';
 import Exports from './ui/exports/Exports';
 
 const nodeTypes: NodeTypes = {
-  processUnitNode: ProcessUnitNode,
-  dataProviderNode: DataProviderNode,
-  applicationNode: ApplicationNode,
-  resizableNode: ResizableNode,
-  securityRealm: SecurityRealm,
+    processUnitNode: ProcessUnitNode,
+    dataProviderNode: DataProviderNode,
+    applicationNode: ApplicationNode,
+    resizableNode: ResizableNode,
+    securityRealmNode: SecurityRealm,
+    serviceNode: ServiceNode,
+    identityProviderNode: IdentityProviderNode,
 };
 
 const edgeTypes: EdgeTypes = {
