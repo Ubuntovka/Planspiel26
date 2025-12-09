@@ -1,7 +1,18 @@
-import { ReactFlow, Background, Controls, Panel, BackgroundVariant } from "@xyflow/react";
-import ContextMenu from "./controls/ContextMenu";
-import type { DiagramNode, DiagramEdge, ContextMenuState } from "@/types/diagram";
-import { NodeTypes, EdgeTypes, NodeChange, EdgeChange, Connection, ConnectionMode } from "@xyflow/react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  ConnectionMode,
+  type ReactFlowInstance,
+  type NodeTypes,
+  type EdgeTypes,
+  type NodeChange,
+  type EdgeChange,
+  type Connection,
+  BackgroundVariant,
+} from '@xyflow/react';
+import ContextMenu from './controls/ContextMenu';
+import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram';
 
 interface DiagramCanvasProps {
   flowWrapperRef: React.RefObject<HTMLDivElement>;
@@ -16,6 +27,7 @@ interface DiagramCanvasProps {
   onEdgeContextMenu: (event: React.MouseEvent, edge: any) => void;
   onPaneClick: () => void;
   menu: ContextMenuState | null;
+  onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
 }
 
 const DiagramCanvas = ({
@@ -31,9 +43,10 @@ const DiagramCanvas = ({
   onEdgeContextMenu,
   onPaneClick,
   menu,
+  onFlowInit,
 }: DiagramCanvasProps) => {
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "#ffffff" }} ref={flowWrapperRef}>
+    <div style={{ width: '100vw', height: '100vh', background: '#ffffff' }} ref={flowWrapperRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -47,6 +60,7 @@ const DiagramCanvas = ({
         onPaneClick={onPaneClick}
         connectionMode={ConnectionMode.Loose}
         fitView
+        onInit={onFlowInit}
       >
         {/* <Panel position="top-center">top-center panel</Panel> */}
         <Background variant={BackgroundVariant.Lines} gap={10} color="#f1f1f1" id="1" />
@@ -60,4 +74,3 @@ const DiagramCanvas = ({
 };
 
 export default DiagramCanvas;
-

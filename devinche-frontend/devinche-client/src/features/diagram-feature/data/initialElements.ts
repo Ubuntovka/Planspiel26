@@ -53,7 +53,7 @@ export const initialEdges: DiagramEdge[] = [
     id: "n2-n3",
     source: "n2",
     target: "n3",
-    type: "legacy"
+    type: "invocation"
   }
 ];
 
