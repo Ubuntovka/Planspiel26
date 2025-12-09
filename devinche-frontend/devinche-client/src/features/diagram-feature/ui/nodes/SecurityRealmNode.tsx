@@ -27,7 +27,6 @@ const SecurityRealmNode = ({ data, selected }: NodeProps<SecurityRealmDataNode>)
           </text>
         )}
       </svg>
-
       {/* <Handle type="source" position={Position.Top} id="top-source" /> */}
       <Handle type="source" position={Position.Left} id="left-source" />
       <Handle type="source" position={Position.Right} id="right-source" />
