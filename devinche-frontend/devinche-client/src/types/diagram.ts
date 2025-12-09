@@ -67,3 +67,8 @@ export interface EdgeProps {
   [key: string]: any;
 }
 
+
+export interface SecurityRealmData {
+  label?: string
+  [key: string]: any;
+}

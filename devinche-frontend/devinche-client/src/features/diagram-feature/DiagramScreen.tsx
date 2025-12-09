@@ -3,15 +3,18 @@
 import { ReactFlowProvider } from '@xyflow/react';
 import { useDiagram } from './hooks';
 import DiagramCanvas from './ui/DiagramCanvas';
-import { ProcessUnitNode } from "./ui/nodes/ProcessUnitNode"; 
+import { ProcessUnitNode } from "./ui/nodes/ProcessUnitNode";
 import DataProviderNode from "./ui/nodes/DataProviderNode";
 import ApplicationNode from "./ui/nodes/ApplicationNode";
 import ResizableNode from "./ui/nodes/ResizableNode";
-import SecurityRealm from "./ui/nodes/SecurityRealmNode";
+import SecurityRealmNode from "./ui/nodes/SecurityRealmNode";
 import ServiceNode from "./ui/nodes/ServiceNode";
 import IdentityProviderNode from "./ui/nodes/IdentityProviderNode";
 import StepEdge from "./ui/edges/StepEdge";
 import type { NodeTypes, EdgeTypes } from '@xyflow/react';
+import TrustEdge from './ui/edges/TrustEdge';
+import Invocation from './ui/edges/Invocation';
+import Legacy from './ui/edges/Legacy';
 import Exports from './ui/exports/Exports';
 
 const nodeTypes: NodeTypes = {
@@ -19,23 +22,26 @@ const nodeTypes: NodeTypes = {
     dataProviderNode: DataProviderNode,
     applicationNode: ApplicationNode,
     resizableNode: ResizableNode,
-    securityRealmNode: SecurityRealm,
+    securityRealmNode: SecurityRealmNode,
     serviceNode: ServiceNode,
     identityProviderNode: IdentityProviderNode,
 };
 
 const edgeTypes: EdgeTypes = {
-  step: StepEdge,
+    step: StepEdge,
+    trust: TrustEdge,
+    invocation: Invocation,
+    legacy:Legacy
 };
 
 const DiagramScreen = () => {
-  const { 
-    nodes, 
-    edges, 
-    menu, 
+  const {
+    nodes,
+    edges,
+    menu,
     flowWrapperRef,
-    onNodesChange, 
-    onEdgesChange, 
+    onNodesChange,
+    onEdgesChange,
     onConnect,
     onNodeContextMenu,
     onEdgeContextMenu,
