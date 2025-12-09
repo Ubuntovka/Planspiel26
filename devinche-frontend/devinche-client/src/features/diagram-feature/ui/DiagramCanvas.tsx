@@ -1,6 +1,7 @@
 import {
   ReactFlow,
   Background,
+  BackgroundVariant,
   Controls,
   ConnectionMode,
   type ReactFlowInstance,
@@ -9,7 +10,7 @@ import {
   type NodeChange,
   type EdgeChange,
   type Connection,
-    useReactFlow,
+  useReactFlow,
 } from '@xyflow/react';
 import ContextMenu from './controls/ContextMenu';
 import PalettePanel from "./palette/PalettePanel";
