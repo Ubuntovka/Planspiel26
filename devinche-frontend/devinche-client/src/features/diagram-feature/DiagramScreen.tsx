@@ -43,7 +43,8 @@ const DiagramScreen = () => {
     onFlowInit,
     exportToJson,
     exportToRdf,
-    importFromJson
+    importFromJson,
+    setNodes,
   } = useDiagram();
 
   return (
@@ -65,6 +66,7 @@ const DiagramScreen = () => {
           onPaneClick={onPaneClick}
           menu={menu}
           onFlowInit={onFlowInit}
+          setNodes={setNodes}
         />
       </div>
     </ReactFlowProvider>

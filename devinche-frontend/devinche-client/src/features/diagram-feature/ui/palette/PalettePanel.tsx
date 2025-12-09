@@ -75,7 +75,9 @@ const PalettePanel = ({ onDragStart }: PalettePanelProps) => {
 
     const handleDragStart = (event: React.DragEvent, item: PaletteItem) => {
         event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('application/reactflow', JSON.stringify(item));
+        const { id, type, label, nodeType } = item;
+        const payload = { id, type, label, nodeType };
+        event.dataTransfer.setData('application/reactflow', JSON.stringify(payload));
         onDragStart?.(event, item);
     };
 

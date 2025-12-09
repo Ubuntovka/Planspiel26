@@ -117,7 +117,7 @@ const DiagramCanvas = ({
         <Background />
         <Controls />
         {menu && <ContextMenu onClick={onPaneClick} {...menu} />}
-          <PalettePanel flowWrapperRef={flowWrapperRef} setNodes={setNodes} />
+          <PalettePanel />
       </ReactFlow>
     </div>
   );
