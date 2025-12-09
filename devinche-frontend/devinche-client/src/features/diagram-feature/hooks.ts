@@ -8,15 +8,66 @@ import {
     type Connection,
     type Node,
     type Edge,
+    ReactFlowInstance,
+    type ReactFlowJsonObject,
+    type Viewport
 } from "@xyflow/react";
+import { useReactFlow } from '@xyflow/react'; 
 import { initialNodes, initialEdges } from "./data/initialElements";
 import type { DiagramNode, DiagramEdge, ContextMenuState, UseDiagramReturn } from "@/types/diagram";
+import { exportDiagramToRdfTurtle } from "./ui/exports/exportToRdf";
 
 export const useDiagram = (): UseDiagramReturn => {
     const [nodes, setNodes] = useState<DiagramNode[]>(initialNodes);
     const [edges, setEdges] = useState<DiagramEdge[]>(initialEdges);
     const [menu, setMenu] = useState<ContextMenuState | null>(null);
+    const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>; 
+
+    // reactflow initial state handler
+    const onFlowInit = useCallback(
+        (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => { 
+        setRfInstance(instance);
+        },
+        []
+    );
+
+    // JSON export handler
+    const exportToJson = useCallback((): string | null => { 
+        if (!rfInstance) return null;
+        const flow: ReactFlowJsonObject<DiagramNode, DiagramEdge> = rfInstance.toObject();
+        return JSON.stringify(flow, null, 2);
+    }, [rfInstance]);
+
+    // RDF export handler
+    const exportToRdf = useCallback((): string => {
+        return exportDiagramToRdfTurtle(nodes, edges);
+    }, [nodes, edges]);
+
+    const importFromJson = useCallback(
+        (json: string) => {
+        let obj: ReactFlowJsonObject<DiagramNode, DiagramEdge>;
+        try {
+            obj = JSON.parse(json);
+        } catch (e) {
+            console.error('Invalid JSON for import', e);
+            return;
+        }
+
+        const nodes = obj.nodes ?? [];
+        const edges = obj.edges ?? [];
+        const viewport: Viewport | undefined = obj.viewport;
+
+        setNodes(nodes);
+        setEdges(edges);
+
+        if (rfInstance && viewport) {
+            const { x = 0, y = 0, zoom = 1 } = viewport;
+            rfInstance.setViewport({ x, y, zoom });
+        }
+        },
+        [rfInstance]
+    );
 
     // 1. Node change handler
     const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -76,7 +127,7 @@ export const useDiagram = (): UseDiagramReturn => {
         setMenu({ id: edge.id, type: 'edge', top, left, right, bottom });
     }, []);
 
-    // onPaneClick과 close menu를 분리 중.
+    // Separate onPaneClick, close menu
     const closeMenu = useCallback(() => {
         setMenu(null);
     }, []);
@@ -96,7 +147,12 @@ export const useDiagram = (): UseDiagramReturn => {
         onNodeContextMenu,
         onEdgeContextMenu,
         onPaneClick,
-        closeMenu
+        closeMenu,
+        onFlowInit,
+        exportToJson,
+        exportToRdf, 
+        importFromJson
+
     };
 };
 
