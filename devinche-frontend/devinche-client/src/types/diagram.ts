@@ -39,10 +39,11 @@ export interface UseDiagramReturn {
   onNodeContextMenu: (event: React.MouseEvent, node: Node) => void;
   onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: () => void;
+  closeMenu: () => void,
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   exportToJson: () => string | null;
   exportToRdf: () => string;
-  importFromJson: (json: string) => void; 
+  importFromJson: (json: string) => void;
 }
 
 // Node component props

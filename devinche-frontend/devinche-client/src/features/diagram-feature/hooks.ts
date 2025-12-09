@@ -129,6 +129,11 @@ export const useDiagram = (): UseDiagramReturn => {
         setMenu({ id: edge.id, type: 'edge', top, left, right, bottom });
     }, []);
 
+    // Separate onPaneClick, close menu
+    const closeMenu = useCallback(() => {
+        setMenu(null);
+    }, []);
+
     const onPaneClick = useCallback(() => {
         setMenu(null);
     }, []);
@@ -144,10 +149,12 @@ export const useDiagram = (): UseDiagramReturn => {
         onNodeContextMenu,
         onEdgeContextMenu,
         onPaneClick,
+        closeMenu,
         onFlowInit,
         exportToJson,
         exportToRdf, 
         importFromJson
+
     };
 };
 
