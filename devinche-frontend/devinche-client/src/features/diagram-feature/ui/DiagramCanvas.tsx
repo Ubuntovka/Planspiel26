@@ -1,5 +1,6 @@
-import { ReactFlow, Background, Controls, Panel } from "@xyflow/react";
+import { ReactFlow, Background, Controls, Panel} from "@xyflow/react";
 import ContextMenu from "./controls/ContextMenu";
+import PalettePanel from "./palette/PalettePanel";
 import type { DiagramNode, DiagramEdge, ContextMenuState } from "@/types/diagram";
 import { NodeTypes, EdgeTypes, NodeChange, EdgeChange, Connection, ConnectionMode } from "@xyflow/react";
 
@@ -16,6 +17,7 @@ interface DiagramCanvasProps {
   onEdgeContextMenu: (event: React.MouseEvent, edge: any) => void;
   onPaneClick: () => void;
   menu: ContextMenuState | null;
+  setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
 }
 
 const DiagramCanvas = ({
@@ -31,6 +33,7 @@ const DiagramCanvas = ({
   onEdgeContextMenu,
   onPaneClick,
   menu,
+    setNodes,
 }: DiagramCanvasProps) => {
   return (
     <div style={{ width: "100vw", height: "100vh", background: "#ffffff" }} ref={flowWrapperRef}>
@@ -52,6 +55,7 @@ const DiagramCanvas = ({
         <Background />
         <Controls />
         {menu && <ContextMenu onClick={onPaneClick} {...menu} />}
+          <PalettePanel flowWrapperRef={flowWrapperRef} setNodes={setNodes} />
       </ReactFlow>
     </div>
   );
