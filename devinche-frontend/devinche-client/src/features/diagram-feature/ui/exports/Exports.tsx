@@ -67,18 +67,18 @@ const Exports = ({ exportToJson, flowWrapperRef, exportToRdf, importFromJson }: 
 
     return (
         <>
-            <div className="w-fit bg-white border p-5 hover:cursor-pointer rounded-xl absolute top-4 right-4 z-10 flex">
-                <button className="block w-full border" onClick={handleDownloadJson}>
+            <div className="w-fit bg-white border border-black p-5 hover:cursor-pointer rounded-xl absolute top-4 right-4 z-10 flex">
+                <button className="block w-full border border-black text-black" onClick={handleDownloadJson}>
                     Export JSON
                 </button>
-                <button className="block w-full border" onClick={handleDownloadPng}>
+                <button className="block w-full border border-black text-black" onClick={handleDownloadPng}>
                     Export PNG
                 </button>
-                <button className="block w-full border" onClick={handleDownloadRdf}>
+                <button className="block w-full border border-black text-black" onClick={handleDownloadRdf}>
                     Export RDF
                 </button>
 
-                <label className="block w-full text-sm">
+                <label className="block w-full text-sm text-black">
                     <span className="block mb-1">Import JSON</span>
                     <input
                     type="file"
