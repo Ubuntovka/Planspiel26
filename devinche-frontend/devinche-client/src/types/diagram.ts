@@ -40,6 +40,7 @@ export interface UseDiagramReturn {
   onNodeContextMenu: (event: React.MouseEvent, node: Node) => void;
   onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: () => void;
+  closeMenu: () => void,
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   exportToJson: () => string | null;
   exportToRdf: () => string;
@@ -69,3 +70,8 @@ export interface EdgeProps {
   [key: string]: any;
 }
 
+
+export interface SecurityRealmData {
+  label?: string
+  [key: string]: any;
+}
