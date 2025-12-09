@@ -1,7 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import { Pointer, Box, GitBranch } from 'lucide-react';
-import { useReactFlow } from '@xyflow/react';
-import type { DiagramNode } from '@/types/diagram';
 
 interface PaletteItem {
     id: string;
@@ -69,102 +67,17 @@ const paletteItems: PaletteItem[] = [
 ];
 
 interface PalettePanelProps {
-    flowWrapperRef: React.RefObject<HTMLDivElement>;
-    setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
+    onDragStart?: (event: React.DragEvent, item: PaletteItem) => void;
 }
 
-const PalettePanel = ({ flowWrapperRef, setNodes }: PalettePanelProps) => {
+const PalettePanel = ({ onDragStart }: PalettePanelProps) => {
     const [collapsed, setCollapsed] = useState(false);
-    const reactFlowInstance = useReactFlow();
 
     const handleDragStart = (event: React.DragEvent, item: PaletteItem) => {
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('application/reactflow', JSON.stringify(item));
+        onDragStart?.(event, item);
     };
-
-    const onDragOver = useCallback((event: React.DragEvent) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-    }, []);
-
-    const onDrop = useCallback(
-        (event: React.DragEvent) => {
-            event.preventDefault();
-
-            const reactFlowBounds = flowWrapperRef.current?.getBoundingClientRect();
-            if (!reactFlowBounds) return;
-
-            const dataString = event.dataTransfer.getData('application/reactflow');
-            if (!dataString) return;
-
-            const data: PaletteItem = JSON.parse(dataString);
-
-            if (data.type === 'node' && data.nodeType) {
-                const position = reactFlowInstance.screenToFlowPosition({
-                    x: event.clientX,
-                    y: event.clientY,
-                });
-
-                const newNode: DiagramNode = {
-                    id: `${data.nodeType}-${Date.now()}`,
-                    type: data.nodeType,
-                    position,
-                    data: { label: data.label },
-                };
-
-                setNodes((nds) => nds.concat(newNode));
-            }
-        },
-        [reactFlowInstance, flowWrapperRef, setNodes]
-    );
-
-    useEffect(() => {
-        const wrapper = flowWrapperRef.current;
-        if (!wrapper) return;
-
-        const handleDragOverWrapper = (e: DragEvent) => {
-            e.preventDefault();
-            if (e.dataTransfer) {
-                e.dataTransfer.dropEffect = 'move';
-            }
-        };
-
-        const handleDropWrapper = (e: DragEvent) => {
-            e.preventDefault();
-
-            const reactFlowBounds = wrapper.getBoundingClientRect();
-            if (!reactFlowBounds) return;
-
-            const dataString = e.dataTransfer?.getData('application/reactflow');
-            if (!dataString) return;
-
-            const data: PaletteItem = JSON.parse(dataString);
-
-            if (data.type === 'node' && data.nodeType) {
-                const position = reactFlowInstance.screenToFlowPosition({
-                    x: e.clientX,
-                    y: e.clientY,
-                });
-
-                const newNode: DiagramNode = {
-                    id: `${data.nodeType}-${Date.now()}`,
-                    type: data.nodeType,
-                    position,
-                    data: { label: data.label },
-                };
-
-                setNodes((nds) => nds.concat(newNode));
-            }
-        };
-
-        wrapper.addEventListener('dragover', handleDragOverWrapper);
-        wrapper.addEventListener('drop', handleDropWrapper);
-
-        return () => {
-            wrapper.removeEventListener('dragover', handleDragOverWrapper);
-            wrapper.removeEventListener('drop', handleDropWrapper);
-        };
-    }, [flowWrapperRef, reactFlowInstance, setNodes]);
 
     return (
         <div
@@ -195,8 +108,8 @@ const PalettePanel = ({ flowWrapperRef, setNodes }: PalettePanelProps) => {
             >
                 {!collapsed && (
                     <span style={{ fontWeight: 600, fontSize: '14px', color: '#374151' }}>
-                        Components
-                    </span>
+            Components
+          </span>
                 )}
                 <button
                     style={{

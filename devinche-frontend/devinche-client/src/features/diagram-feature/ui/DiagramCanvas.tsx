@@ -9,8 +9,11 @@ import {
   type NodeChange,
   type EdgeChange,
   type Connection,
+    useReactFlow,
 } from '@xyflow/react';
 import ContextMenu from './controls/ContextMenu';
+import PalettePanel from "./palette/PalettePanel";
+import { useCallback } from 'react';
 import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram';
 
 interface DiagramCanvasProps {
@@ -27,7 +30,16 @@ interface DiagramCanvasProps {
   onPaneClick: () => void;
   menu: ContextMenuState | null;
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
+    setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
 }
+
+interface PaletteItem {
+    id: string;
+    type: 'cursor' | 'node' | 'edge';
+    label: string;
+    nodeType?: string;
+}
+
 
 const DiagramCanvas = ({
   flowWrapperRef,
@@ -43,7 +55,46 @@ const DiagramCanvas = ({
   onPaneClick,
   menu,
   onFlowInit,
+  setNodes,
 }: DiagramCanvasProps) => {
+    const reactFlowInstance = useReactFlow();
+
+    const onDragOver = useCallback((event: React.DragEvent) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }, []);
+
+    const onDrop = useCallback(
+        (event: React.DragEvent) => {
+            event.preventDefault();
+
+            const reactFlowBounds = flowWrapperRef.current?.getBoundingClientRect();
+            if (!reactFlowBounds) return;
+
+            const dataString = event.dataTransfer.getData('application/reactflow');
+            if (!dataString) return;
+
+            const data: PaletteItem = JSON.parse(dataString);
+
+            if (data.type === 'node' && data.nodeType) {
+                const position = reactFlowInstance.screenToFlowPosition({
+                    x: event.clientX,
+                    y: event.clientY,
+                });
+
+                const newNode: DiagramNode = {
+                    id: `${data.nodeType}-${Date.now()}`,
+                    type: data.nodeType,
+                    position,
+                    data: { label: data.label },
+                };
+
+                setNodes((nds) => nds.concat(newNode));
+            }
+        },
+        [reactFlowInstance, flowWrapperRef, setNodes]
+    );
+
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#ffffff' }} ref={flowWrapperRef}>
       <ReactFlow
@@ -60,10 +111,13 @@ const DiagramCanvas = ({
         connectionMode={ConnectionMode.Loose}
         fitView
         onInit={onFlowInit}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
       >
         <Background />
         <Controls />
         {menu && <ContextMenu onClick={onPaneClick} {...menu} />}
+          <PalettePanel flowWrapperRef={flowWrapperRef} setNodes={setNodes} />
       </ReactFlow>
     </div>
   );
