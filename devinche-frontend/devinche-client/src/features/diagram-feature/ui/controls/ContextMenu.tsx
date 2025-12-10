@@ -4,15 +4,17 @@ import { v4 as uuidv4 } from "uuid";
 import type { ContextMenuState } from "@/types/diagram";
 
 import {
-  SquareRounded,      // Node icon
-  Link,               // Edge icon
-  AspectRatio,        // Size/Dimensions icon
-  OutlinedFlag,       // Source icon
+  SquareRounded, // Node icon
+  Link, // Edge icon
+  AspectRatio, // Size/Dimensions icon
+  OutlinedFlag, // Source icon
   LocationOnOutlined, // Target icon
+  Refresh, // Reset icon
 } from "@mui/icons-material";
 
 interface ContextMenuProps extends ContextMenuState {
   onClick?: () => void;
+  resetCanvas?: () => void;
 }
 
 const IconNode = () => <SquareRounded fontSize="small" />;
@@ -20,37 +22,42 @@ const IconEdge = () => <Link fontSize="small" />;
 const IconDimensions = () => <AspectRatio fontSize="small" />;
 const IconSource = () => <OutlinedFlag fontSize="small" />;
 const IconTarget = () => <LocationOnOutlined fontSize="small" />;
+const IconPane = () => <Refresh fontSize="small" />; 
 
 export default function ContextMenu({
   id,
-  type = "node",
+  type,
   top,
   left,
   right,
   bottom,
   onClick,
+  resetCanvas, 
   ...props
 }: ContextMenuProps) {
   const { getNode, getEdges, addNodes, deleteElements } = useReactFlow();
 
+  const elementType = type; 
+  const isCanvasMenu = elementType === "canvas";
+
   // Get node/edge data
   const elementData = useMemo(() => {
     const data = [];
-    if (type === "node") {
+    if (elementType === "node") { 
       const node = getNode(id);
       if (node) {
         data.push({
-          icon: <IconDimensions />, 
+          icon: <IconDimensions />,
           label: "Size",
-          value: `${node.measured?.width ?? "N/A"}x${node.measured?.height ?? "N/A"}`,
+          value: `${node.measured?.width ?? "N/A"}x${
+            node.measured?.height ?? "N/A"
+          }`,
           unit: "px",
         });
       }
-    } else if (type === "edge") {
-      // Find edge using getEdges(), return source/target ID
+    } else if (elementType === "edge") { 
       const edge = getEdges().find((e) => e.id === id);
       if (edge) {
-        // Returns the node IDs connected to the edge
         data.push({
           icon: <IconSource />,
           label: "Source",
@@ -64,11 +71,11 @@ export default function ContextMenu({
       }
     }
     return data;
-  }, [id, type, getNode, getEdges]);
+  }, [id, elementType, getNode, getEdges]);
 
   // NODE DUPLICATION
   const duplicateNode = useCallback(() => {
-    if (type !== "node") return;
+    if (elementType !== "node") return; 
 
     const node = getNode(id);
     if (!node) return;
@@ -85,16 +92,21 @@ export default function ContextMenu({
       selected: false,
       dragging: false,
     });
-  }, [id, getNode, addNodes, type]);
+  }, [id, getNode, addNodes, elementType]); 
 
   // NODE and EDGE DELETION
   const deleteItem = useCallback(() => {
-    if (type === "node") {
+    if (elementType === "node") { 
       deleteElements({ nodes: [{ id }] });
-    } else if (type === "edge") {
+    } else if (elementType === "edge") { 
       deleteElements({ edges: [{ id }] });
     }
-  }, [id, type, deleteElements]);
+  }, [id, elementType, deleteElements]); 
+
+  // CANVAS RESET
+  const handleResetCanvas = useCallback(() => {
+    resetCanvas?.(); 
+  }, [resetCanvas]);
 
   return (
     <div
@@ -105,26 +117,31 @@ export default function ContextMenu({
       {/* --- Info section --- */}
       <div className="flex items-center space-x-2 border-b pb-2 mb-2 border-gray-200">
         <span className="text-blue-500 w-4 h-4 flex items-center justify-center">
-          {type === "node" ? <IconNode /> : <IconEdge />}
+          {isCanvasMenu ? <IconPane /> : elementType === "node" ? <IconNode /> : <IconEdge />}
         </span>
         <h3 className="text-sm font-semibold text-gray-800 capitalize m-0 p-0">
-          {type}
+          {isCanvasMenu ? "Canvas" : elementType}
         </h3>
       </div>
-      
-      {/* ID  */}
-      <div className="text-xs text-gray-500 flex flex-col gap-1">
-        <span className="font-medium">ID:</span>
-        <span className="truncate max-w-full font-mono bg-gray-50 text-gray-700 px-2 py-0.5 rounded">
-          {id}
-        </span>
-      </div>
 
-      {/* dynamic data */}
-      {elementData.length > 0 && (
+      {/* ID (hidden when canvas type) */}
+      {!isCanvasMenu && (
+        <div className="text-xs text-gray-500 flex flex-col gap-1">
+          <span className="font-medium">ID:</span>
+          <span className="truncate max-w-full font-mono bg-gray-50 text-gray-700 px-2 py-0.5 rounded">
+            {id}
+          </span>
+        </div>
+      )}
+
+      {/* dynamic data (hidden when canvas type) */}
+      {elementData.length > 0 && !isCanvasMenu && (
         <div className="pt-2 border-t border-gray-100 flex flex-col gap-1.5">
           {elementData.map((item, index) => (
-            <div key={index} className="flex items-center justify-between text-xs text-gray-600">
+            <div
+              key={index}
+              className="flex items-center justify-between text-xs text-gray-600"
+            >
               <span className="flex items-center space-x-1 font-medium">
                 <span className="text-gray-500 w-4 h-4 flex items-center justify-center">
                   {item.icon}
@@ -133,15 +150,34 @@ export default function ContextMenu({
               </span>
               <span className="font-semibold text-gray-800">
                 {item.value}
-                {item.unit && <span className="ml-1 text-gray-500 font-normal">{item.unit}</span>}
+                {item.unit && (
+                  <span className="ml-1 text-gray-500 font-normal">
+                    {item.unit}
+                  </span>
+                )}
               </span>
             </div>
           ))}
         </div>
       )}
-      
+
       <div className="pt-2 border-t border-gray-200 mt-1 flex flex-col gap-1">
-        {type === "node" && (
+        {/* Reset Canvas button (show only when canvas type) */}
+        {isCanvasMenu && (
+          <button
+            className="flex items-center justify-center px-3 py-1.5 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
+            onClick={() => {
+              handleResetCanvas();
+              onClick?.();
+            }}
+          >
+            <IconPane />
+            <span className="ml-1">Reset Canvas</span>
+          </button>
+        )}
+
+        {/* Duplicate Node button (show only when Node type) */}
+        {elementType === "node" && (
           <button
             className="flex items-center justify-center px-3 py-1.5 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
             onClick={() => {
@@ -152,15 +188,19 @@ export default function ContextMenu({
             Duplicate Node
           </button>
         )}
-        <button
-          className="flex items-center justify-center px-3 py-1.5 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
-          onClick={() => {
-            deleteItem();
-            onClick?.();
-          }}
-        >
-          Delete {type === "node" ? "Node" : "Edge"}
-        </button>
+
+        {/* Delete Node/Edge button (show only when Canvas type) */}
+        {!isCanvasMenu && (
+          <button
+            className="flex items-center justify-center px-3 py-1.5 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
+            onClick={() => {
+              deleteItem();
+              onClick?.();
+            }}
+          >
+            Delete {elementType === "node" ? "Node" : "Edge"}
+          </button>
+        )}
       </div>
     </div>
   );

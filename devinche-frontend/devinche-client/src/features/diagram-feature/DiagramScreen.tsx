@@ -45,6 +45,8 @@ const DiagramScreen = () => {
     onConnect,
     onNodeContextMenu,
     onEdgeContextMenu,
+    onPaneContextMenu,
+    resetCanvas,
     onPaneClick,
     onFlowInit,
     exportToJson,
@@ -53,10 +55,17 @@ const DiagramScreen = () => {
     setNodes,
   } = useDiagram();
 
+  const contextMenuProps = menu ? { ...menu, resetCanvas } : null;
+
   return (
     <ReactFlowProvider>
       <div className="relative w-screen h-screen">
-        <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} importFromJson={importFromJson}/>
+        <Exports
+          exportToJson={exportToJson}
+          flowWrapperRef={flowWrapperRef}
+          exportToRdf={exportToRdf}
+          importFromJson={importFromJson}
+        />
 
         <DiagramCanvas
           flowWrapperRef={flowWrapperRef}
@@ -69,8 +78,9 @@ const DiagramScreen = () => {
           onConnect={onConnect}
           onNodeContextMenu={onNodeContextMenu}
           onEdgeContextMenu={onEdgeContextMenu}
+          onPaneContextMenu={onPaneContextMenu}
+          menu={contextMenuProps}
           onPaneClick={onPaneClick}
-          menu={menu}
           onFlowInit={onFlowInit}
           setNodes={setNodes}
         />
