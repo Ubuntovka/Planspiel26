@@ -146,9 +146,8 @@ export const useDiagram = (): UseDiagramReturn => {
 
     // Canvas reset handler
     const resetCanvas = useCallback(() => {
-        setNodes(initialNodes);
-        setEdges(initialEdges);
-        
+        setNodes([]);
+        setEdges([]);
         if (rfInstance) {
             rfInstance.setViewport({ x: 0, y: 0, zoom: 1 });
         }
