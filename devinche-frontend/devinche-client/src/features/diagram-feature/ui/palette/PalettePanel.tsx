@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pointer, Box, GitBranch } from 'lucide-react';
+import { Pointer, Box, GitBranch, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 
 interface PaletteItem {
     id: string;
@@ -7,6 +7,7 @@ interface PaletteItem {
     label: string;
     icon: React.ReactNode;
     nodeType?: string;
+    edgeType?: string;
 }
 
 const paletteItems: PaletteItem[] = [
@@ -14,63 +15,87 @@ const paletteItems: PaletteItem[] = [
         id: 'cursor',
         type: 'cursor',
         label: 'Cursor',
-        icon: <Pointer size={20} />,
+        icon: <Pointer size={18} />,
     },
     {
         id: 'application-node',
         type: 'node',
         label: 'Application',
         nodeType: 'applicationNode',
-        icon: <Box size={20} />,
+        icon: <Box size={18} />,
     },
     {
         id: 'data-provider-node',
         type: 'node',
         label: 'Data Provider',
         nodeType: 'dataProviderNode',
-        icon: <Box size={20} />,
+        icon: <Box size={18} />,
     },
     {
         id: 'identity-provider-node',
         type: 'node',
         label: 'Identity Provider',
         nodeType: 'identityProviderNode',
-        icon: <Box size={20} />,
+        icon: <Box size={18} />,
     },
     {
         id: 'process-unit-node',
         type: 'node',
         label: 'Process Unit',
         nodeType: 'processUnitNode',
-        icon: <Box size={20} />,
+        icon: <Box size={18} />,
     },
     {
         id: 'security-realm-node',
         type: 'node',
         label: 'Security Realm',
         nodeType: 'securityRealmNode',
-        icon: <Box size={20} />,
+        icon: <Box size={18} />,
     },
     {
         id: 'service-node',
         type: 'node',
         label: 'Service',
         nodeType: 'serviceNode',
-        icon: <Box size={20} />,
+        icon: <Box size={18} />,
     },
     {
         id: 'step-edge',
         type: 'edge',
         label: 'Step Edge',
-        icon: <GitBranch size={20} />,
+        edgeType: 'step',
+        icon: <GitBranch size={18} />,
+    },
+    {
+        id: 'trust-edge',
+        type: 'edge',
+        label: 'Trust Edge',
+        edgeType: 'trust',
+        icon: <GitBranch size={18} />,
+    },
+    {
+        id: 'invocation-edge',
+        type: 'edge',
+        label: 'Invocation Edge',
+        edgeType: 'invocation',
+        icon: <GitBranch size={18} />,
+    },
+    {
+        id: 'legacy-edge',
+        type: 'edge',
+        label: 'Legacy Edge',
+        edgeType: 'legacy',
+        icon: <GitBranch size={18} />,
     },
 ];
 
 interface PalettePanelProps {
     onDragStart?: (event: React.DragEvent, item: PaletteItem) => void;
+    selectedEdgeType?: string;
+    onEdgeTypeSelect?: (edgeType: string) => void;
 }
 
-const PalettePanel = ({ onDragStart }: PalettePanelProps) => {
+const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: PalettePanelProps) => {
     const [collapsed, setCollapsed] = useState(false);
 
     const handleDragStart = (event: React.DragEvent, item: PaletteItem) => {
@@ -81,107 +106,121 @@ const PalettePanel = ({ onDragStart }: PalettePanelProps) => {
         onDragStart?.(event, item);
     };
 
+    const handleEdgeTypeClick = (edgeType: string) => {
+        onEdgeTypeSelect?.(edgeType);
+    };
+
     return (
         <div
-            style={{
-                position: 'absolute',
-                top: '16px',
-                left: '16px',
-                background: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                width: collapsed ? '48px' : '240px',
-                transition: 'width 0.2s ease',
-                zIndex: 10,
-                overflow: 'hidden',
+            className={`absolute top-16 left-4 backdrop-blur-sm rounded-lg shadow-2xl z-10 overflow-hidden transition-all duration-300 ease-in-out ${
+                collapsed ? 'w-14' : 'w-64'
+            }`}
+            style={{ 
+                backgroundColor: 'var(--editor-panel-bg)',
+                border: '1px solid var(--editor-border)',
+                boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+            }}
+            onMouseEnter={(e) => {
+                if (collapsed) {
+                    e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                }
+            }}
+            onMouseLeave={(e) => {
+                if (collapsed) {
+                    e.currentTarget.style.backgroundColor = 'var(--editor-panel-bg)';
+                }
             }}
         >
             <div
+                className={`flex items-center cursor-pointer transition-colors ${
+                    collapsed ? 'justify-center py-3' : 'justify-between px-4 py-3'
+                }`}
                 style={{
-                    padding: '12px',
-                    borderBottom: '1px solid #e5e7eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
+                    borderBottom: collapsed ? 'none' : '1px solid var(--editor-border)',
+                }}
+                onMouseEnter={(e) => {
+                    if (!collapsed) {
+                        e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onClick={() => setCollapsed(!collapsed)}
+                title={collapsed ? 'Expand Components Panel' : 'Collapse Components Panel'}
             >
-                {!collapsed && (
-                    <span style={{ fontWeight: 600, fontSize: '14px', color: '#374151' }}>
-            Components
-          </span>
+                {collapsed ? (
+                    <div className="flex flex-col items-center gap-1.5 py-1">
+                        <Layers size={18} style={{ color: 'var(--editor-text)' }} />
+                        <ChevronRight size={12} style={{ color: 'var(--editor-text-secondary)' }} />
+                    </div>
+                ) : (
+                    <>
+                        <h3 className="text-sm font-semibold tracking-tight" style={{ color: 'var(--editor-text)' }}>
+                            Components
+                        </h3>
+                        <button
+                            className="p-1.5 rounded-md transition-colors"
+                            style={{ 
+                                color: 'var(--editor-text-secondary)',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'var(--editor-border)';
+                                e.currentTarget.style.color = 'var(--editor-text)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = 'var(--editor-text-secondary)';
+                            }}
+                            aria-label="Collapse panel"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setCollapsed(true);
+                            }}
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+                    </>
                 )}
-                <button
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: '#6b7280',
-                    }}
-                >
-                    {collapsed ? '→' : '←'}
-                </button>
             </div>
 
             {!collapsed && (
-                <div style={{ padding: '8px', maxHeight: '600px', overflowY: 'auto' }}>
-                    <div style={{ marginBottom: '16px' }}>
-                        <div
-                            style={{
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                color: '#6b7280',
-                                marginBottom: '8px',
-                                paddingLeft: '4px',
-                            }}
-                        >
-                            TOOLS
+                <div className="p-2 max-h-[600px] overflow-y-auto custom-scrollbar">
+                    <div className="mb-4">
+                        <div className="text-xs font-semibold uppercase tracking-wider mb-2 px-2" style={{ color: 'var(--editor-text-secondary)' }}>
+                            Tools
                         </div>
                         {paletteItems
                             .filter((item) => item.type === 'cursor')
                             .map((item) => (
                                 <div
                                     key={item.id}
+                                    className="px-3 py-2 mb-1 rounded-md cursor-pointer flex items-center gap-3 transition-all duration-150 border border-transparent"
                                     style={{
-                                        padding: '8px 12px',
-                                        marginBottom: '4px',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        transition: 'background 0.15s ease',
-                                        background: '#f9fafb',
+                                        color: 'var(--editor-text-secondary)',
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = '#f3f4f6';
+                                        e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                                        e.currentTarget.style.color = 'var(--editor-text)';
+                                        e.currentTarget.style.borderColor = 'var(--editor-border)';
                                     }}
                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = '#f9fafb';
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                        e.currentTarget.style.color = 'var(--editor-text-secondary)';
+                                        e.currentTarget.style.borderColor = 'transparent';
                                     }}
                                 >
-                                    <span style={{ color: '#6b7280', display: 'flex' }}>{item.icon}</span>
-                                    <span style={{ fontSize: '13px', color: '#374151' }}>{item.label}</span>
+                                    <span className="transition-colors" style={{ color: 'var(--editor-text-muted)' }}>
+                                        {item.icon}
+                                    </span>
+                                    <span className="text-sm font-medium">{item.label}</span>
                                 </div>
                             ))}
                     </div>
 
-                    <div style={{ marginBottom: '16px' }}>
-                        <div
-                            style={{
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                color: '#6b7280',
-                                marginBottom: '8px',
-                                paddingLeft: '4px',
-                            }}
-                        >
-                            NODES
+                    <div className="mb-4">
+                        <div className="text-xs font-semibold uppercase tracking-wider mb-2 px-2" style={{ color: 'var(--editor-text-secondary)' }}>
+                            Nodes
                         </div>
                         {paletteItems
                             .filter((item) => item.type === 'node')
@@ -190,74 +229,78 @@ const PalettePanel = ({ onDragStart }: PalettePanelProps) => {
                                     key={item.id}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, item)}
+                                    className="px-3 py-2 mb-1 rounded-md cursor-grab active:cursor-grabbing flex items-center gap-3 transition-all duration-150 border border-transparent"
                                     style={{
-                                        padding: '8px 12px',
-                                        marginBottom: '4px',
-                                        borderRadius: '6px',
-                                        cursor: 'grab',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        transition: 'background 0.15s ease',
-                                        background: '#f9fafb',
+                                        color: 'var(--editor-text-secondary)',
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = '#f3f4f6';
+                                        e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                                        e.currentTarget.style.color = 'var(--editor-text)';
+                                        e.currentTarget.style.borderColor = 'var(--editor-border)';
                                     }}
                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = '#f9fafb';
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                        e.currentTarget.style.color = 'var(--editor-text-secondary)';
+                                        e.currentTarget.style.borderColor = 'transparent';
                                     }}
                                     onDragEnd={(e) => {
                                         e.currentTarget.style.cursor = 'grab';
                                     }}
                                 >
-                                    <span style={{ color: '#6b7280', display: 'flex' }}>{item.icon}</span>
-                                    <span style={{ fontSize: '13px', color: '#374151' }}>{item.label}</span>
+                                    <span className="transition-colors" style={{ color: 'var(--editor-text-muted)' }}>
+                                        {item.icon}
+                                    </span>
+                                    <span className="text-sm font-medium">{item.label}</span>
                                 </div>
                             ))}
                     </div>
 
                     <div>
-                        <div
-                            style={{
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                color: '#6b7280',
-                                marginBottom: '8px',
-                                paddingLeft: '4px',
-                            }}
-                        >
-                            EDGES
+                        <div className="text-xs font-semibold uppercase tracking-wider mb-2 px-2" style={{ color: 'var(--editor-text-secondary)' }}>
+                            Edges
                         </div>
                         {paletteItems
                             .filter((item) => item.type === 'edge')
-                            .map((item) => (
-                                <div
-                                    key={item.id}
-                                    draggable
-                                    onDragStart={(e) => handleDragStart(e, item)}
-                                    style={{
-                                        padding: '8px 12px',
-                                        marginBottom: '4px',
-                                        borderRadius: '6px',
-                                        cursor: 'grab',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        transition: 'background 0.15s ease',
-                                        background: '#f9fafb',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = '#f3f4f6';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = '#f9fafb';
-                                    }}
-                                >
-                                    <span style={{ color: '#6b7280', display: 'flex' }}>{item.icon}</span>
-                                    <span style={{ fontSize: '13px', color: '#374151' }}>{item.label}</span>
-                                </div>
-                            ))}
+                            .map((item) => {
+                                const isSelected = selectedEdgeType === item.edgeType;
+                                return (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => item.edgeType && handleEdgeTypeClick(item.edgeType)}
+                                        className="px-3 py-2 mb-1 rounded-md cursor-pointer flex items-center gap-3 transition-all duration-150 border"
+                                        style={{
+                                            color: isSelected ? 'var(--editor-text)' : 'var(--editor-text-secondary)',
+                                            backgroundColor: isSelected ? 'var(--editor-surface-hover)' : 'transparent',
+                                            borderColor: isSelected ? 'var(--editor-accent)' : 'transparent',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!isSelected) {
+                                                e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                                                e.currentTarget.style.color = 'var(--editor-text)';
+                                                e.currentTarget.style.borderColor = 'var(--editor-border)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!isSelected) {
+                                                e.currentTarget.style.backgroundColor = 'transparent';
+                                                e.currentTarget.style.color = 'var(--editor-text-secondary)';
+                                                e.currentTarget.style.borderColor = 'transparent';
+                                            }
+                                        }}
+                                        title={`Select ${item.label} as default edge type`}
+                                    >
+                                        <span className="transition-colors" style={{ color: isSelected ? 'var(--editor-accent)' : 'var(--editor-text-muted)' }}>
+                                            {item.icon}
+                                        </span>
+                                        <span className="text-sm font-medium">{item.label}</span>
+                                        {isSelected && (
+                                            <span className="ml-auto text-xs" style={{ color: 'var(--editor-accent)' }}>
+                                                ✓
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })}
                     </div>
                 </div>
             )}
