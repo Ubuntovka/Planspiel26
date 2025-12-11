@@ -11,18 +11,19 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const defaultTheme: Theme = 'dark'; 
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('theme') as Theme;
-      const initialTheme = saved || 'dark';
-      // Set theme immediately to prevent flash
-      document.documentElement.setAttribute('data-theme', initialTheme);
-      return initialTheme;
+  const [theme, setThemeState] = useState<Theme>(defaultTheme);
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') as Theme;
+
+    if (saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setThemeState(saved);
     }
-    return 'dark';
-  });
+    document.documentElement.setAttribute('data-theme', saved || defaultTheme);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -52,4 +53,3 @@ export function useTheme() {
   }
   return context;
 }
-
