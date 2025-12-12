@@ -16,6 +16,10 @@ import TrustEdge from './ui/edges/TrustEdge';
 import Invocation from './ui/edges/Invocation';
 import Legacy from './ui/edges/Legacy';
 import Exports from './ui/exports/Exports';
+import Toolbar from './ui/toolbar/Toolbar';
+import PalettePanel from './ui/palette/PalettePanel';
+import { useCallback } from 'react';
+import { useReactFlow } from '@xyflow/react';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -34,7 +38,7 @@ const edgeTypes: EdgeTypes = {
     legacy:Legacy
 };
 
-const DiagramScreen = () => {
+const DiagramScreenContent = () => {
   const {
     nodes,
     edges,
@@ -53,38 +57,70 @@ const DiagramScreen = () => {
     exportToRdf,
     importFromJson,
     setNodes,
+    selectedEdgeType,
+    setSelectedEdgeType,
   } = useDiagram();
 
+
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
   const contextMenuProps = menu ? { ...menu, resetCanvas } : null;
 
+  const handleZoomIn = useCallback(() => {
+    zoomIn();
+  }, [zoomIn]);
+
+  const handleZoomOut = useCallback(() => {
+    zoomOut();
+  }, [zoomOut]);
+
+  const handleFitView = useCallback(() => {
+    fitView();
+  }, [fitView]);
+
+  const handleSave = useCallback(() => {
+    exportToJson();
+  }, [exportToJson]);
+
+  return (
+    <div className="relative w-screen h-screen">
+      <Toolbar
+        onSave={handleSave}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitView={handleFitView}
+      />
+      <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} importFromJson={importFromJson}/>
+
+      <DiagramCanvas
+        flowWrapperRef={flowWrapperRef}
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
+        onPaneClick={onPaneClick}
+        menu={contextMenuProps}
+        onFlowInit={onFlowInit}
+        setNodes={setNodes}
+        selectedEdgeType={selectedEdgeType}
+      />
+      <PalettePanel 
+        selectedEdgeType={selectedEdgeType}
+        onEdgeTypeSelect={setSelectedEdgeType}
+      />
+    </div>
+  );
+};
+
+const DiagramScreen = () => {
   return (
     <ReactFlowProvider>
-      <div className="relative w-screen h-screen">
-        <Exports
-          exportToJson={exportToJson}
-          flowWrapperRef={flowWrapperRef}
-          exportToRdf={exportToRdf}
-          importFromJson={importFromJson}
-        />
-
-        <DiagramCanvas
-          flowWrapperRef={flowWrapperRef}
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeContextMenu={onNodeContextMenu}
-          onEdgeContextMenu={onEdgeContextMenu}
-          onPaneContextMenu={onPaneContextMenu}
-          menu={contextMenuProps}
-          onPaneClick={onPaneClick}
-          onFlowInit={onFlowInit}
-          setNodes={setNodes}
-        />
-      </div>
+      <DiagramScreenContent />
     </ReactFlowProvider>
   );
 };

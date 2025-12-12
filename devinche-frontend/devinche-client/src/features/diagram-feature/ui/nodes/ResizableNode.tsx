@@ -5,10 +5,13 @@ import { Handle, Position, NodeResizer } from '@xyflow/react';
 import type { NodeProps } from "@/types/diagram";
 
 const ResizableNodeSelected = ({ data, selected }: NodeProps) => {
+  const borderColor = selected ? 'var(--editor-accent)' : 'var(--editor-border)';
+  const bgColor = selected ? 'var(--editor-surface-hover)' : 'var(--editor-surface)';
+  const textColor = 'var(--editor-text)';
   return (
-    <div className='relative border w-full h-full bg-gray-300'>
+    <div className='relative border w-full h-full' style={{ borderColor, backgroundColor: bgColor, color: textColor }}>
       <NodeResizer
-        color="#ff0071"
+        color="var(--editor-accent)"
         isVisible={selected}
         minWidth={100}
         minHeight={30}

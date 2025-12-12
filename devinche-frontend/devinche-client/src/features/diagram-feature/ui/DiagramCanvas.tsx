@@ -34,7 +34,8 @@ interface DiagramCanvasProps {
   onPaneContextMenu: (event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => void;
   menu: ContextMenuState | null;
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
-    setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
+  setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
+  selectedEdgeType: string;
 }
 
 interface PaletteItem {
@@ -61,6 +62,7 @@ const DiagramCanvas = ({
   menu,
   onFlowInit,
   setNodes,
+  selectedEdgeType,
 }: DiagramCanvasProps) => {
     const reactFlowInstance = useReactFlow();
 
@@ -101,7 +103,7 @@ const DiagramCanvas = ({
     );
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#ffffff' }} ref={flowWrapperRef}>
+    <div style={{ width: '100vw', height: '100vh', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -119,14 +121,49 @@ const DiagramCanvas = ({
         onInit={onFlowInit}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        defaultEdgeOptions={{
+          style: { stroke: 'var(--editor-border)', strokeWidth: 2 },
+          type: selectedEdgeType,
+        }}
+        connectionLineStyle={{ stroke: 'var(--editor-accent)', strokeWidth: 2 }}
+        snapToGrid={true}
+        snapGrid={[20, 20]}
       >
-        {/* <Panel position="top-center">top-center panel</Panel> */}
-        <Background variant={BackgroundVariant.Lines} gap={10} color="#f1f1f1" id="1" />
-        <Background variant={BackgroundVariant.Lines} gap={100} color="#ccc" id="2" />
-        <Controls />
-        <Controls />
+        {/* Major grid lines - every 100px - more prominent */}
+        <Background 
+          variant={BackgroundVariant.Lines} 
+          gap={100} 
+          lineWidth={1.5}
+          style={{ 
+            color: 'var(--editor-grid)',
+            opacity: 0.7 
+          }}
+        />
+        {/* Minor grid lines - every 20px */}
+        <Background 
+          variant={BackgroundVariant.Lines} 
+          gap={20} 
+          lineWidth={0.8}
+          style={{ 
+            color: 'var(--editor-grid)',
+            opacity: 0.5 
+          }}
+        />
+        {/* Grid dots for better visual reference at intersections */}
+        <Background 
+          variant={BackgroundVariant.Dots} 
+          gap={20} 
+          size={2} 
+          style={{ 
+            color: 'var(--editor-grid)',
+            opacity: 0.6 
+          }}
+        />
+        <Controls 
+          position="bottom-right"
+          showInteractive={false}
+        />
         {menu && <ContextMenu onClick={onPaneClick} {...menu} />}
-          <PalettePanel />
       </ReactFlow>
     </div>
   );

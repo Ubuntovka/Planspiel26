@@ -4,12 +4,12 @@ import { v4 as uuidv4 } from "uuid";
 import type { ContextMenuState } from "@/types/diagram";
 
 import {
-  SquareRounded, // Node icon
-  Link, // Edge icon
-  AspectRatio, // Size/Dimensions icon
-  OutlinedFlag, // Source icon
-  LocationOnOutlined, // Target icon
-  Refresh, // Reset icon
+  SquareRounded,
+  Link,
+  AspectRatio,
+  OutlinedFlag,
+  LocationOnOutlined,
+  Refresh,
 } from "@mui/icons-material";
 
 interface ContextMenuProps extends ContextMenuState {
@@ -22,7 +22,7 @@ const IconEdge = () => <Link fontSize="small" />;
 const IconDimensions = () => <AspectRatio fontSize="small" />;
 const IconSource = () => <OutlinedFlag fontSize="small" />;
 const IconTarget = () => <LocationOnOutlined fontSize="small" />;
-const IconPane = () => <Refresh fontSize="small" />; 
+const IconPane = () => <Refresh fontSize="small" />;
 
 export default function ContextMenu({
   id,
@@ -32,59 +32,49 @@ export default function ContextMenu({
   right,
   bottom,
   onClick,
-  resetCanvas, 
+  resetCanvas,
   ...props
 }: ContextMenuProps) {
   const { getNode, getEdges, addNodes, deleteElements } = useReactFlow();
 
-  const elementType = type; 
+  const elementType = type;
   const isCanvasMenu = elementType === "canvas";
 
-  // Get node/edge data
   const elementData = useMemo(() => {
     const data = [];
-    if (elementType === "node") { 
+    if (elementType === "node") {
       const node = getNode(id);
       if (node) {
         data.push({
           icon: <IconDimensions />,
           label: "Size",
-          value: `${node.measured?.width ?? "N/A"}x${
-            node.measured?.height ?? "N/A"
-          }`,
+          value: `${node.measured?.width ?? "N/A"}x${node.measured?.height ?? "N/A"}`,
           unit: "px",
         });
       }
-    } else if (elementType === "edge") { 
+    } else if (elementType === "edge") {
       const edge = getEdges().find((e) => e.id === id);
       if (edge) {
-        data.push({
-          icon: <IconSource />,
-          label: "Source",
-          value: edge.source,
-        });
-        data.push({
-          icon: <IconTarget />,
-          label: "Target",
-          value: edge.target,
-        });
+        data.push({ icon: <IconSource />, label: "Source", value: edge.source });
+        data.push({ icon: <IconTarget />, label: "Target", value: edge.target });
       }
     }
     return data;
   }, [id, elementType, getNode, getEdges]);
 
-  // NODE DUPLICATION
+  // duplicate node (HEAD logic)
   const duplicateNode = useCallback(() => {
-    if (elementType !== "node") return; 
-
+    if (elementType !== "node") return;
     const node = getNode(id);
     if (!node) return;
 
-    // NEW NODE: created 50px right and below
-    const position = { x: node.position.x + 50, y: node.position.y + 50 };
-    const newId = uuidv4();
+    const position = {
+      x: node.position.x + 50,
+      y: node.position.y + 50,
+    };
+
     addNodes({
-      id: newId,
+      id: uuidv4(),
       type: node.type,
       position,
       data: { ...node.data },
@@ -92,66 +82,103 @@ export default function ContextMenu({
       selected: false,
       dragging: false,
     });
-  }, [id, getNode, addNodes, elementType]); 
+  }, [id, getNode, addNodes, elementType]);
 
-  // NODE and EDGE DELETION
+  // delete (HEAD logic)
   const deleteItem = useCallback(() => {
-    if (elementType === "node") { 
+    if (elementType === "node") {
       deleteElements({ nodes: [{ id }] });
-    } else if (elementType === "edge") { 
+    } else if (elementType === "edge") {
       deleteElements({ edges: [{ id }] });
     }
-  }, [id, elementType, deleteElements]); 
+  }, [id, elementType, deleteElements]);
 
-  // CANVAS RESET
   const handleResetCanvas = useCallback(() => {
-    resetCanvas?.(); 
+    resetCanvas?.();
   }, [resetCanvas]);
 
   return (
     <div
-      style={{ top, left, right, bottom }}
-      className="absolute bg-white border border-gray-300 rounded-xl shadow-2xl p-3 z-50 flex flex-col gap-2 min-w-[200px]"
+      className="absolute rounded-lg shadow-2xl p-3 z-50 flex flex-col gap-2 min-w-[240px]"
+      style={{
+        top,
+        left,
+        right,
+        bottom,
+        backgroundColor: "var(--editor-panel-bg)",
+        border: "1px solid var(--editor-border)",
+        boxShadow: "0 8px 16px var(--editor-shadow-lg)",
+      }}
       {...props}
     >
-      {/* --- Info section --- */}
-      <div className="flex items-center space-x-2 border-b pb-2 mb-2 border-gray-200">
-        <span className="text-blue-500 w-4 h-4 flex items-center justify-center">
+      {/* Header */}
+      <div
+        className="flex items-center space-x-2 pb-2 mb-2"
+        style={{ borderBottom: "1px solid var(--editor-border)" }}
+      >
+        <span
+          className="w-4 h-4 flex items-center justify-center"
+          style={{ color: "var(--editor-accent)" }}
+        >
           {isCanvasMenu ? <IconPane /> : elementType === "node" ? <IconNode /> : <IconEdge />}
         </span>
-        <h3 className="text-sm font-semibold text-gray-800 capitalize m-0 p-0">
+        <h3
+          className="text-sm font-semibold capitalize m-0 p-0"
+          style={{ color: "var(--editor-text)" }}
+        >
           {isCanvasMenu ? "Canvas" : elementType}
         </h3>
       </div>
 
-      {/* ID (hidden when canvas type) */}
+      {/* ID */}
       {!isCanvasMenu && (
-        <div className="text-xs text-gray-500 flex flex-col gap-1">
+        <div
+          className="text-xs flex flex-col gap-1"
+          style={{ color: "var(--editor-text-secondary)" }}
+        >
           <span className="font-medium">ID:</span>
-          <span className="truncate max-w-full font-mono bg-gray-50 text-gray-700 px-2 py-0.5 rounded">
+          <span
+            className="truncate max-w-full font-mono px-2 py-0.5 rounded"
+            style={{
+              backgroundColor: "var(--editor-bg)",
+              color: "var(--editor-text)",
+              border: "1px solid var(--editor-border)",
+            }}
+          >
             {id}
           </span>
         </div>
       )}
 
-      {/* dynamic data (hidden when canvas type) */}
+      {/* Node/edge info */}
       {elementData.length > 0 && !isCanvasMenu && (
-        <div className="pt-2 border-t border-gray-100 flex flex-col gap-1.5">
-          {elementData.map((item, index) => (
+        <div
+          className="pt-2 flex flex-col gap-1.5"
+          style={{ borderTop: "1px solid var(--editor-border)" }}
+        >
+          {elementData.map((item, idx) => (
             <div
-              key={index}
-              className="flex items-center justify-between text-xs text-gray-600"
+              key={idx}
+              className="flex items-center justify-between text-xs"
+              style={{ color: "var(--editor-text-secondary)" }}
             >
               <span className="flex items-center space-x-1 font-medium">
-                <span className="text-gray-500 w-4 h-4 flex items-center justify-center">
+                <span
+                  className="w-4 h-4 flex items-center justify-center"
+                  style={{ color: "var(--editor-text-muted)" }}
+                >
                   {item.icon}
                 </span>
                 <span>{item.label}:</span>
               </span>
-              <span className="font-semibold text-gray-800">
+
+              <span className="font-semibold" style={{ color: "var(--editor-text)" }}>
                 {item.value}
                 {item.unit && (
-                  <span className="ml-1 text-gray-500 font-normal">
+                  <span
+                    className="ml-1 font-normal"
+                    style={{ color: "var(--editor-text-secondary)" }}
+                  >
                     {item.unit}
                   </span>
                 )}
@@ -161,11 +188,29 @@ export default function ContextMenu({
         </div>
       )}
 
-      <div className="pt-2 border-t border-gray-200 mt-1 flex flex-col gap-1">
-        {/* Reset Canvas button (show only when canvas type) */}
+      {/* Action buttons */}
+      <div
+        className="pt-2 mt-1 flex flex-col gap-1.5"
+        style={{ borderTop: "1px solid var(--editor-border)" }}
+      >
+        {/* Reset Canvas (HEAD logic) */}
         {isCanvasMenu && (
           <button
-            className="flex items-center justify-center px-3 py-1.5 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
+            className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition"
+            style={{
+              color: "var(--editor-text)",
+              border: "1px solid transparent",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--editor-surface-hover)";
+              e.currentTarget.style.color = "var(--editor-accent)";
+              e.currentTarget.style.borderColor = "var(--editor-accent)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "var(--editor-text)";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
             onClick={() => {
               handleResetCanvas();
               onClick?.();
@@ -176,10 +221,21 @@ export default function ContextMenu({
           </button>
         )}
 
-        {/* Duplicate Node button (show only when Node type) */}
+        {/* Duplicate Node */}
         {elementType === "node" && (
           <button
-            className="flex items-center justify-center px-3 py-1.5 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
+            className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition border border-transparent"
+            style={{ color: "var(--editor-text)" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--editor-surface-hover)";
+              e.currentTarget.style.color = "var(--editor-accent)";
+              e.currentTarget.style.borderColor = "var(--editor-accent)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "var(--editor-text)";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
             onClick={() => {
               duplicateNode();
               onClick?.();
@@ -189,10 +245,19 @@ export default function ContextMenu({
           </button>
         )}
 
-        {/* Delete Node/Edge button (show only when Canvas type) */}
+        {/* Delete node/edge */}
         {!isCanvasMenu && (
           <button
-            className="flex items-center justify-center px-3 py-1.5 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition duration-150 hover:cursor-pointer font-medium"
+            className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition border border-transparent"
+            style={{ color: "var(--editor-error)" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--editor-surface-hover)";
+              e.currentTarget.style.borderColor = "var(--editor-error)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
             onClick={() => {
               deleteItem();
               onClick?.();
