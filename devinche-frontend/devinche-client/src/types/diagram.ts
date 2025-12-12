@@ -52,6 +52,7 @@ export interface UseDiagramReturn {
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
   selectedEdgeType: string;
   setSelectedEdgeType: React.Dispatch<React.SetStateAction<string>>;
+  onMoveEnd: (event: any, viewport: { x: number; y: number; zoom: number }) => void;
 }
 
 // Node component props

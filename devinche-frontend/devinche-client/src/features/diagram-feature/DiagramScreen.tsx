@@ -60,6 +60,7 @@ const DiagramScreenContent = () => {
     setNodes,
     selectedEdgeType,
     setSelectedEdgeType,
+    onMoveEnd,
   } = useDiagram();
 
 
@@ -109,6 +110,7 @@ const DiagramScreenContent = () => {
         onFlowInit={onFlowInit}
         setNodes={setNodes}
         selectedEdgeType={selectedEdgeType}
+        onMoveEnd={onMoveEnd}
       />
       <PalettePanel 
         selectedEdgeType={selectedEdgeType}
