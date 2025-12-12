@@ -36,6 +36,7 @@ interface DiagramCanvasProps {
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
   selectedEdgeType: string;
+  onMoveEnd: (event: any, viewport: { x: number; y: number; zoom: number }) => void;
 }
 
 interface PaletteItem {
@@ -63,6 +64,7 @@ const DiagramCanvas = ({
   onFlowInit,
   setNodes,
   selectedEdgeType,
+  onMoveEnd,
 }: DiagramCanvasProps) => {
     const reactFlowInstance = useReactFlow();
 
@@ -121,6 +123,7 @@ const DiagramCanvas = ({
         onInit={onFlowInit}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onMoveEnd={onMoveEnd}
         defaultEdgeOptions={{
           style: { stroke: 'var(--editor-border)', strokeWidth: 2 },
           type: selectedEdgeType,

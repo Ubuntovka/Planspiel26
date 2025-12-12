@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
     applyNodeChanges,
     applyEdgeChanges,
@@ -11,13 +11,13 @@ import {
     ReactFlowInstance,
     type ReactFlowJsonObject,
     type Viewport,
-    MarkerType,
-    useReactFlow
+    MarkerType
 } from "@xyflow/react";
-// import { useReactFlow } from '@xyflow/react'; 
 import { initialNodes, initialEdges } from "./data/initialElements";
 import type { DiagramNode, DiagramEdge, ContextMenuState, UseDiagramReturn } from "@/types/diagram";
 import { exportDiagramToRdfTurtle } from "./ui/exports/exportToRdf";
+
+const STORAGE_KEY = 'diagram.flow';
 
 export const useDiagram = (): UseDiagramReturn => {
     const [nodes, setNodes] = useState<DiagramNode[]>(initialNodes);
@@ -27,12 +27,59 @@ export const useDiagram = (): UseDiagramReturn => {
     const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
 
+    // load saved flow from storage
+    const loadSaved = useCallback((): ReactFlowJsonObject<DiagramNode, DiagramEdge> | null => {
+        if (typeof window === 'undefined') return null;
+        try {
+            const raw = window.localStorage.getItem(STORAGE_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw) as ReactFlowJsonObject<DiagramNode, DiagramEdge>;
+        } catch (e) {
+            console.warn('Failed to parse saved diagram from storage', e);
+            return null;
+        }
+    }, []);
+
+    // persist flow to storage
+    const saveToStorage = useCallback(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            if (rfInstance) {
+                const obj = rfInstance.toObject();
+                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+            } else {
+                const minimal: Partial<ReactFlowJsonObject<DiagramNode, DiagramEdge>> = { nodes, edges };
+                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal));
+            }
+        } catch (e) {
+            console.warn('Failed to save diagram to storage', e);
+        }
+    }, [rfInstance, nodes, edges]);
+
+    // On mount: load saved nodes/edges
+    useEffect(() => {
+        const saved = loadSaved();
+        if (saved) {
+            if (saved.nodes) setNodes(saved.nodes as DiagramNode[]);
+            if (saved.edges) setEdges(saved.edges as DiagramEdge[]);
+        }
+        // else keep initialNodes/initialEdges
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // reactflow initial state handler
     const onFlowInit = useCallback(
         (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => { 
         setRfInstance(instance);
+        // apply saved viewport if available
+        const saved = loadSaved();
+        const vp = saved?.viewport;
+        if (vp) {
+            const { x = 0, y = 0, zoom = 1 } = vp as Viewport;
+            instance.setViewport({ x, y, zoom });
+        }
         },
-        []
+        [loadSaved]
     );
 
     // JSON export handler
@@ -68,8 +115,12 @@ export const useDiagram = (): UseDiagramReturn => {
             const { x = 0, y = 0, zoom = 1 } = viewport;
             rfInstance.setViewport({ x, y, zoom });
         }
+        // persist immediately after state updates (defer to next tick to let RF apply)
+        setTimeout(() => {
+            saveToStorage();
+        }, 0);
         },
-        [rfInstance]
+        [rfInstance, saveToStorage]
     );
 
     // Node change handler
@@ -81,6 +132,17 @@ export const useDiagram = (): UseDiagramReturn => {
     const onEdgesChange = useCallback((changes: EdgeChange[]) => {
         setEdges((eds) => applyEdgeChanges(changes, eds) as DiagramEdge[]);
     }, []);
+
+    // Persist whenever nodes or edges change
+    useEffect(() => {
+        saveToStorage();
+    }, [nodes, edges, saveToStorage]);
+
+    // Persist viewport when panning/zooming ends
+    const onMoveEnd = useCallback((event: any, viewport: Viewport) => {
+        // rfInstance.toObject() includes viewport
+        saveToStorage();
+    }, [saveToStorage]);
 
     // Connection handler
     const onConnect = useCallback((params: Connection) => {
@@ -149,8 +211,17 @@ export const useDiagram = (): UseDiagramReturn => {
     const resetCanvas = useCallback(() => {
         setNodes([]);
         setEdges([]);
+        // reset viewport
         if (rfInstance) {
             rfInstance.setViewport({ x: 0, y: 0, zoom: 1 });
+        }
+        // clear persisted cache as requested
+        if (typeof window !== 'undefined') {
+            try {
+                window.localStorage.removeItem(STORAGE_KEY);
+            } catch (e) {
+                console.warn('Failed to clear cached diagram from storage', e);
+            }
         }
     }, [rfInstance]);
     
@@ -194,6 +265,7 @@ export const useDiagram = (): UseDiagramReturn => {
         setNodes,
         selectedEdgeType,
         setSelectedEdgeType,
+        onMoveEnd,
     };
 };
 
