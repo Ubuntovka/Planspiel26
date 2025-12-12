@@ -10,6 +10,7 @@ import {
   OutlinedFlag,
   LocationOnOutlined,
   Refresh,
+  Dashboard,
 } from "@mui/icons-material";
 
 interface ContextMenuProps extends ContextMenuState {
@@ -23,6 +24,7 @@ const IconDimensions = () => <AspectRatio fontSize="small" />;
 const IconSource = () => <OutlinedFlag fontSize="small" />;
 const IconTarget = () => <LocationOnOutlined fontSize="small" />;
 const IconPane = () => <Refresh fontSize="small" />;
+const IconCanvas = () => <Dashboard fontSize="small" />;
 
 export default function ContextMenu({
   id,
@@ -120,7 +122,7 @@ export default function ContextMenu({
           className="w-4 h-4 flex items-center justify-center"
           style={{ color: "var(--editor-accent)" }}
         >
-          {isCanvasMenu ? <IconPane /> : elementType === "node" ? <IconNode /> : <IconEdge />}
+          {isCanvasMenu ? <IconCanvas /> : elementType === "node" ? <IconNode /> : <IconEdge />}
         </span>
         <h3
           className="text-sm font-semibold capitalize m-0 p-0"
@@ -193,7 +195,7 @@ export default function ContextMenu({
         className="pt-2 mt-1 flex flex-col gap-1.5"
         style={{ borderTop: "1px solid var(--editor-border)" }}
       >
-        {/* Reset Canvas (HEAD logic) */}
+        {/* Reset Canvas */}
         {isCanvasMenu && (
           <button
             className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition"
