@@ -51,6 +51,7 @@ const DiagramScreenContent = () => {
     onEdgeContextMenu,
     onPaneContextMenu,
     resetCanvas,
+    selectAllNodes,
     onPaneClick,
     onFlowInit,
     exportToJson,
@@ -63,7 +64,7 @@ const DiagramScreenContent = () => {
 
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-  const contextMenuProps = menu ? { ...menu, resetCanvas } : null;
+  const contextMenuProps = menu ? { ...menu, resetCanvas, selectAllNodes } : null;
 
   const handleZoomIn = useCallback(() => {
     zoomIn();

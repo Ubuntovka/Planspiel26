@@ -42,6 +42,7 @@ export interface UseDiagramReturn {
   onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
   onPaneContextMenu: (event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => void;
   resetCanvas: () => void;
+  selectAllNodes: () => void;
   onPaneClick: () => void;
   closeMenu: () => void,
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;

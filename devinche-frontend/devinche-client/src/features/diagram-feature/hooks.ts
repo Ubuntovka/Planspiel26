@@ -163,6 +163,15 @@ export const useDiagram = (): UseDiagramReturn => {
         setMenu(null);
     }, []);
 
+    const selectAllNodes = useCallback(() => {
+        setNodes((nds) =>
+            nds.map((node) => ({
+                ...node,
+                selected: true,
+            }))
+        );
+    }, [setNodes]);
+
     return {
         nodes,
         edges,
@@ -175,6 +184,7 @@ export const useDiagram = (): UseDiagramReturn => {
         onEdgeContextMenu,
         onPaneContextMenu,
         resetCanvas,
+        selectAllNodes,
         onPaneClick,
         closeMenu,
         onFlowInit,

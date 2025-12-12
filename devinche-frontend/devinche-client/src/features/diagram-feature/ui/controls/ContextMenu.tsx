@@ -11,11 +11,13 @@ import {
   LocationOnOutlined,
   Refresh,
   Dashboard,
+  SelectAll,
 } from "@mui/icons-material";
 
 interface ContextMenuProps extends ContextMenuState {
   onClick?: () => void;
   resetCanvas?: () => void;
+  selectAllNodes?: () => void;
 }
 
 const IconNode = () => <SquareRounded fontSize="small" />;
@@ -25,6 +27,7 @@ const IconSource = () => <OutlinedFlag fontSize="small" />;
 const IconTarget = () => <LocationOnOutlined fontSize="small" />;
 const IconPane = () => <Refresh fontSize="small" />;
 const IconCanvas = () => <Dashboard fontSize="small" />;
+const IconSelectAll = () => <SelectAll fontSize="small" />;
 
 export default function ContextMenu({
   id,
@@ -35,6 +38,7 @@ export default function ContextMenu({
   bottom,
   onClick,
   resetCanvas,
+  selectAllNodes,
   ...props
 }: ContextMenuProps) {
   const { getNode, getEdges, addNodes, deleteElements } = useReactFlow();
@@ -98,6 +102,10 @@ export default function ContextMenu({
   const handleResetCanvas = useCallback(() => {
     resetCanvas?.();
   }, [resetCanvas]);
+
+  const handleSelectAll = useCallback(() => {
+    selectAllNodes?.();
+  }, [selectAllNodes]);
 
   return (
     <div
@@ -220,6 +228,33 @@ export default function ContextMenu({
           >
             <IconPane />
             <span className="ml-1">Reset Canvas</span>
+          </button>
+        )}
+        {/* Select All Nodes (New Button) */} 
+        {isCanvasMenu && (
+          <button
+            className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition"
+            style={{
+              color: "var(--editor-text)",
+              border: "1px solid transparent",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--editor-surface-hover)";
+              e.currentTarget.style.color = "var(--editor-accent)";
+              e.currentTarget.style.borderColor = "var(--editor-accent)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "var(--editor-text)";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
+            onClick={() => {
+              handleSelectAll();
+              onClick?.();
+            }}
+          >
+            <IconSelectAll />
+            <span className="ml-1">Select All</span>
           </button>
         )}
 
