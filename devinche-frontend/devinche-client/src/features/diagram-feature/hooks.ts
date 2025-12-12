@@ -72,17 +72,17 @@ export const useDiagram = (): UseDiagramReturn => {
         [rfInstance]
     );
 
-    // 1. Node change handler
+    // Node change handler
     const onNodesChange = useCallback((changes: NodeChange[]) => {
         setNodes((nds) => applyNodeChanges(changes, nds) as DiagramNode[]);
     }, []);
 
-    // 2. Edge change handler
+    // Edge change handler
     const onEdgesChange = useCallback((changes: EdgeChange[]) => {
         setEdges((eds) => applyEdgeChanges(changes, eds) as DiagramEdge[]);
     }, []);
 
-    // 3. Connection handler
+    // Connection handler
     const onConnect = useCallback((params: Connection) => {
         if (!params.source || !params.target) return;
 
@@ -97,7 +97,7 @@ export const useDiagram = (): UseDiagramReturn => {
         setEdges((eds) => addEdge(newEdge, eds) as DiagramEdge[]);
     }, [selectedEdgeType]);
 
-    // 4. Node context menu handler
+    // Node context menu handler
     const onNodeContextMenu = useCallback(
         (event: React.MouseEvent, node: Node) => {
             event.preventDefault();
@@ -110,12 +110,12 @@ export const useDiagram = (): UseDiagramReturn => {
             const right = event.clientX >= pane.width - 200 ? pane.width - event.clientX : undefined;
             const bottom = event.clientY >= pane.height - 200 ? pane.height - event.clientY : undefined;
 
-            setMenu({ id: node.id, top, left, right, bottom });
+            setMenu({ id: node.id, type: 'node', top, left, right, bottom });
         },
         []
     );
 
-    // 5. Edge context menu handler
+    // Edge context menu handler
     const onEdgeContextMenu = useCallback((event: React.MouseEvent, edge: Edge) => {
         event.preventDefault();
 
@@ -130,6 +130,30 @@ export const useDiagram = (): UseDiagramReturn => {
         setMenu({ id: edge.id, type: 'edge', top, left, right, bottom });
     }, []);
 
+    // Canvas context menu handler
+   const onPaneContextMenu = useCallback((event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
+        event.preventDefault(); 
+
+        if (!flowWrapperRef.current) return;
+        const pane = flowWrapperRef.current.getBoundingClientRect();
+
+        const top = event.clientY < pane.height - 200 ? event.clientY : undefined;
+        const left = event.clientX < pane.width - 200 ? event.clientX : undefined;
+        const right = event.clientX >= pane.width - 200 ? pane.width - event.clientX : undefined;
+        const bottom = event.clientY >= pane.height - 200 ? pane.height - event.clientY : undefined;
+
+        setMenu({ id: 'pane-menu', type: 'canvas', top, left, right, bottom }); 
+    }, []);
+
+    // Canvas reset handler
+    const resetCanvas = useCallback(() => {
+        setNodes([]);
+        setEdges([]);
+        if (rfInstance) {
+            rfInstance.setViewport({ x: 0, y: 0, zoom: 1 });
+        }
+    }, [rfInstance]);
+    
     // Separate onPaneClick, close menu
     const closeMenu = useCallback(() => {
         setMenu(null);
@@ -138,6 +162,15 @@ export const useDiagram = (): UseDiagramReturn => {
     const onPaneClick = useCallback(() => {
         setMenu(null);
     }, []);
+
+    const selectAllNodes = useCallback(() => {
+        setNodes((nds) =>
+            nds.map((node) => ({
+                ...node,
+                selected: true,
+            }))
+        );
+    }, [setNodes]);
 
     return {
         nodes,
@@ -149,6 +182,9 @@ export const useDiagram = (): UseDiagramReturn => {
         onConnect,
         onNodeContextMenu,
         onEdgeContextMenu,
+        onPaneContextMenu,
+        resetCanvas,
+        selectAllNodes,
         onPaneClick,
         closeMenu,
         onFlowInit,

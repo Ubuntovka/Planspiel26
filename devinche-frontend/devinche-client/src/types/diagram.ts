@@ -21,11 +21,12 @@ export interface DiagramEdge extends Edge {
 // Context menu state
 export interface ContextMenuState {
   id: string;
-  type?: 'node' | 'edge';
+  type: 'node' | 'edge' | 'canvas';
   top?: number;
   left?: number;
   right?: number;
   bottom?: number;
+  resetCanvas?: () => void;
 }
 
 // Hook return type
@@ -39,6 +40,9 @@ export interface UseDiagramReturn {
   onConnect: (params: Connection) => void;
   onNodeContextMenu: (event: React.MouseEvent, node: Node) => void;
   onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
+  onPaneContextMenu: (event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => void;
+  resetCanvas: () => void;
+  selectAllNodes: () => void;
   onPaneClick: () => void;
   closeMenu: () => void,
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;

@@ -49,6 +49,9 @@ const DiagramScreenContent = () => {
     onConnect,
     onNodeContextMenu,
     onEdgeContextMenu,
+    onPaneContextMenu,
+    resetCanvas,
+    selectAllNodes,
     onPaneClick,
     onFlowInit,
     exportToJson,
@@ -59,7 +62,9 @@ const DiagramScreenContent = () => {
     setSelectedEdgeType,
   } = useDiagram();
 
+
   const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const contextMenuProps = menu ? { ...menu, resetCanvas, selectAllNodes } : null;
 
   const handleZoomIn = useCallback(() => {
     zoomIn();
@@ -98,8 +103,9 @@ const DiagramScreenContent = () => {
         onConnect={onConnect}
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
-        menu={menu}
+        menu={contextMenuProps}
         onFlowInit={onFlowInit}
         setNodes={setNodes}
         selectedEdgeType={selectedEdgeType}

@@ -11,6 +11,8 @@ import {
   type EdgeChange,
   type Connection,
   useReactFlow,
+  Node,
+  Edge,
 } from '@xyflow/react';
 import ContextMenu from './controls/ContextMenu';
 import PalettePanel from "./palette/PalettePanel";
@@ -26,9 +28,10 @@ interface DiagramCanvasProps {
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (params: Connection) => void;
-  onNodeContextMenu: (event: React.MouseEvent, node: any) => void;
-  onEdgeContextMenu: (event: React.MouseEvent, edge: any) => void;
+  onNodeContextMenu: (event: React.MouseEvent, node: Node) => void;
+  onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: () => void;
+  onPaneContextMenu: (event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => void;
   menu: ContextMenuState | null;
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
@@ -55,6 +58,7 @@ const DiagramCanvas = ({
   onNodeContextMenu,
   onEdgeContextMenu,
   onPaneClick,
+  onPaneContextMenu,
   menu,
   onFlowInit,
   setNodes,
@@ -110,6 +114,7 @@ const DiagramCanvas = ({
         onConnect={onConnect}
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
         connectionMode={ConnectionMode.Loose}
         fitView
