@@ -85,6 +85,11 @@ const DiagramScreenContent = () => {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
+        exportToJson={exportToJson}
+        exportToRdf={exportToRdf}
+        exportToXml={exportToXml}
+        importFromJson={importFromJson}
+        flowWrapperRef={flowWrapperRef}
       />
       <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} exportToXml={exportToXml} importFromJson={importFromJson}/>
 

@@ -1,5 +1,9 @@
 import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { exportDiagramToPng } from '../exports/exportToPng';
+import { Download, Upload, FileJson, Image, FileCode } from 'lucide-react';
+
+
 
 interface ToolbarProps {
   onSave?: () => void;
@@ -8,6 +12,11 @@ interface ToolbarProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onFitView?: () => void;
+  exportToJson: () => string | null;
+  exportToRdf: () => string;
+  exportToXml: () => string;
+  importFromJson: (json: string) => void;
+  flowWrapperRef: React.RefObject<HTMLDivElement>
 }
 
 const Toolbar = ({
@@ -17,8 +26,84 @@ const Toolbar = ({
   onZoomIn,
   onZoomOut,
   onFitView,
+  exportToJson, 
+  flowWrapperRef, 
+  exportToRdf, 
+  exportToXml, 
+  importFromJson
 }: ToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
+
+  const handleDownloadJson = () => {
+          try {
+              const json = exportToJson();
+              if (!json) return;
+  
+              const blob = new Blob([json], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "diagram.json";
+              a.click();
+              URL.revokeObjectURL(url);
+          } catch (e) {
+              console.error("Problem exporting diagram JSON: ", e)
+          }
+          
+      };
+  
+      const handleDownloadPng = async () => {
+          if (!flowWrapperRef.current) return;
+          try {
+          await exportDiagramToPng(flowWrapperRef.current, 'diagram.png');
+          } catch (e) {
+          console.error('Problem exporting diagram PNG: ', e);
+          }
+      };
+  
+      const handleDownloadRdf = () => {
+          try {
+          const ttl = exportToRdf();
+          const blob = new Blob([ttl], { type: 'text/turtle;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'diagram.ttl';
+          a.click();
+          URL.revokeObjectURL(url);
+          } catch (e) {
+          console.error('Problem exporting diagram RDF: ', e);
+          }
+      };
+  
+      const handleDownloadXml = () => {
+          try {
+          const xml = exportToXml();
+          const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'diagram.xml';
+          a.click();
+          URL.revokeObjectURL(url);
+          } catch (e) {
+          console.error('Problem exporting diagram XML: ', e);
+          }
+      };
+  
+      const handleImportJson: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+  
+          try {
+          const text = await file.text();
+          importFromJson(text);
+          } catch (err) {
+          console.error('Problem importing diagram JSON: ', err);
+          } finally {
+          e.target.value = ''; // reset input
+          }
+      };
   
   return (
     <div className="absolute top-0 left-0 right-0 h-12 z-20 flex items-center px-4 gap-1" style={{ 
@@ -138,9 +223,48 @@ const Toolbar = ({
           <Maximize2 size={16} />
         </button>
       </div>
+      
+      {/* Import Dropdown */}
+      <div className='import-wrapper h-[100%] relative group gap-1 pr-3 mr-3'>
+        <Upload  size={16} style={{ color: 'var(--editor-text-muted)' }} className='h-[100%] items-center'/>
+        <div className='import-dropdown absolute left-0 w-40 bg-white rounded hidden group-hover:block font-medium' 
+          style={{ 
+                backgroundColor: 'var(--editor-panel-bg)',
+                border: '1px solid var(--editor-border)',
+                boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+            }}>
+          <div className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>
+            <label>                   
+                <span className="flex-1">Import JSON </span>
+                <input
+                    type="file"
+                    accept="application/json"
+                    onChange={handleImportJson}
+                    className="hidden"
+                />
+            </label>
+          </div>
+          {/* <div className='import-item hover:cursor-pointer hover:bg-[#EEE]'>Import JSON</div> */}
+        </div>
+      </div>
+
+      {/* Export Dropdown */}
+      <div className='import-wrapper h-[100%] relative group gap-1 pr-3 mr-3'>
+        <Download  size={16} style={{ color: 'var(--editor-text-muted)' }} className='h-[100%] items-center'/>
+        <div className='import-dropdown absolute left-0 w-40 bg-white border rounded hidden group-hover:block font-medium'
+          style={{ 
+                backgroundColor: 'var(--editor-panel-bg)',
+                border: '1px solid var(--editor-border)',
+                boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+            }}>
+          <div onClick={handleDownloadJson} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export JSON</div>
+          <div onClick={handleDownloadPng} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export PNG</div>
+          <div onClick={handleDownloadRdf} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export RDF</div>
+          <div onClick={handleDownloadXml} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export XML</div>
+        </div>
+      </div>
 
       <div className="flex-1" />
-
       <button
         onClick={toggleTheme}
         className="p-2 rounded-md transition-colors"
