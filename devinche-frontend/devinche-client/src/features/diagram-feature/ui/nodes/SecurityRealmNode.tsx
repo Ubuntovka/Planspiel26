@@ -1,9 +1,15 @@
 import { Handle, Position, NodeResizer, Node, NodeProps } from "@xyflow/react";
 import type { SecurityRealmData } from "@/types/diagram";
-type SecurityRealmDataNode = Node<SecurityRealmData>
-const SecurityRealmNode = ({ data, selected }: NodeProps<SecurityRealmDataNode>) => {
-  const strokeColor = selected ? 'var(--editor-accent)' : 'var(--editor-text)';
-  const textColor = selected ? 'var(--editor-accent)' : 'var(--editor-text)';
+
+type SecurityRealmDataNode = Node<SecurityRealmData>;
+
+const SecurityRealmNode = ({
+  data,
+  selected,
+}: NodeProps<SecurityRealmDataNode>) => {
+  const strokeColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
+  const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
+  const fillColor = "var(--editor-surface)";
   const fixedStrokeWidth = 3;
   return (
     <div className="relative w-full h-full">
@@ -21,12 +27,6 @@ const SecurityRealmNode = ({ data, selected }: NodeProps<SecurityRealmDataNode>)
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="none"
       >
-        <path
-          d="M63.2898 1.50571L89.0742 25.048"
-          stroke={strokeColor}
-          strokeWidth={fixedStrokeWidth}
-          vectorEffect="non-scaling-stroke"
-        />
         <rect
           x="2.00506"
           y="1.87939"
@@ -36,12 +36,19 @@ const SecurityRealmNode = ({ data, selected }: NodeProps<SecurityRealmDataNode>)
           stroke={strokeColor}
           strokeWidth={fixedStrokeWidth}
           vectorEffect="non-scaling-stroke"
+          fill={fillColor} 
+        />
+        <path
+          d="M63.2898 1.50571L89.0742 25.048"
+          stroke={strokeColor}
+          strokeWidth={fixedStrokeWidth}
+          vectorEffect="non-scaling-stroke"
         />
 
         {data.label && (
           <text
-            x="82"
-            y="12"
+            x="45.5"
+            y="45.5"
             fontSize="10"
             fill={textColor}
             textAnchor="middle"

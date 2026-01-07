@@ -201,3 +201,13 @@ body {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
+
+
+.is-intersecting {
+    /* border: 3px solid var(--editor-accent-hover) !important;  */
+    box-shadow: 0 0 10px var(--editor-accent-hover);
+}
+
+.is-dragging {
+    opacity: 0.8;
+}

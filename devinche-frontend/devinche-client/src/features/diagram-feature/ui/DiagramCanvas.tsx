@@ -15,7 +15,6 @@ import {
   Edge,
 } from '@xyflow/react';
 import ContextMenu from './controls/ContextMenu';
-import PalettePanel from "./palette/PalettePanel";
 import { useCallback } from 'react';
 import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram';
 
@@ -103,7 +102,56 @@ const DiagramCanvas = ({
         },
         [reactFlowInstance, flowWrapperRef, setNodes]
     );
+    
 
+  
+  /**
+   * 💡 노드 드래그 시 교차(intersection) 감지 핸들러
+   * 드래그 중인 노드와 겹치는 다른 노드에 시각적 피드백을 제공합니다.
+   */
+  const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
+    // getIntersectingNodes를 사용하여 현재 노드와 겹치는 노드를 찾습니다.
+    // 'true'를 전달하여 부분적으로 교차하는 노드도 포함합니다.
+    const intersections = reactFlowInstance
+      .getIntersectingNodes(node, true)
+      .map((n) => n.id);
+
+    setNodes((ns) =>
+      ns.map((n) => {
+        // 교차 노드에 클래스 추가
+        const isIntersecting = intersections.includes(n.id) && n.id !== node.id;
+        // 드래그 중인 노드 자체에 클래스 추가
+        const isDragging = n.id === node.id;
+
+        let className = '';
+        if (isDragging) {
+          className += ' is-dragging';
+        }
+        if (isIntersecting) {
+          className += ' is-intersecting';
+        }
+
+        return {
+          ...n,
+          // 노드의 'className' 속성을 업데이트하여 스타일 변경
+          className: className.trim(),
+        };
+      }),
+    );
+  }, [reactFlowInstance, setNodes]);
+
+  /**
+   * 💡 노드 드래그가 끝났을 때 스타일(클래스)을 초기화하는 핸들러
+   */
+  const onNodeDragStop = useCallback(() => {
+    setNodes((ns) =>
+      ns.map((n) => ({
+        ...n,
+        className: '', // 모든 노드의 클래스 초기화
+      })),
+    );
+  }, [setNodes]);
+  
   return (
     <div style={{ width: '100vw', height: '100vh', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
       <ReactFlow
@@ -124,6 +172,10 @@ const DiagramCanvas = ({
         onDrop={onDrop}
         onDragOver={onDragOver}
         onMoveEnd={onMoveEnd}
+        // node drag handlers for intersection detection
+        onNodeDrag={onNodeDrag}
+        onNodeDragStop={onNodeDragStop}
+        
         defaultEdgeOptions={{
           style: { stroke: 'var(--editor-border)', strokeWidth: 2 },
           type: selectedEdgeType,
