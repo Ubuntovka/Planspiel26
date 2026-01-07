@@ -205,7 +205,14 @@ body {
 
 .is-intersecting {
     /* border: 3px solid var(--editor-accent-hover) !important;  */
-    box-shadow: 0 0 10px var(--editor-accent-hover);
+    /* box-shadow: 0 0 10px var(--editor-accent-hover); */
+}
+.react-flow__node.is-intersecting svg rect,
+.react-flow__node.is-intersecting svg path,
+.react-flow__node.is-intersecting svg circle {
+    stroke: var(--editor-accent-hover) !important;
+    transition: stroke 0.2s ease;
+    filter: drop-shadow(0 0 1px rgba(0, 150, 255, 0.6));
 }
 
 .is-dragging {

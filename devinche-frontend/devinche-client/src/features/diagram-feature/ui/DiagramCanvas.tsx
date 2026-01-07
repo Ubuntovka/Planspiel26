@@ -10,12 +10,10 @@ import {
   type NodeChange,
   type EdgeChange,
   type Connection,
-  useReactFlow,
   Node,
   Edge,
 } from '@xyflow/react';
 import ContextMenu from './controls/ContextMenu';
-import { useCallback } from 'react';
 import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram';
 
 interface DiagramCanvasProps {
@@ -36,23 +34,10 @@ interface DiagramCanvasProps {
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
   selectedEdgeType: string;
   onMoveEnd: (event: any, viewport: { x: number; y: number; zoom: number }) => void;
-}
-
-const NODE_DEFAULT_SIZE: Record<string, { width: number; height: number }> = {
-  applicationNode: { width: 87, height: 88 },
-  dataProviderNode: { width: 77, height: 88 },
-  identityProviderNode: { width: 76, height: 77 },
-  processUnitNode: { width: 87, height: 87 },
-  securityRealmNode: { width: 400, height: 400 },
-  serviceNode: { width: 87, height: 77 },
-};
-
-
-interface PaletteItem {
-    id: string;
-    type: 'cursor' | 'node' | 'edge';
-    label: string;
-    nodeType?: string;
+  onDragOver: (event: React.DragEvent) => void;
+  onDrop: (event: React.DragEvent) => void;
+  onNodeDrag: (event: React.MouseEvent, node: Node) => void;
+  onNodeDragStop: () => void;
 }
 
 
@@ -74,80 +59,12 @@ const DiagramCanvas = ({
   setNodes,
   selectedEdgeType,
   onMoveEnd,
+  onDragOver,
+  onDrop,
+  onNodeDrag,
+  onNodeDragStop,
 }: DiagramCanvasProps) => {
-    const reactFlowInstance = useReactFlow();
-    const onDragOver = useCallback((event: React.DragEvent) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-    }, []);
-
-    const onDrop = useCallback(
-        (event: React.DragEvent) => {
-            event.preventDefault();
-
-            const reactFlowBounds = flowWrapperRef.current?.getBoundingClientRect();
-            if (!reactFlowBounds) return;
-
-            const dataString = event.dataTransfer.getData('application/reactflow');
-            if (!dataString) return;
-
-            const data: PaletteItem = JSON.parse(dataString);
-
-            if (data.type === 'node' && data.nodeType) {
-                const position = reactFlowInstance.screenToFlowPosition({
-                    x: event.clientX,
-                    y: event.clientY,
-                });
-                const size = NODE_DEFAULT_SIZE[data.nodeType] ?? { width: 80, height: 60 };
-                const newNode: DiagramNode = {
-                id: `${data.nodeType}-${Date.now()}`,
-                type: data.nodeType,
-                position,
-                data: { label: data.label },
-                width: size.width,
-                height: size.height,
-};
-                setNodes((nds) => nds.concat(newNode));
-            }
-        },
-        [reactFlowInstance, flowWrapperRef, setNodes]
-    );
     
-  const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
-    const intersections = reactFlowInstance
-      .getIntersectingNodes(node, true)
-      .map((n) => n.id);
-
-    setNodes((ns) =>
-      ns.map((n) => {
-        const isIntersecting = intersections.includes(n.id) && n.id !== node.id;
-        const isDragging = n.id === node.id;
-
-        let className = '';
-        if (isDragging) {
-          className += ' is-dragging';
-        }
-        if (isIntersecting) {
-          className += ' is-intersecting';
-        }
-
-        return {
-          ...n,
-          className: className.trim(),
-        };
-      }),
-    );
-  }, [reactFlowInstance, setNodes]);
-
-  const onNodeDragStop = useCallback(() => {
-    setNodes((ns) =>
-      ns.map((n) => ({
-        ...n,
-        className: '', 
-      })),
-    );
-  }, [setNodes]);
-  
   return (
     <div style={{ width: '100vw', height: '100vh', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
       <ReactFlow
