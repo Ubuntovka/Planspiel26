@@ -11,6 +11,7 @@ const SecurityRealmNode = ({
   const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
   const fillColor = "var(--editor-surface)";
   const fixedStrokeWidth = 3;
+
   return (
     <div className="relative w-full h-full">
       <NodeResizer
@@ -18,6 +19,16 @@ const SecurityRealmNode = ({
         isVisible={selected}
         minWidth={91}
         minHeight={91}
+        lineStyle={{
+          borderColor: "var(--editor-accent)",
+        }}
+        handleStyle={{
+          width: "8px",
+          height: "8px",
+          backgroundColor: "white",
+          border: `2px solid var(--editor-accent)`,
+          borderRadius: "2px",
+        }}
       />
       <svg
         width="100%"
@@ -26,20 +37,21 @@ const SecurityRealmNode = ({
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="none"
+        style={{ overflow: "visible", display: "block" }} 
       >
         <rect
-          x="2.00506"
-          y="1.87939"
-          width="86.6955"
-          height="86.6955"
-          rx="13.4528"
+          x="0"
+          y="0"
+          width="91"
+          height="91"
+          rx="14"
           stroke={strokeColor}
           strokeWidth={fixedStrokeWidth}
           vectorEffect="non-scaling-stroke"
-          fill={fillColor} 
+          fill={fillColor}
         />
         <path
-          d="M63.2898 1.50571L89.0742 25.048"
+          d="M65 0L91 26" 
           stroke={strokeColor}
           strokeWidth={fixedStrokeWidth}
           vectorEffect="non-scaling-stroke"
@@ -47,19 +59,21 @@ const SecurityRealmNode = ({
 
         {data.label && (
           <text
-            x="45.5"
-            y="45.5"
+            x="50%" 
+            y="50%"
             fontSize="10"
             fill={textColor}
             textAnchor="middle"
             dominantBaseline="middle"
+            className="pointer-events-none select-none"
           >
             {data.label}
           </text>
         )}
       </svg>
-      <Handle type="source" position={Position.Left} id="left-source" />
-      <Handle type="source" position={Position.Right} id="right-source" />
+      
+      {/* <Handle type="source" position={Position.Left} id="left" />
+      <Handle type="source" position={Position.Right} id="right" /> */}
     </div>
   );
 };

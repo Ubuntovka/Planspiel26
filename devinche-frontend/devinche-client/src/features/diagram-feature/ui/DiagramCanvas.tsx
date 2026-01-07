@@ -38,6 +38,16 @@ interface DiagramCanvasProps {
   onMoveEnd: (event: any, viewport: { x: number; y: number; zoom: number }) => void;
 }
 
+const NODE_DEFAULT_SIZE: Record<string, { width: number; height: number }> = {
+  applicationNode: { width: 87, height: 88 },
+  dataProviderNode: { width: 77, height: 88 },
+  identityProviderNode: { width: 76, height: 77 },
+  processUnitNode: { width: 87, height: 87 },
+  securityRealmNode: { width: 400, height: 400 },
+  serviceNode: { width: 87, height: 77 },
+};
+
+
 interface PaletteItem {
     id: string;
     type: 'cursor' | 'node' | 'edge';
@@ -66,7 +76,6 @@ const DiagramCanvas = ({
   onMoveEnd,
 }: DiagramCanvasProps) => {
     const reactFlowInstance = useReactFlow();
-
     const onDragOver = useCallback((event: React.DragEvent) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
@@ -89,38 +98,29 @@ const DiagramCanvas = ({
                     x: event.clientX,
                     y: event.clientY,
                 });
-
+                const size = NODE_DEFAULT_SIZE[data.nodeType] ?? { width: 80, height: 60 };
                 const newNode: DiagramNode = {
-                    id: `${data.nodeType}-${Date.now()}`,
-                    type: data.nodeType,
-                    position,
-                    data: { label: data.label },
-                };
-
+                id: `${data.nodeType}-${Date.now()}`,
+                type: data.nodeType,
+                position,
+                data: { label: data.label },
+                width: size.width,
+                height: size.height,
+};
                 setNodes((nds) => nds.concat(newNode));
             }
         },
         [reactFlowInstance, flowWrapperRef, setNodes]
     );
     
-
-  
-  /**
-   * 💡 노드 드래그 시 교차(intersection) 감지 핸들러
-   * 드래그 중인 노드와 겹치는 다른 노드에 시각적 피드백을 제공합니다.
-   */
   const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
-    // getIntersectingNodes를 사용하여 현재 노드와 겹치는 노드를 찾습니다.
-    // 'true'를 전달하여 부분적으로 교차하는 노드도 포함합니다.
     const intersections = reactFlowInstance
       .getIntersectingNodes(node, true)
       .map((n) => n.id);
 
     setNodes((ns) =>
       ns.map((n) => {
-        // 교차 노드에 클래스 추가
         const isIntersecting = intersections.includes(n.id) && n.id !== node.id;
-        // 드래그 중인 노드 자체에 클래스 추가
         const isDragging = n.id === node.id;
 
         let className = '';
@@ -133,21 +133,17 @@ const DiagramCanvas = ({
 
         return {
           ...n,
-          // 노드의 'className' 속성을 업데이트하여 스타일 변경
           className: className.trim(),
         };
       }),
     );
   }, [reactFlowInstance, setNodes]);
 
-  /**
-   * 💡 노드 드래그가 끝났을 때 스타일(클래스)을 초기화하는 핸들러
-   */
   const onNodeDragStop = useCallback(() => {
     setNodes((ns) =>
       ns.map((n) => ({
         ...n,
-        className: '', // 모든 노드의 클래스 초기화
+        className: '', 
       })),
     );
   }, [setNodes]);

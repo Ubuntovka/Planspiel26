@@ -160,8 +160,8 @@ body {
 
 /* React Flow Node Selection */
 .react-flow__node.selected {
-  outline: 2px solid var(--editor-accent) !important;
-  outline-offset: 2px;
+  /* outline: 2px solid var(--editor-accent) !important;
+  outline-offset: 2px; */
 }
 
 /* React Flow Edge Selection */
@@ -183,10 +183,10 @@ body {
   height: 10px !important;
 }
 
-.react-flow__handle:hover {
+/* .react-flow__handle:hover {
   background: var(--editor-accent-hover) !important;
   transform: scale(1.2);
-}
+} */
 
 /* React Flow Mini Map */
 .react-flow__minimap {
