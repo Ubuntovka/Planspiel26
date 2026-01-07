@@ -44,6 +44,7 @@ export interface UseDiagramReturn {
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   exportToJson: () => string | null;
   exportToRdf: () => string;
+  exportToXml: () => string;
   importFromJson: (json: string) => void;
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
   selectedEdgeType: string;

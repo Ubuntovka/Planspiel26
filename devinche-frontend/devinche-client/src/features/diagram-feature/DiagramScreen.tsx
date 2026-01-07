@@ -53,6 +53,7 @@ const DiagramScreenContent = () => {
     onFlowInit,
     exportToJson,
     exportToRdf,
+    exportToXml,
     importFromJson,
     setNodes,
     selectedEdgeType,
@@ -85,7 +86,7 @@ const DiagramScreenContent = () => {
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
       />
-      <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} importFromJson={importFromJson}/>
+      <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} exportToXml={exportToXml} importFromJson={importFromJson}/>
 
       <DiagramCanvas
         flowWrapperRef={flowWrapperRef}
