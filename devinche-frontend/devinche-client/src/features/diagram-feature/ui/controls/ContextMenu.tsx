@@ -74,8 +74,6 @@ export default function ContextMenu({
   const node = getNode(id);
   if (!node) return;
   
-  console.log(node);
-  
   const newNode = {
     ...node,
     id: uuidv4(), 
