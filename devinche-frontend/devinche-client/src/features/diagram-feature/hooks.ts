@@ -11,11 +11,13 @@ import {
     ReactFlowInstance,
     type ReactFlowJsonObject,
     type Viewport,
-    MarkerType
+    MarkerType,
+    useReactFlow
 } from "@xyflow/react";
 import { initialNodes, initialEdges } from "./data/initialElements";
 import type { DiagramNode, DiagramEdge, ContextMenuState, UseDiagramReturn } from "@/types/diagram";
 import { exportDiagramToRdfTurtle } from "./ui/exports/exportToRdf";
+import { NODE_DEFAULT_SIZE } from "./data/nodeSizes";
 
 const STORAGE_KEY = 'diagram.flow';
 
@@ -26,6 +28,7 @@ export const useDiagram = (): UseDiagramReturn => {
     const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
     const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+    const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
     // load saved flow from storage
     const loadSaved = useCallback((): ReactFlowJsonObject<DiagramNode, DiagramEdge> | null => {
@@ -242,6 +245,61 @@ export const useDiagram = (): UseDiagramReturn => {
             }))
         );
     }, [setNodes]);
+    
+    const onDragOver = useCallback((event: React.DragEvent) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }, []);
+
+    const onDrop = useCallback((event: React.DragEvent) => {
+        event.preventDefault();
+        if (!flowWrapperRef.current) return;
+
+        const dataString = event.dataTransfer.getData('application/reactflow');
+        if (!dataString) return;
+
+        const data = JSON.parse(dataString);
+        if (data.type === 'node' && data.nodeType) {
+        const position = screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+        });
+
+        const size = NODE_DEFAULT_SIZE[data.nodeType] ?? { width: 80, height: 60 };
+        const newNode: DiagramNode = {
+            id: `${data.nodeType}-${Date.now()}`,
+            type: data.nodeType,
+            position,
+            data: { label: data.label },
+            width: size.width,
+            height: size.height,
+        };
+
+        setNodes((nds) => nds.concat(newNode));
+        }
+    }, [screenToFlowPosition, setNodes]);
+
+
+    const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
+        const intersections = getIntersectingNodes(node, true).map((n) => n.id);
+
+        setNodes((ns) =>
+        ns.map((n) => {
+            const isIntersecting = intersections.includes(n.id) && n.id !== node.id;
+            const isDragging = n.id === node.id;
+            let className = '';
+            if (isDragging) className += ' is-dragging';
+            if (isIntersecting) className += ' is-intersecting';
+            return { ...n, className: className.trim() };
+        })
+        );
+    }, [getIntersectingNodes, setNodes]);
+
+    const onNodeDragStop = useCallback(() => {
+        setNodes((ns) => ns.map((n) => ({ ...n, className: '' })));
+    }, [setNodes]);
+
+
 
     return {
         nodes,
@@ -266,6 +324,10 @@ export const useDiagram = (): UseDiagramReturn => {
         selectedEdgeType,
         setSelectedEdgeType,
         onMoveEnd,
+        onDragOver,
+        onDrop,
+        onNodeDrag,
+        onNodeDragStop,
     };
 };
 

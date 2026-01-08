@@ -53,6 +53,10 @@ export interface UseDiagramReturn {
   selectedEdgeType: string;
   setSelectedEdgeType: React.Dispatch<React.SetStateAction<string>>;
   onMoveEnd: (event: any, viewport: { x: number; y: number; zoom: number }) => void;
+  onDrop: (event: React.DragEvent) => void;
+  onDragOver: (event: React.DragEvent) => void;
+  onNodeDrag: (event: React.MouseEvent, node: Node) => void;
+  onNodeDragStop: () => void;
 }
 
 // Node component props
@@ -81,4 +85,13 @@ export interface EdgeProps {
 export interface SecurityRealmData {
   label?: string
   [key: string]: any;
+}
+
+export interface NodeSize {
+  width: number;
+  height: number;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
 }
