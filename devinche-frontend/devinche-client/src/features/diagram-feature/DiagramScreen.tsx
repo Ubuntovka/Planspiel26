@@ -88,15 +88,6 @@ const DiagramScreenContent = () => {
     exportToJson();
   }, [exportToJson]);
 
-  function startHideTimer() {
-    
-
-    hideTimeoutRef.current = window.setTimeout(() => {
-      setValidationError(null);
-      hideTimeoutRef.current = null;
-    }, 10000); // 10 seconds
-  }
-
   const handleValidation = useCallback(() => {
     const json = exportToJson();
     if (json) {
@@ -112,15 +103,15 @@ const DiagramScreenContent = () => {
         hideTimeoutRef.current = null;
       }, 60000); 
     }
-  }, []);
+  }, [exportToJson]);
 
-  const closeValidationError = () => {
+  const closeValidationError = useCallback(() => {
     if (hideTimeoutRef.current !== null) {
       clearTimeout(hideTimeoutRef.current);
       hideTimeoutRef.current = null;
     }
     setValidationError(null);
-  }
+  }, []);
 
   return (
     <div className="relative w-screen h-screen">
