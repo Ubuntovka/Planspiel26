@@ -160,8 +160,8 @@ body {
 
 /* React Flow Node Selection */
 .react-flow__node.selected {
-  outline: 2px solid var(--editor-accent) !important;
-  outline-offset: 2px;
+  /* outline: 2px solid var(--editor-accent) !important;
+  outline-offset: 2px; */
 }
 
 /* React Flow Edge Selection */
@@ -183,10 +183,10 @@ body {
   height: 10px !important;
 }
 
-.react-flow__handle:hover {
+/* .react-flow__handle:hover {
   background: var(--editor-accent-hover) !important;
   transform: scale(1.2);
-}
+} */
 
 /* React Flow Mini Map */
 .react-flow__minimap {
@@ -200,4 +200,21 @@ body {
   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow; /* transform; */
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+
+
+.is-intersecting {
+    /* border: 3px solid var(--editor-accent-hover) !important;  */
+    /* box-shadow: 0 0 10px var(--editor-accent-hover); */
+}
+.react-flow__node.is-intersecting svg rect,
+.react-flow__node.is-intersecting svg path,
+.react-flow__node.is-intersecting svg circle {
+    stroke: var(--editor-accent-hover) !important;
+    transition: stroke 0.2s ease;
+    filter: drop-shadow(0 0 1px rgba(0, 150, 255, 0.6));
+}
+
+.is-dragging {
+    opacity: 0.8;
 }

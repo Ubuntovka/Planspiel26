@@ -64,6 +64,10 @@ const DiagramScreenContent = () => {
     selectedEdgeType,
     setSelectedEdgeType,
     onMoveEnd,
+    onDragOver,
+    onDrop,
+    onNodeDrag,
+    onNodeDragStop,
   } = useDiagram();
 
 
@@ -148,6 +152,10 @@ const DiagramScreenContent = () => {
         setNodes={setNodes}
         selectedEdgeType={selectedEdgeType}
         onMoveEnd={onMoveEnd}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        onNodeDrag={onNodeDrag}
+        onNodeDragStop={onNodeDragStop}
       />
       <PalettePanel 
         selectedEdgeType={selectedEdgeType}

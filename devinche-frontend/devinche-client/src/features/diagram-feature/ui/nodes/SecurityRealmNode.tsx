@@ -1,41 +1,93 @@
+// TODO: Add Handles for trust, invocation
+
 import { Handle, Position, NodeResizer, Node, NodeProps } from "@xyflow/react";
 import type { SecurityRealmData } from "@/types/diagram";
-type SecurityRealmDataNode = Node<SecurityRealmData>
-const SecurityRealmNode = ({ data, selected }: NodeProps<SecurityRealmDataNode>) => {
-  const strokeColor = selected ? 'var(--editor-accent)' : 'var(--editor-text)';
-  const textColor = selected ? 'var(--editor-accent)' : 'var(--editor-text)';
+
+type SecurityRealmDataNode = Node<SecurityRealmData>;
+
+const SecurityRealmNode = ({
+  data,
+  selected,
+}: NodeProps<SecurityRealmDataNode>) => {
+  const strokeColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
+  const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
+  const fillColor = "var(--editor-surface)";
+  const fixedStrokeWidth = 3;
+
   return (
-    <div className="relative w-full h-full">
+    <div 
+      className="relative w-full h-full"
+      style={{ containerType: "size" }} 
+    >
       <NodeResizer
         color="var(--editor-accent)"
         isVisible={selected}
-        minWidth={91}
-        minHeight={91}
+        minWidth={300}
+        minHeight={300}
+        lineStyle={{ borderColor: "var(--editor-accent)" }}
+        handleStyle={{
+          width: "8px",
+          height: "8px",
+          backgroundColor: "white",
+          border: `2px solid var(--editor-accent)`,
+          borderRadius: "2px",
+        }}
       />
-      <svg width="100%" height="100%" viewBox="0 0 91 91" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-        <path d="M63.2898 1.50571L89.0742 25.048" stroke={strokeColor} strokeWidth="2.9895" />
-        <rect x="2.00506" y="1.87939" width="86.6955" height="86.6955" rx="13.4528" stroke={strokeColor} strokeWidth="2.9895" />
-        {data.label && (
-          <text
-            x="82"
-            y="12"
-            fontSize="10"
-            fill={textColor}
-            textAnchor="middle"
-            dominantBaseline="middle"
-          // transform="rotate(-45 76.182 13.277)"
-          >
-            {data.label}
-          </text>
-        )}
+    
+      <svg
+        className="absolute inset-0 w-full h-full"
+        style={{ overflow: "visible", display: "block" }}
+      >
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          rx="25"
+          stroke={strokeColor}
+          strokeWidth={fixedStrokeWidth}
+          fill={fillColor}
+        />
+        <line
+          x1="calc(100% - 80px)"
+          y1="0"
+          x2="100%"
+          y2="80"
+          stroke={strokeColor}
+          strokeWidth={fixedStrokeWidth}
+        />
       </svg>
-      {/* <Handle type="source" position={Position.Top} id="top-source" /> */}
-      <Handle type="source" position={Position.Left} id="left-source" />
-      <Handle type="source" position={Position.Right} id="right-source" />
-      {/* <Handle type="source" position={Position.Bottom} id="bottom-source" /> */}
+
+      <div
+        className="absolute inset-0 flex items-start justify-end pointer-events-none"
+        style={{
+          color: textColor,
+          fontSize: "10px", 
+          paddingTop: "10",
+          paddingRight: "10",
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        <div 
+          className="flex items-center justify-center text-center"
+          style={{
+            width: "50px",
+            height: "50px",
+            lineHeight: "1.1",
+          }}
+        >
+          <span className="break-words line-clamp-3 w-full pr-2 mb-2">
+            {data.label}
+          </span>
+        </div>
+      </div>
+
+
+      {/* <Handle type="source" position={Position.Left} id="left" />
+      <Handle type="source" position={Position.Right} id="right" /> */}
     </div>
   );
 };
 
 export default SecurityRealmNode;
-
