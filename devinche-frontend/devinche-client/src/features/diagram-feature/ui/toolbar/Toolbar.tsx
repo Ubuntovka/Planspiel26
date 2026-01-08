@@ -227,7 +227,7 @@ const Toolbar = ({
       {/* Import Dropdown */}
       <div className='import-wrapper h-[100%] relative group gap-1 pr-3 mr-3'>
         <Upload  size={16} style={{ color: 'var(--editor-text-muted)' }} className='h-[100%] items-center'/>
-        <div className='import-dropdown absolute left-0 w-40 bg-white rounded hidden group-hover:block font-medium' 
+        <div className='import-dropdown absolute left-0 w-40 bg-white rounded hidden group-hover:block font-medium text-sm' 
           style={{ 
                 backgroundColor: 'var(--editor-panel-bg)',
                 border: '1px solid var(--editor-border)',
@@ -251,7 +251,7 @@ const Toolbar = ({
       {/* Export Dropdown */}
       <div className='import-wrapper h-[100%] relative group gap-1 pr-3 mr-3'>
         <Download  size={16} style={{ color: 'var(--editor-text-muted)' }} className='h-[100%] items-center'/>
-        <div className='import-dropdown absolute left-0 w-40 bg-white border rounded hidden group-hover:block font-medium'
+        <div className='import-dropdown absolute left-0 w-40 bg-white border rounded hidden group-hover:block font-medium text-sm'
           style={{ 
                 backgroundColor: 'var(--editor-panel-bg)',
                 border: '1px solid var(--editor-border)',

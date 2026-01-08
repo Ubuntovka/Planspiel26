@@ -15,7 +15,7 @@ import type { NodeTypes, EdgeTypes } from '@xyflow/react';
 import TrustEdge from './ui/edges/TrustEdge';
 import Invocation from './ui/edges/Invocation';
 import Legacy from './ui/edges/Legacy';
-import Exports from './ui/exports/Exports';
+// import Exports from './ui/exports/Exports';
 import Toolbar from './ui/toolbar/Toolbar';
 import PalettePanel from './ui/palette/PalettePanel';
 import { useCallback } from 'react';
@@ -91,7 +91,7 @@ const DiagramScreenContent = () => {
         importFromJson={importFromJson}
         flowWrapperRef={flowWrapperRef}
       />
-      <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} exportToXml={exportToXml} importFromJson={importFromJson}/>
+      {/* <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} exportToXml={exportToXml} importFromJson={importFromJson}/> */}
 
       <DiagramCanvas
         flowWrapperRef={flowWrapperRef}
