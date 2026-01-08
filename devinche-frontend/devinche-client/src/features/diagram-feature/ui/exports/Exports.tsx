@@ -4,11 +4,12 @@ import { Download, Upload, FileJson, Image, FileCode } from 'lucide-react';
 interface ExportsPropsType {
     exportToJson: () => string | null;
     exportToRdf: () => string;
+    exportToXml: () => string;
     importFromJson: (json: string) => void;
     flowWrapperRef: React.RefObject<HTMLDivElement>
 }
 
-const Exports = ({ exportToJson, flowWrapperRef, exportToRdf, importFromJson }: ExportsPropsType) => {
+const Exports = ({ exportToJson, flowWrapperRef, exportToRdf, exportToXml, importFromJson }: ExportsPropsType) => {
 
     const handleDownloadJson = () => {
         try {
@@ -49,6 +50,21 @@ const Exports = ({ exportToJson, flowWrapperRef, exportToRdf, importFromJson }: 
         URL.revokeObjectURL(url);
         } catch (e) {
         console.error('Problem exporting diagram RDF: ', e);
+        }
+    };
+
+    const handleDownloadXml = () => {
+        try {
+        const xml = exportToXml();
+        const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'diagram.xml';
+        a.click();
+        URL.revokeObjectURL(url);
+        } catch (e) {
+        console.error('Problem exporting diagram XML: ', e);
         }
     };
 
@@ -137,6 +153,25 @@ const Exports = ({ exportToJson, flowWrapperRef, exportToRdf, importFromJson }: 
             >
                 <FileCode size={16} style={{ color: 'var(--editor-text-muted)' }} />
                 <span>Export RDF</span>
+            </button>
+
+            <button 
+                onClick={handleDownloadXml}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 border border-transparent"
+                style={{ color: 'var(--editor-text)' }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                    e.currentTarget.style.color = 'var(--editor-error)';
+                    e.currentTarget.style.borderColor = 'var(--editor-error)';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--editor-text)';
+                    e.currentTarget.style.borderColor = 'transparent';
+                }}
+            >
+                <FileCode size={16} style={{ color: 'var(--editor-text-muted)' }} />
+                <span>Export XML</span>
             </button>
 
             <div className="pt-2 mt-1" style={{ borderTop: '1px solid var(--editor-border)' }}>

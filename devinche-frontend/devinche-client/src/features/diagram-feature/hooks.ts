@@ -18,6 +18,7 @@ import { initialNodes, initialEdges } from "./data/initialElements";
 import type { DiagramNode, DiagramEdge, ContextMenuState, UseDiagramReturn } from "@/types/diagram";
 import { exportDiagramToRdfTurtle } from "./ui/exports/exportToRdf";
 import { NODE_DEFAULT_SIZE } from "./data/nodeSizes";
+import { exportDiagramToXML } from "./ui/exports/exportToXML";
 
 const STORAGE_KEY = 'diagram.flow';
 
@@ -97,6 +98,12 @@ export const useDiagram = (): UseDiagramReturn => {
         return exportDiagramToRdfTurtle(nodes, edges);
     }, [nodes, edges]);
 
+    // XML export handler
+    const exportToXml = useCallback((): string => {
+        return exportDiagramToXML(nodes, edges);
+    }, [nodes, edges]);
+
+    // import JSON handler
     const importFromJson = useCallback(
         (json: string) => {
         let obj: ReactFlowJsonObject<DiagramNode, DiagramEdge>;
@@ -319,6 +326,7 @@ export const useDiagram = (): UseDiagramReturn => {
         onFlowInit,
         exportToJson,
         exportToRdf, 
+        exportToXml,
         importFromJson,
         setNodes,
         selectedEdgeType,

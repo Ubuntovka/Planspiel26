@@ -15,11 +15,13 @@ import type { NodeTypes, EdgeTypes } from '@xyflow/react';
 import TrustEdge from './ui/edges/TrustEdge';
 import Invocation from './ui/edges/Invocation';
 import Legacy from './ui/edges/Legacy';
-import Exports from './ui/exports/Exports';
+// import Exports from './ui/exports/Exports';
 import Toolbar from './ui/toolbar/Toolbar';
 import PalettePanel from './ui/palette/PalettePanel';
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
+import ValidationError from './validation/ValidationError';
+import { validate } from './validation/validate';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -56,6 +58,7 @@ const DiagramScreenContent = () => {
     onFlowInit,
     exportToJson,
     exportToRdf,
+    exportToXml,
     importFromJson,
     setNodes,
     selectedEdgeType,
@@ -70,6 +73,8 @@ const DiagramScreenContent = () => {
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const contextMenuProps = menu ? { ...menu, resetCanvas, selectAllNodes } : null;
+  const [validationError, setValidationError] = useState<string[] | null>(null);
+  const hideTimeoutRef = useRef<number | null>(null);
 
   const handleZoomIn = useCallback(() => {
     zoomIn();
@@ -87,6 +92,31 @@ const DiagramScreenContent = () => {
     exportToJson();
   }, [exportToJson]);
 
+  const handleValidation = useCallback(() => {
+    const json = exportToJson();
+    if (json) {
+      if (hideTimeoutRef.current !== null) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+
+      const errors = validate(json);
+      setValidationError(errors);
+
+      hideTimeoutRef.current = window.setTimeout(() => {
+        setValidationError(null);
+        hideTimeoutRef.current = null;
+      }, 60000); 
+    }
+  }, [exportToJson]);
+
+  const closeValidationError = useCallback(() => {
+    if (hideTimeoutRef.current !== null) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setValidationError(null);
+  }, []);
+
   return (
     <div className="relative w-screen h-screen">
       <Toolbar
@@ -94,8 +124,15 @@ const DiagramScreenContent = () => {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
+        exportToJson={exportToJson}
+        exportToRdf={exportToRdf}
+        exportToXml={exportToXml}
+        importFromJson={importFromJson}
+        handleValidation={handleValidation}
+        flowWrapperRef={flowWrapperRef}
       />
-      <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} importFromJson={importFromJson}/>
+      {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
+      {/* <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} exportToXml={exportToXml} importFromJson={importFromJson}/> */}
 
       <DiagramCanvas
         flowWrapperRef={flowWrapperRef}
