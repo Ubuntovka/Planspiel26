@@ -30,6 +30,11 @@ export const useDiagram = (): UseDiagramReturn => {
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
     const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
+useEffect(() => {
+    console.log("Current Nodes (State Update):", nodes);
+}, [nodes]); // nodes가 변경될 때마다 실행
+
+
     // load saved flow from storage
     const loadSaved = useCallback((): ReactFlowJsonObject<DiagramNode, DiagramEdge> | null => {
         if (typeof window === 'undefined') return null;

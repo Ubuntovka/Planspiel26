@@ -41,7 +41,7 @@ export default function ContextMenu({
   selectAllNodes,
   ...props
 }: ContextMenuProps) {
-  const { getNode, getEdges, addNodes, deleteElements } = useReactFlow();
+  const { getNode, getEdges, addNodes, deleteElements, setNodes } = useReactFlow();
 
   const elementType = type;
   const isCanvasMenu = elementType === "canvas";
@@ -70,25 +70,25 @@ export default function ContextMenu({
 
   // duplicate node (HEAD logic)
   const duplicateNode = useCallback(() => {
-    if (elementType !== "node") return;
-    const node = getNode(id);
-    if (!node) return;
-
-    const position = {
+  if (elementType !== "node") return;
+  const node = getNode(id);
+  if (!node) return;
+  
+  console.log(node);
+  
+  const newNode = {
+    ...node,
+    id: uuidv4(), 
+    // id: `${node.type}-${Date.now()}`,
+    selected: false,
+    position: {
       x: node.position.x + 50,
       y: node.position.y + 50,
-    };
+    },
+  };
 
-    addNodes({
-      id: uuidv4(),
-      type: node.type,
-      position,
-      data: { ...node.data },
-      style: { ...node.style },
-      selected: false,
-      dragging: false,
-    });
-  }, [id, getNode, addNodes, elementType]);
+  setNodes((nds) => nds.concat(newNode)); 
+}, [id, getNode, setNodes, elementType]);
 
   // delete (HEAD logic)
   const deleteItem = useCallback(() => {
