@@ -6,6 +6,11 @@ const IdentityProviderNode = ({ data, selected }: NodeProps) => {
   const fillColor = "var(--editor-surface)";
   const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
 
+  const labelLength = data.label?.length || 0;
+  const fontSize =
+    labelLength > 10
+      ? `clamp(8px, ${Math.max(4, 10 - (labelLength - 10) * 0.3)}cqw, 40px)`
+      : "clamp(14px, 12cqw, 60px)";
   return (
     <div
       className="relative w-full h-full"
@@ -49,15 +54,13 @@ const IdentityProviderNode = ({ data, selected }: NodeProps) => {
         className="absolute inset-0 flex items-center justify-center text-center p-3 pointer-events-none"
         style={{
           color: textColor,
-          fontSize: "clamp(8px, 8cqw)",
+          fontSize: fontSize,
           paddingTop: "40%",
           paddingLeft: "50%",
           paddingRight: "10%",
         }}
       >
-        <span className="break-words line-clamp-3 leading-tight w-full">
-          {data.label}
-        </span>
+        <span className="break-words leading-tight w-full">{data.label}</span>
       </div>
     </div>
   );
