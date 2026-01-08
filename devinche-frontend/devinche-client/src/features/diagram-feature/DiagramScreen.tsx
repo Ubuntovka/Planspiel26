@@ -51,6 +51,9 @@ const DiagramScreenContent = () => {
     onConnect,
     onNodeContextMenu,
     onEdgeContextMenu,
+    onPaneContextMenu,
+    resetCanvas,
+    selectAllNodes,
     onPaneClick,
     onFlowInit,
     exportToJson,
@@ -60,9 +63,12 @@ const DiagramScreenContent = () => {
     setNodes,
     selectedEdgeType,
     setSelectedEdgeType,
+    onMoveEnd,
   } = useDiagram();
 
+
   const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const contextMenuProps = menu ? { ...menu, resetCanvas, selectAllNodes } : null;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
 
@@ -144,11 +150,13 @@ const DiagramScreenContent = () => {
         onConnect={onConnect}
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
-        menu={menu}
+        menu={contextMenuProps}
         onFlowInit={onFlowInit}
         setNodes={setNodes}
         selectedEdgeType={selectedEdgeType}
+        onMoveEnd={onMoveEnd}
       />
       <PalettePanel 
         selectedEdgeType={selectedEdgeType}
