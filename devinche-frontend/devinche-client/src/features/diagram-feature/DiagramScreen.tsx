@@ -18,8 +18,10 @@ import Legacy from './ui/edges/Legacy';
 // import Exports from './ui/exports/Exports';
 import Toolbar from './ui/toolbar/Toolbar';
 import PalettePanel from './ui/palette/PalettePanel';
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
+import ValidationError from './validation/ValidationError';
+import { validate } from './validation/validate';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -61,6 +63,8 @@ const DiagramScreenContent = () => {
   } = useDiagram();
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const [validationError, setValidationError] = useState<string[] | null>(null);
+  const hideTimeoutRef = useRef<number | null>(null);
 
   const handleZoomIn = useCallback(() => {
     zoomIn();
@@ -78,6 +82,40 @@ const DiagramScreenContent = () => {
     exportToJson();
   }, [exportToJson]);
 
+  function startHideTimer() {
+    
+
+    hideTimeoutRef.current = window.setTimeout(() => {
+      setValidationError(null);
+      hideTimeoutRef.current = null;
+    }, 10000); // 10 seconds
+  }
+
+  const handleValidation = useCallback(() => {
+    const json = exportToJson();
+    if (json) {
+      if (hideTimeoutRef.current !== null) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+
+      const errors = validate(json);
+      setValidationError(errors);
+
+      hideTimeoutRef.current = window.setTimeout(() => {
+        setValidationError(null);
+        hideTimeoutRef.current = null;
+      }, 60000); 
+    }
+  }, []);
+
+  const closeValidationError = () => {
+    if (hideTimeoutRef.current !== null) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setValidationError(null);
+  }
+
   return (
     <div className="relative w-screen h-screen">
       <Toolbar
@@ -89,8 +127,10 @@ const DiagramScreenContent = () => {
         exportToRdf={exportToRdf}
         exportToXml={exportToXml}
         importFromJson={importFromJson}
+        handleValidation={handleValidation}
         flowWrapperRef={flowWrapperRef}
       />
+      {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
       {/* <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} exportToXml={exportToXml} importFromJson={importFromJson}/> */}
 
       <DiagramCanvas

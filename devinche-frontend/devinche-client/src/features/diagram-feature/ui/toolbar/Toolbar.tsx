@@ -2,6 +2,7 @@ import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon } from 'lucide-
 import { useTheme } from '@/contexts/ThemeContext';
 import { exportDiagramToPng } from '../exports/exportToPng';
 import { Download, Upload, FileJson, Image, FileCode } from 'lucide-react';
+import { validate } from '../../validation/validate';
 
 
 
@@ -16,6 +17,7 @@ interface ToolbarProps {
   exportToRdf: () => string;
   exportToXml: () => string;
   importFromJson: (json: string) => void;
+  handleValidation?: () => void;
   flowWrapperRef: React.RefObject<HTMLDivElement>
 }
 
@@ -30,7 +32,8 @@ const Toolbar = ({
   flowWrapperRef, 
   exportToRdf, 
   exportToXml, 
-  importFromJson
+  importFromJson,
+  handleValidation,
 }: ToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
 
@@ -224,45 +227,72 @@ const Toolbar = ({
         </button>
       </div>
       
+      <div className="flex items-center gap-1 pr-3 mr-3" style={{ borderRight: '1px solid var(--editor-border)' }}>
       {/* Import Dropdown */}
-      <div className='import-wrapper h-[100%] relative group gap-1 pr-3 mr-3'>
-        <Upload  size={16} style={{ color: 'var(--editor-text-muted)' }} className='h-[100%] items-center'/>
-        <div className='import-dropdown absolute left-0 w-40 bg-white rounded hidden group-hover:block font-medium text-sm' 
-          style={{ 
-                backgroundColor: 'var(--editor-panel-bg)',
-                border: '1px solid var(--editor-border)',
-                boxShadow: '0 8px 16px var(--editor-shadow-lg)'
-            }}>
-          <div className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>
-            <label>                   
-                <span className="flex-1">Import JSON </span>
-                <input
-                    type="file"
-                    accept="application/json"
-                    onChange={handleImportJson}
-                    className="hidden"
-                />
-            </label>
+        <div className='import-wrapper h-[100%] relative group'>
+          <div className='h-[100%] items-center p-2 rounded-md transition-colors'
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+              e.currentTarget.style.color = 'var(--editor-text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--editor-text-secondary)';
+            }}
+          >
+            <Upload  size={16} className='items-center' />        
           </div>
-          {/* <div className='import-item hover:cursor-pointer hover:bg-[#EEE]'>Import JSON</div> */}
+          <div className='import-dropdown absolute left-0 w-40 bg-white rounded hidden group-hover:block font-medium text-sm' 
+            style={{ 
+                  backgroundColor: 'var(--editor-panel-bg)',
+                  border: '1px solid var(--editor-border)',
+                  boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+              }}>
+            <div className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>
+              <label>                   
+                  <span className="flex-1">Import JSON </span>
+                  <input
+                      type="file"
+                      accept="application/json"
+                      onChange={handleImportJson}
+                      className="hidden"
+                  />
+              </label>
+            </div>
+            {/* <div className='import-item hover:cursor-pointer hover:bg-[#EEE]'>Import JSON</div> */}
+          </div>
+        </div>
+
+        {/* Export Dropdown */}
+        <div className='import-wrapper h-[100%] relative group '>
+          <div className='h-[100%] items-center p-2 rounded-md transition-colors'
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+              e.currentTarget.style.color = 'var(--editor-text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--editor-text-secondary)';
+            }}
+          >
+            <Download  size={16} style={{ color: 'var(--editor-text-muted)' }} className='h-[100%] items-center'/>
+          </div>
+          <div className='import-dropdown absolute left-0 w-40 bg-white border rounded hidden group-hover:block font-medium text-sm'
+            style={{ 
+                  backgroundColor: 'var(--editor-panel-bg)',
+                  border: '1px solid var(--editor-border)',
+                  boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+              }}>
+            <div onClick={handleDownloadJson} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export JSON</div>
+            <div onClick={handleDownloadPng} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export PNG</div>
+            <div onClick={handleDownloadRdf} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export RDF</div>
+            <div onClick={handleDownloadXml} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export XML</div>
+          </div>
         </div>
       </div>
 
-      {/* Export Dropdown */}
-      <div className='import-wrapper h-[100%] relative group gap-1 pr-3 mr-3'>
-        <Download  size={16} style={{ color: 'var(--editor-text-muted)' }} className='h-[100%] items-center'/>
-        <div className='import-dropdown absolute left-0 w-40 bg-white border rounded hidden group-hover:block font-medium text-sm'
-          style={{ 
-                backgroundColor: 'var(--editor-panel-bg)',
-                border: '1px solid var(--editor-border)',
-                boxShadow: '0 8px 16px var(--editor-shadow-lg)'
-            }}>
-          <div onClick={handleDownloadJson} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export JSON</div>
-          <div onClick={handleDownloadPng} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export PNG</div>
-          <div onClick={handleDownloadRdf} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export RDF</div>
-          <div onClick={handleDownloadXml} className='import-item hover:cursor-pointer hover:bg-[#EEE] p-3'>Export XML</div>
-        </div>
-      </div>
+      {/* Validation Button */}
+      <div onClick={handleValidation} className='hover:cursor-pointer font-medium text-sm'>VALIDATE</div>
 
       <div className="flex-1" />
       <button

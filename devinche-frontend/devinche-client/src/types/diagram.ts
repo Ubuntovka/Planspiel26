@@ -1,6 +1,11 @@
 import type { Node, Edge, Connection, NodeChange, EdgeChange, ReactFlowInstance } from '@xyflow/react';
 import type React from 'react';
 
+export interface DiagramState {
+  nodes: DiagramNode[];
+  edges: DiagramEdge[];
+}
+
 // Extended node type with our custom data structure
 export interface DiagramNode extends Node {
   type: string;
