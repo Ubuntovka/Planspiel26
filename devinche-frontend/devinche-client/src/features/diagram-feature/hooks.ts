@@ -29,7 +29,7 @@ export const useDiagram = (): UseDiagramReturn => {
     const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
     const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
-    const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
+    const { screenToFlowPosition, getIntersectingNodes, getNodes } = useReactFlow();
 
     // load saved flow from storage
     const loadSaved = useCallback((): ReactFlowJsonObject<DiagramNode, DiagramEdge> | null => {
@@ -273,16 +273,57 @@ export const useDiagram = (): UseDiagramReturn => {
         });
 
         const size = NODE_DEFAULT_SIZE[data.nodeType] ?? { width: 80, height: 60 };
+        
+        // Don't allow Security Realm nodes to be children
+        const isSecurityRealm = data.nodeType === 'securityRealmNode';
+        
+        setNodes((nds) => {
+            // Check if drop position is over a Security Realm node
+            const securityRealmParent = nds.find((n) => {
+                if (n.type !== 'securityRealmNode' || !n.position || !n.width || !n.height) {
+                    return false;
+                }
+                const nodeX = n.position.x;
+                const nodeY = n.position.y;
+                const nodeWidth = n.width;
+                const nodeHeight = n.height;
+                
+                // Check if drop position is within the Security Realm bounds
+                return (
+                    position.x >= nodeX &&
+                    position.x <= nodeX + nodeWidth &&
+                    position.y >= nodeY &&
+                    position.y <= nodeY + nodeHeight
+                );
+            });
+
         const newNode: DiagramNode = {
             id: `${data.nodeType}-${Date.now()}`,
             type: data.nodeType,
-            position,
+                position: securityRealmParent && !isSecurityRealm && securityRealmParent.position
+                    ? {
+                        // Relative position to parent
+                        x: position.x - securityRealmParent.position.x,
+                        y: position.y - securityRealmParent.position.y,
+                    }
+                    : position,
             data: { label: data.label },
             width: size.width,
             height: size.height,
-        };
+                ...(securityRealmParent && !isSecurityRealm 
+                    ? { 
+                        parentId: securityRealmParent.id,
+                        extent: 'parent' as const,
+                    } 
+                    : {}),
+            };
 
-        setNodes((nds) => nds.concat(newNode));
+            const updatedNodes = nds.concat(newNode);
+            // Ensure parents come before children in the array (React Flow requirement)
+            const parents = updatedNodes.filter((n) => !n.parentId || n.type === 'securityRealmNode');
+            const children = updatedNodes.filter((n) => n.parentId && n.type !== 'securityRealmNode');
+            return [...parents, ...children];
+        });
         }
     }, [screenToFlowPosition, setNodes]);
 
@@ -302,9 +343,160 @@ export const useDiagram = (): UseDiagramReturn => {
         );
     }, [getIntersectingNodes, setNodes]);
 
-    const onNodeDragStop = useCallback(() => {
-        setNodes((ns) => ns.map((n) => ({ ...n, className: '' })));
-    }, [setNodes]);
+    const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
+        if (!node.position) return;
+        
+        // Get current nodes from React Flow (most up-to-date state)
+        const currentNodes = getNodes();
+        const currentNode = currentNodes.find((n) => n.id === node.id);
+        if (!currentNode) return;
+        
+        // Clear className for all nodes (original functionality)
+        setNodes((ns) => {
+            // First, clear className
+            let updatedNodes = ns.map((n) => ({ ...n, className: '' }));
+            
+            // Don't allow Security Realm nodes to be children
+            if (currentNode.type === 'securityRealmNode') {
+                updatedNodes = updatedNodes.map((n) => {
+                    if (n.id === node.id && n.parentId) {
+                        const { parentId, extent, ...rest } = n;
+                        // Convert relative position back to absolute
+                        const oldParent = currentNodes.find((p) => p.id === parentId);
+                        if (oldParent && oldParent.position) {
+                            return {
+                                ...rest,
+                                position: {
+                                    x: oldParent.position.x + node.position.x,
+                                    y: oldParent.position.y + node.position.y,
+                                },
+                            };
+                        }
+                        return rest;
+                    }
+                    return n;
+                });
+            } else {
+                // Find Security Realm nodes that the dragged node is intersecting with
+                // Use the node from React Flow state, not the parameter (which might have stale position)
+                const intersections = getIntersectingNodes(currentNode, true);
+                const securityRealmParent = intersections.find(
+                    (n) => n.type === 'securityRealmNode' && n.id !== node.id
+                );
+                
+                // Also check manually if getIntersectingNodes doesn't work properly
+                if (!securityRealmParent && currentNode.position) {
+                    // Get absolute position of dragged node
+                    let absX = currentNode.position.x;
+                    let absY = currentNode.position.y;
+                    if (currentNode.parentId) {
+                        const oldParent = currentNodes.find((p) => p.id === currentNode.parentId);
+                        if (oldParent && oldParent.position) {
+                            absX = oldParent.position.x + currentNode.position.x;
+                            absY = oldParent.position.y + currentNode.position.y;
+                        }
+                    }
+                    
+                    const manualCheck = currentNodes.find((n) => {
+                        if (n.type !== 'securityRealmNode' || n.id === node.id || !n.position || !n.width || !n.height) {
+                            return false;
+                        }
+                        // Check if node center or any part is within Security Realm bounds
+                        const nodeWidth = currentNode.width || 80;
+                        const nodeHeight = currentNode.height || 60;
+                        return (
+                            (absX >= n.position.x && absX <= n.position.x + n.width &&
+                             absY >= n.position.y && absY <= n.position.y + n.height) ||
+                            (absX + nodeWidth >= n.position.x && absX + nodeWidth <= n.position.x + n.width &&
+                             absY + nodeHeight >= n.position.y && absY + nodeHeight <= n.position.y + n.height) ||
+                            (absX + nodeWidth / 2 >= n.position.x && absX + nodeWidth / 2 <= n.position.x + n.width &&
+                             absY + nodeHeight / 2 >= n.position.y && absY + nodeHeight / 2 <= n.position.y + n.height)
+                        );
+                    });
+                    
+                    if (manualCheck) {
+                        const relativeX = absX - manualCheck.position.x;
+                        const relativeY = absY - manualCheck.position.y;
+                        
+                        updatedNodes = updatedNodes.map((n) => {
+                            if (n.id !== node.id) return n;
+                            return {
+                                ...n,
+                                parentId: manualCheck.id,
+                                position: { x: relativeX, y: relativeY },
+                                extent: 'parent' as const,
+                            };
+                        });
+                        const parents = updatedNodes.filter((n) => !n.parentId || n.type === 'securityRealmNode');
+                        const children = updatedNodes.filter((n) => n.parentId && n.type !== 'securityRealmNode');
+                        return [...parents, ...children];
+                    }
+                }
+
+                updatedNodes = updatedNodes.map((n) => {
+                    if (n.id !== node.id) return n;
+
+                    // If dragged node is over a Security Realm, set it as parent
+                    if (securityRealmParent) {
+                        const parentNode = currentNodes.find((p) => p.id === securityRealmParent.id);
+                        if (parentNode && parentNode.position && currentNode.position) {
+                            // Calculate absolute position of dragged node
+                            // Use currentNode.position which is the actual current position
+                            let absoluteX = currentNode.position.x;
+                            let absoluteY = currentNode.position.y;
+                            
+                            // If node already had a parent, the position is relative, so convert to absolute
+                            if (currentNode.parentId) {
+                                const oldParent = currentNodes.find((p) => p.id === currentNode.parentId);
+                                if (oldParent && oldParent.position) {
+                                    absoluteX = oldParent.position.x + currentNode.position.x;
+                                    absoluteY = oldParent.position.y + currentNode.position.y;
+                                }
+                            }
+                            
+                            // Calculate relative position to new parent
+                            const relativeX = absoluteX - parentNode.position.x;
+                            const relativeY = absoluteY - parentNode.position.y;
+                            
+                            return {
+                                ...n,
+                                parentId: securityRealmParent.id,
+                                position: {
+                                    x: relativeX,
+                                    y: relativeY,
+                                },
+                                extent: 'parent' as const,
+                            };
+                        }
+                    } else {
+                        // If not over a Security Realm, remove parentId if it exists
+                        if (n.parentId) {
+                            const { parentId, extent, ...rest } = n;
+                            // Convert relative position back to absolute
+                            const oldParent = currentNodes.find((p) => p.id === parentId);
+                            if (oldParent && oldParent.position && currentNode.position) {
+                                return {
+                                    ...rest,
+                                    position: {
+                                        x: oldParent.position.x + currentNode.position.x,
+                                        y: oldParent.position.y + currentNode.position.y,
+                                    },
+                                };
+                            }
+                            return rest;
+                        }
+                    }
+
+                    return n;
+                });
+            }
+            
+            // Ensure parents come before children in the array (React Flow requirement)
+            const parents = updatedNodes.filter((n) => !n.parentId || n.type === 'securityRealmNode');
+            const children = updatedNodes.filter((n) => n.parentId && n.type !== 'securityRealmNode');
+            return [...parents, ...children];
+        });
+    }, [getIntersectingNodes, setNodes, getNodes]);
 
 
 
