@@ -10,6 +10,8 @@ interface ToolbarProps {
   onSave?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onFitView?: () => void;
@@ -25,6 +27,8 @@ const Toolbar = ({
   onSave,
   onUndo,
   onRedo,
+  canUndo,
+  canRedo,
   onZoomIn,
   onZoomOut,
   onFitView,
@@ -134,11 +138,13 @@ const Toolbar = ({
         </button>
         <button
           onClick={onUndo}
-          className="p-2 rounded-md transition-colors"
+          disabled={!canUndo}
+          className="p-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ 
             color: 'var(--editor-text-secondary)',
           }}
           onMouseEnter={(e) => {
+            if ((e.currentTarget as HTMLButtonElement).disabled) return;
             e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
             e.currentTarget.style.color = 'var(--editor-text)';
           }}
@@ -152,11 +158,13 @@ const Toolbar = ({
         </button>
         <button
           onClick={onRedo}
-          className="p-2 rounded-md transition-colors"
+          disabled={!canRedo}
+          className="p-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ 
             color: 'var(--editor-text-secondary)',
           }}
           onMouseEnter={(e) => {
+            if ((e.currentTarget as HTMLButtonElement).disabled) return;
             e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
             e.currentTarget.style.color = 'var(--editor-text)';
           }}

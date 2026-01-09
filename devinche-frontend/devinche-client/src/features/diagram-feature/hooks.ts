@@ -21,6 +21,7 @@ import { NODE_DEFAULT_SIZE } from "./data/nodeSizes";
 import { exportDiagramToXML } from "./ui/exports/exportToXML";
 
 const STORAGE_KEY = 'diagram.flow';
+const STORAGE_PTR_KEY = 'diagram.flow.ptr';
 
 export const useDiagram = (): UseDiagramReturn => {
     const [nodes, setNodes] = useState<DiagramNode[]>(initialNodes);
@@ -29,45 +30,208 @@ export const useDiagram = (): UseDiagramReturn => {
     const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
     const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
-    const { screenToFlowPosition, getIntersectingNodes, getNodes } = useReactFlow();
+    const { screenToFlowPosition, getIntersectingNodes, getNodes, getEdges } = useReactFlow();
 
-    // load saved flow from storage
+    // History helpers (max 3 snapshots)
+    type Snapshot = ReactFlowJsonObject<DiagramNode, DiagramEdge>;
+
+    const readHistory = useCallback((): Snapshot[] => {
+        if (typeof window === 'undefined') return [];
+        try {
+            const raw = window.localStorage.getItem(STORAGE_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                return parsed as Snapshot[];
+            }
+            // migrate legacy single snapshot to array
+            return [parsed as Snapshot];
+        } catch (e) {
+            console.warn('Failed to parse history from storage', e);
+            return [];
+        }
+    }, []);
+
+    const readPtr = useCallback((): number => {
+        if (typeof window === 'undefined') return 0;
+        try {
+            const raw = window.localStorage.getItem(STORAGE_PTR_KEY);
+            const n = raw != null ? Number(raw) : NaN;
+            return Number.isFinite(n) ? n : 0;
+        } catch {
+            return 0;
+        }
+    }, []);
+
+    const writeHistory = useCallback((hist: Snapshot[], ptr: number) => {
+        if (typeof window === 'undefined') return;
+        try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(hist));
+            window.localStorage.setItem(String(STORAGE_PTR_KEY), String(ptr));
+        } catch (e) {
+            console.warn('Failed to write history to storage', e);
+        }
+    }, []);
+
+    // Normalize a snapshot for comparison (sort nodes/edges and keep only essential viewport fields)
+    const normalizeSnapshot = (snap: Snapshot) => {
+        const nodes = [...(snap.nodes ?? [])].sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)));
+        const edges = [...(snap.edges ?? [])].sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)));
+        const vp = snap.viewport as Viewport | undefined;
+        const viewport = vp ? { x: vp.x ?? 0, y: vp.y ?? 0, zoom: vp.zoom ?? 1 } : undefined;
+        return { nodes, edges, viewport };
+    };
+
+    const snapshotsEqual = (a?: Snapshot, b?: Snapshot) => {
+        if (!a || !b) return false;
+        try {
+            return JSON.stringify(normalizeSnapshot(a)) === JSON.stringify(normalizeSnapshot(b));
+        } catch {
+            return false;
+        }
+    };
+
+    const takeSnapshot = useCallback((overrideNodes?: DiagramNode[], overrideEdges?: DiagramEdge[]): Snapshot => {
+        if (rfInstance) {
+            const snapshot = rfInstance.toObject();
+            // If override nodes/edges are provided, use them instead (more up-to-date)
+            if (overrideNodes || overrideEdges) {
+                return {
+                    ...snapshot,
+                    nodes: overrideNodes ?? snapshot.nodes,
+                    edges: overrideEdges ?? snapshot.edges,
+                };
+            }
+            return snapshot;
+        }
+        // Fallback to state if rfInstance not available
+        return { nodes: overrideNodes ?? nodes, edges: overrideEdges ?? edges } as unknown as Snapshot;
+    }, [rfInstance, nodes, edges]);
+
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
+
+    const updateUndoRedoFlags = useCallback((hist?: Snapshot[], ptrIdx?: number) => {
+        const history = hist ?? readHistory();
+        const ptr = ptrIdx ?? readPtr();
+        setCanUndo(ptr > 0);
+        setCanRedo(ptr < history.length - 1);
+    }, [readHistory, readPtr]);
+
+    const pushSnapshot = useCallback((overrideNodes?: DiagramNode[], overrideEdges?: DiagramEdge[]) => {
+        const current = takeSnapshot(overrideNodes, overrideEdges);
+        let history = readHistory();
+        let ptr = readPtr();
+        // if we are not at the end, drop forward history
+        if (ptr < history.length - 1) {
+            history = history.slice(0, ptr + 1);
+        }
+        // avoid pushing duplicates
+        const last = history[history.length - 1];
+        if (last && snapshotsEqual(last, current)) {
+            updateUndoRedoFlags(history, ptr);
+            return;
+        }
+        // add and cap to last 3
+        history.push(current);
+        if (history.length > 3) {
+            history = history.slice(history.length - 3);
+        }
+        ptr = history.length - 1;
+        writeHistory(history, ptr);
+        updateUndoRedoFlags(history, ptr);
+    }, [readHistory, readPtr, takeSnapshot, writeHistory, updateUndoRedoFlags]);
+
+    const restoringRef = useRef(false);
+
+    const applySnapshot = useCallback((snap: Snapshot | undefined) => {
+        if (!snap) return;
+        restoringRef.current = true;
+        // Ensure we have valid arrays (not null/undefined)
+        const nextNodes = (Array.isArray(snap.nodes) ? snap.nodes : []) as DiagramNode[];
+        const nextEdges = (Array.isArray(snap.edges) ? snap.edges : []) as DiagramEdge[];
+        
+        // Validate node structure - ensure all nodes have required fields
+        const validNodes = nextNodes.filter((n) => n && n.id && n.type && n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number');
+        
+        // Validate edge structure - ensure all edges have required fields
+        const validEdges = nextEdges.filter((e) => e && e.id && e.source && e.target);
+        
+        setNodes(validNodes);
+        setEdges(validEdges);
+        const vp = snap.viewport as Viewport | undefined;
+        if (rfInstance && vp) {
+            const { x = 0, y = 0, zoom = 1 } = vp;
+            rfInstance.setViewport({ x, y, zoom });
+        }
+        // release the restoring flag on next tick to allow normal saves again
+        setTimeout(() => { restoringRef.current = false; }, 0);
+    }, [rfInstance]);
+
+    const undo = useCallback(() => {
+        let history = readHistory();
+        let ptr = readPtr();
+        if (ptr <= 0) return;
+        ptr -= 1;
+        writeHistory(history, ptr);
+        applySnapshot(history[ptr]);
+        updateUndoRedoFlags(history, ptr);
+    }, [applySnapshot, readHistory, readPtr, writeHistory, updateUndoRedoFlags]);
+
+    const redo = useCallback(() => {
+        let history = readHistory();
+        let ptr = readPtr();
+        if (ptr >= history.length - 1) return;
+        ptr += 1;
+        writeHistory(history, ptr);
+        applySnapshot(history[ptr]);
+        updateUndoRedoFlags(history, ptr);
+    }, [applySnapshot, readHistory, readPtr, writeHistory, updateUndoRedoFlags]);
+
+    // legacy single-snapshot loader retained for initial mount
     const loadSaved = useCallback((): ReactFlowJsonObject<DiagramNode, DiagramEdge> | null => {
         if (typeof window === 'undefined') return null;
         try {
             const raw = window.localStorage.getItem(STORAGE_KEY);
             if (!raw) return null;
-            return JSON.parse(raw) as ReactFlowJsonObject<DiagramNode, DiagramEdge>;
+            return JSON.parse(raw) as ReactFlowJsonObject<DiagramNode, DiagramEdge> | ReactFlowJsonObject<DiagramNode, DiagramEdge>[] as any;
         } catch (e) {
             console.warn('Failed to parse saved diagram from storage', e);
             return null;
         }
     }, []);
 
-    // persist flow to storage
-    const saveToStorage = useCallback(() => {
-        if (typeof window === 'undefined') return;
-        try {
-            if (rfInstance) {
-                const obj = rfInstance.toObject();
-                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-            } else {
-                const minimal: Partial<ReactFlowJsonObject<DiagramNode, DiagramEdge>> = { nodes, edges };
-                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal));
-            }
-        } catch (e) {
-            console.warn('Failed to save diagram to storage', e);
-        }
-    }, [rfInstance, nodes, edges]);
+    // persist flow to storage (push snapshot)
+    const saveToStorage = useCallback((overrideNodes?: DiagramNode[], overrideEdges?: DiagramEdge[]) => {
+        if (restoringRef.current) return; // avoid pushing while applying a snapshot
+        pushSnapshot(overrideNodes, overrideEdges);
+    }, [pushSnapshot]);
 
-    // On mount: load saved nodes/edges
+    // On mount: load saved nodes/edges (supports legacy object or history array)
     useEffect(() => {
         const saved = loadSaved();
         if (saved) {
-            if (saved.nodes) setNodes(saved.nodes as DiagramNode[]);
-            if (saved.edges) setEdges(saved.edges as DiagramEdge[]);
+            if (Array.isArray(saved)) {
+                const hist = saved as Snapshot[];
+                const ptr = Math.max(0, hist.length - 1);
+                writeHistory(hist, ptr);
+                applySnapshot(hist[ptr]);
+                updateUndoRedoFlags(hist, ptr);
+            } else {
+                const obj = saved as Snapshot;
+                // migrate legacy to history array with single snapshot
+                const hist = [obj];
+                const ptr = 0;
+                writeHistory(hist, ptr);
+                applySnapshot(obj);
+                updateUndoRedoFlags(hist, ptr);
+            }
+        } else {
+            // initialize history with initial state
+            const snap = takeSnapshot();
+            writeHistory([snap], 0);
+            updateUndoRedoFlags([snap], 0);
         }
-        // else keep initialNodes/initialEdges
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -136,17 +300,28 @@ export const useDiagram = (): UseDiagramReturn => {
     // Node change handler
     const onNodesChange = useCallback((changes: NodeChange[]) => {
         setNodes((nds) => applyNodeChanges(changes, nds) as DiagramNode[]);
-    }, []);
+        // push snapshot only for meaningful node changes like removal
+        if (changes.some((c) => c.type === 'remove')) {
+            setTimeout(() => {
+                saveToStorage();
+            }, 0);
+        }
+    }, [saveToStorage]);
 
     // Edge change handler
     const onEdgesChange = useCallback((changes: EdgeChange[]) => {
         setEdges((eds) => applyEdgeChanges(changes, eds) as DiagramEdge[]);
-    }, []);
+        // push snapshot for meaningful edge changes like removal
+        if (changes.some((c) => c.type === 'remove')) {
+            setTimeout(() => {
+                saveToStorage();
+            }, 0);
+        }
+    }, [saveToStorage]);
 
-    // Persist whenever nodes or edges change
-    useEffect(() => {
-        saveToStorage();
-    }, [nodes, edges, saveToStorage]);
+    // Snapshot policy: do NOT push on every change. We push on meaningful boundaries
+    // such as drag stop, connect, remove/add, drop, import, and viewport move end.
+    // This avoids duplicate or near-identical snapshots that break undo/redo UX.
 
     // Persist viewport when panning/zooming ends
     const onMoveEnd = useCallback((event: any, viewport: Viewport) => {
@@ -167,7 +342,11 @@ export const useDiagram = (): UseDiagramReturn => {
             markerEnd: { type: MarkerType.ArrowClosed, color: '#808080' },
         };
         setEdges((eds) => addEdge(newEdge, eds) as DiagramEdge[]);
-    }, [selectedEdgeType]);
+        // snapshot after connect
+        setTimeout(() => {
+            saveToStorage();
+        }, 0);
+    }, [selectedEdgeType, saveToStorage]);
 
     // Node context menu handler
     const onNodeContextMenu = useCallback(
@@ -225,15 +404,22 @@ export const useDiagram = (): UseDiagramReturn => {
         if (rfInstance) {
             rfInstance.setViewport({ x: 0, y: 0, zoom: 1 });
         }
-        // clear persisted cache as requested
+        // clear persisted cache & history
         if (typeof window !== 'undefined') {
             try {
                 window.localStorage.removeItem(STORAGE_KEY);
+                window.localStorage.removeItem(STORAGE_PTR_KEY);
             } catch (e) {
                 console.warn('Failed to clear cached diagram from storage', e);
             }
         }
-    }, [rfInstance]);
+        // re-init history with empty state
+        setTimeout(() => {
+            const snap = takeSnapshot();
+            writeHistory([snap], 0);
+            updateUndoRedoFlags([snap], 0);
+        }, 0);
+    }, [rfInstance, takeSnapshot, writeHistory, updateUndoRedoFlags]);
     
     // Separate onPaneClick, close menu
     const closeMenu = useCallback(() => {
@@ -324,8 +510,12 @@ export const useDiagram = (): UseDiagramReturn => {
             const children = updatedNodes.filter((n) => n.parentId && n.type !== 'securityRealmNode');
             return [...parents, ...children];
         });
+        // snapshot after drop
+        setTimeout(() => {
+            saveToStorage();
+        }, 0);
         }
-    }, [screenToFlowPosition, setNodes]);
+    }, [screenToFlowPosition, setNodes, saveToStorage]);
 
 
     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
@@ -363,13 +553,20 @@ export const useDiagram = (): UseDiagramReturn => {
                         const { parentId, extent, ...rest } = n;
                         // Convert relative position back to absolute
                         const oldParent = currentNodes.find((p) => p.id === parentId);
-                        if (oldParent && oldParent.position) {
+                        if (oldParent && oldParent.position && node.position) {
                             return {
                                 ...rest,
                                 position: {
                                     x: oldParent.position.x + node.position.x,
                                     y: oldParent.position.y + node.position.y,
                                 },
+                            };
+                        }
+                        // If parent doesn't exist or has no position, keep current position
+                        if (node.position) {
+                            return {
+                                ...rest,
+                                position: node.position,
                             };
                         }
                         return rest;
@@ -494,9 +691,23 @@ export const useDiagram = (): UseDiagramReturn => {
             // Ensure parents come before children in the array (React Flow requirement)
             const parents = updatedNodes.filter((n) => !n.parentId || n.type === 'securityRealmNode');
             const children = updatedNodes.filter((n) => n.parentId && n.type !== 'securityRealmNode');
-            return [...parents, ...children];
+            const finalNodes = [...parents, ...children];
+            
+            // Save snapshot with the updated nodes to ensure we capture the latest state
+            // Use a longer timeout to ensure React Flow has processed the update
+            // Get the latest nodes and edges from React Flow to ensure we have the most up-to-date state
+            setTimeout(() => {
+                const latestNodes = getNodes();
+                const latestEdges = getEdges();
+                // Validate that we have valid data before saving
+                if (latestNodes && latestNodes.length >= 0 && latestEdges && Array.isArray(latestEdges)) {
+                    saveToStorage(latestNodes as DiagramNode[], latestEdges as DiagramEdge[]);
+                }
+            }, 100);
+            
+            return finalNodes;
         });
-    }, [getIntersectingNodes, setNodes, getNodes]);
+    }, [getIntersectingNodes, setNodes, getNodes, getEdges, saveToStorage]);
 
 
 
@@ -528,6 +739,10 @@ export const useDiagram = (): UseDiagramReturn => {
         onDrop,
         onNodeDrag,
         onNodeDragStop,
+        onUndo: undo,
+        onRedo: redo,
+        canUndo,
+        canRedo,
     };
 };
 
