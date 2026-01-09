@@ -68,6 +68,10 @@ const DiagramScreenContent = () => {
     onDrop,
     onNodeDrag,
     onNodeDragStop,
+    onUndo,
+    onRedo,
+    canUndo,
+    canRedo,
   } = useDiagram();
 
 
@@ -121,6 +125,10 @@ const DiagramScreenContent = () => {
     <div className="relative w-screen h-screen">
       <Toolbar
         onSave={handleSave}
+        onUndo={onUndo}
+        onRedo={onRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
