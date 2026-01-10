@@ -62,7 +62,7 @@ export interface UseDiagramReturn {
   onDrop: (event: React.DragEvent) => void;
   onDragOver: (event: React.DragEvent) => void;
   onNodeDrag: (event: React.MouseEvent, node: Node) => void;
-  onNodeDragStop: () => void;
+  onNodeDragStop: (event: React.MouseEvent, node: Node) => void;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;

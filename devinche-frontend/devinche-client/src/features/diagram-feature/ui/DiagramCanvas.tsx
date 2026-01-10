@@ -37,7 +37,7 @@ interface DiagramCanvasProps {
   onDragOver: (event: React.DragEvent) => void;
   onDrop: (event: React.DragEvent) => void;
   onNodeDrag: (event: React.MouseEvent, node: Node) => void;
-  onNodeDragStop: () => void;
+  onNodeDragStop: (event: React.MouseEvent, node: Node) => void;
 }
 
 

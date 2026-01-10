@@ -1,15 +1,41 @@
-import { BaseEdge, getEdgeCenter, getSimpleBezierPath } from '@xyflow/react'
+import { BaseEdge, getEdgeCenter, getStraightPath } from '@xyflow/react'
 import type { EdgeProps } from '@/types/diagram'
 import React from 'react'
 
-const TrustEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }: EdgeProps) => {
-    const [d] = getSimpleBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition })
-    const [centerX, centerY] = getEdgeCenter({
-        sourceX,
-        sourceY,
-        targetX,
-        targetY,
-    });
+const TrustEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data }: EdgeProps) => {
+    // Check if edge should be step (90-degree) or straight
+    const isStep = data?.isStep === true;
+    
+    let d: string;
+    let centerXLabel: number;
+    let centerYLabel: number;
+    
+    if (isStep) {
+        // Create 90-degree step path: vertical first, then horizontal, then vertical
+        const centerX = (sourceX + targetX) / 2;
+        const centerY = (sourceY + targetY) / 2;
+        d = `M ${sourceX} ${sourceY} L ${sourceX} ${centerY} L ${targetX} ${centerY} L ${targetX} ${targetY}`;
+        [centerXLabel, centerYLabel] = getEdgeCenter({
+            sourceX,
+            sourceY,
+            targetX,
+            targetY,
+        });
+    } else {
+        // Straight path
+        [d] = getStraightPath({ 
+            sourceX, 
+            sourceY, 
+            targetX, 
+            targetY
+        });
+        [centerXLabel, centerYLabel] = getEdgeCenter({
+            sourceX,
+            sourceY,
+            targetX,
+            targetY,
+        });
+    }
     
     const markerId = `trust-arrow-${id}`;
     
@@ -20,10 +46,10 @@ const TrustEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, tar
                     id={markerId}
                     markerWidth="10"
                     markerHeight="7"
-                    refX="10"
+                    refX="9"
                     refY="3.5"
                     orient="auto"
-                    markerUnits="strokeWidth"
+                    markerUnits="userSpaceOnUse"
                 >
                     <polygon points="0 0, 10 3.5, 0 7" fill="#000" />
                 </marker>
@@ -36,8 +62,8 @@ const TrustEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, tar
             />
             {/* Dark gray label above the arrow */}
             <text
-                x={centerX}
-                y={centerY - 10}
+                x={centerXLabel}
+                y={centerYLabel - 10}
                 textAnchor="middle"
                 className="pointer-events-none select-none"
                 style={{ 
