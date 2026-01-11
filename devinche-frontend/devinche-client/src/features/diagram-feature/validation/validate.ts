@@ -27,7 +27,11 @@ export function validate(diagramState: string | null): string[] {
     const { nodes, edges } = diagramJson;
     const errors: string[] = [];
 
-
+    for (const node of nodes) {
+        if(node.type === "securityRealmNode") {
+            errors.push(...checkSecurityRealmChildren(node, nodes))
+        }
+    }
     for (const edge of edges) {
         const sourceNode = nodes.find(node => node.id === edge.source);
         const targetNode = nodes.find(node => node.id === edge.target);
@@ -35,7 +39,6 @@ export function validate(diagramState: string | null): string[] {
             errors.push(`Source or target node not found for edge ${edge.id}.`);
             continue;
         }
-
         if(sourceNode.type === 'identityProviderNode' || targetNode.type === 'identityProviderNode') {
             errors.push(`Invalid use of Identity Provider node in edge from ${sourceNode?.id} to ${targetNode?.id}.`);
         }
@@ -48,44 +51,46 @@ export function validate(diagramState: string | null): string[] {
         if(edge.type === 'legacy') {
             errors.push(...checkLegacyRelationships(sourceNode, targetNode));
         }
-        // TODO: Add Realm Contains validation
-
     }
     return errors;
 }
 
+const checkSecurityRealmChildren = (sourceNode: DiagramNode, nodes: DiagramNode[]): string[] => {
+    const errors: string[] = [];
+    for(const node of nodes) {
+        if(node.parentId === sourceNode.id) {
+            return []
+        }
+    }
+    return [`Invalide Security Realm ${sourceNode.id}.`]
+}
+
 const checkTrustRelationships = (sourceNode: DiagramNode, targetNode: DiagramNode): string[] => {
     const errors: string[] = [];
-
     const validSourceTypes = ['securityRealmNode'];
     const validTargetTypes = ['securityRealmNode'];
     if (!validSourceTypes.includes(sourceNode.type) || !validTargetTypes.includes(targetNode.type)) {
         errors.push(`Invalide Trust relationship from ${sourceNode?.id} to ${targetNode?.id}.`);
     }
-
     return errors;
 }
 
 const checkInvocationRelationships = (sourceNode: DiagramNode, targetNode: DiagramNode): string[] => {
     const errors: string[] = [];
-
     const validSourceTypes = ['applicationNode', 'serviceNode'];
     const validTargetTypes = ['serviceNode'];
     if (!validSourceTypes.includes(sourceNode.type) || !validTargetTypes.includes(targetNode.type)) {
         errors.push(`Invalide Invocation relationship from ${sourceNode?.id} to ${targetNode?.id}.`);
     }
-
     return errors
 }
 
 const checkLegacyRelationships = (sourceNode: DiagramNode, targetNode: DiagramNode): string[] => {
     const errors: string[] = [];
-
     const validSourceTypes = ['applicationNode', 'serviceNode'];
     const validTargetTypes = ['dataProviderNode', 'dataProcessorNode'];
     if (!validSourceTypes.includes(sourceNode.type) || !validTargetTypes.includes(targetNode.type)) {
         errors.push(`Invalide Legacy Connection from ${sourceNode?.id} to ${targetNode?.id}.`);
     }
-
     return errors
 }
