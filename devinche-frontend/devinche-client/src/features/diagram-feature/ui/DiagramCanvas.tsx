@@ -38,6 +38,7 @@ interface DiagramCanvasProps {
   onDrop: (event: React.DragEvent) => void;
   onNodeDrag: (event: React.MouseEvent, node: Node) => void;
   onNodeDragStop: (event: React.MouseEvent, node: Node) => void;
+  onNodeClick?: (event: React.MouseEvent, node: Node) => void;
 }
 
 
@@ -63,6 +64,7 @@ const DiagramCanvas = ({
   onDrop,
   onNodeDrag,
   onNodeDragStop,
+  onNodeClick,
 }: DiagramCanvasProps) => {
     
   return (
@@ -79,6 +81,7 @@ const DiagramCanvas = ({
         onEdgeContextMenu={onEdgeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
+        onNodeClick={onNodeClick}
         connectionMode={ConnectionMode.Loose}
         fitView
         onInit={onFlowInit}

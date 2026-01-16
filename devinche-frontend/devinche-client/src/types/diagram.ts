@@ -15,6 +15,9 @@ export interface DiagramNode extends Node {
 // Node data structure
 export interface NodeData {
   label?: string | null;
+  name?: string;
+  type?: string;
+  cost?: number | string;
   [key: string]: any;
 }
 
@@ -67,6 +70,9 @@ export interface UseDiagramReturn {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  selectedNode: DiagramNode | null;
+  onNodeClick: (event: React.MouseEvent, node: Node) => void;
+  onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
 }
 
 // Node component props
