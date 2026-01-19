@@ -18,6 +18,7 @@ import Legacy from './ui/edges/Legacy';
 // import Exports from './ui/exports/Exports';
 import Toolbar from './ui/toolbar/Toolbar';
 import PalettePanel from './ui/palette/PalettePanel';
+import PropertiesPanel from './ui/properties/PropertiesPanel';
 import { useCallback, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import ValidationError from './validation/ValidationError';
@@ -72,6 +73,9 @@ const DiagramScreenContent = () => {
     onRedo,
     canUndo,
     canRedo,
+    selectedNode,
+    onNodeClick,
+    onUpdateNode,
   } = useDiagram();
 
 
@@ -164,10 +168,17 @@ const DiagramScreenContent = () => {
         onDrop={onDrop}
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
+        onNodeClick={onNodeClick}
       />
       <PalettePanel 
         selectedEdgeType={selectedEdgeType}
         onEdgeTypeSelect={setSelectedEdgeType}
+      />
+      <PropertiesPanel
+        selectedNode={selectedNode}
+        onUpdateNode={onUpdateNode}
+        onClose={onPaneClick}
+        isOpen={selectedNode !== null}
       />
     </div>
   );

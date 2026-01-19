@@ -13,6 +13,7 @@ const SecurityRealmNode = ({
   const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
   const fillColor = "var(--editor-surface)";
   const fixedStrokeWidth = 3;
+  const hasName = data.name && data.name.trim();
 
   return (
     <div 
@@ -59,7 +60,7 @@ const SecurityRealmNode = ({
       </svg>
 
       <div
-        className="absolute inset-0 flex items-start justify-end pointer-events-none"
+        className="absolute inset-0 flex flex-col items-start justify-end pointer-events-none"
         style={{
           color: textColor,
           fontSize: "10px", 
@@ -73,13 +74,15 @@ const SecurityRealmNode = ({
           className="flex items-center justify-center text-center"
           style={{
             width: "50px",
-            height: "50px",
+            minHeight: "50px",
             lineHeight: "1.1",
           }}
         >
-          <span className="break-words line-clamp-3 w-full pr-2 mb-2">
-            {data.label}
-          </span>
+          {hasName && (
+            <span className="break-words line-clamp-3 w-full pr-2 font-medium">
+              {data.name}
+            </span>
+          )}
         </div>
       </div>
 

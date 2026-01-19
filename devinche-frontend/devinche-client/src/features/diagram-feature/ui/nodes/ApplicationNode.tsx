@@ -5,6 +5,7 @@ const ApplicationNode = ({ data, selected }: NodeProps) => {
   const strokeColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
   const fillColor = "var(--editor-surface)";
   const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
+  const hasName = data.name && data.name.trim();
 
   return (
     <div className="relative w-full h-full">
@@ -44,7 +45,7 @@ const ApplicationNode = ({ data, selected }: NodeProps) => {
           fill={fillColor}
           vectorEffect="non-scaling-stroke"
         />
-        {data.label && (
+        {hasName && data.name && (
           <text
             x="50%"
             y="50%"
@@ -52,9 +53,9 @@ const ApplicationNode = ({ data, selected }: NodeProps) => {
             fill={textColor}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="pointer-events-none select-none"
+            className="pointer-events-none select-none font-medium"
           >
-            {data.label}
+            {data.name.length > 15 ? `${data.name.substring(0, 15)}...` : data.name}
           </text>
         )}
       </svg>

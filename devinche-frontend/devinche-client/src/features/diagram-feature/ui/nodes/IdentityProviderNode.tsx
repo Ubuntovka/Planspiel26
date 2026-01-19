@@ -5,11 +5,11 @@ const IdentityProviderNode = ({ data, selected }: NodeProps) => {
   const strokeColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
   const fillColor = "var(--editor-surface)";
   const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
-
-  const labelLength = data.label?.length || 0;
+  const hasName = data.name && data.name.trim();
+  const nameLength = hasName && data.name ? data.name.length : 0;
   const fontSize =
-    labelLength > 10
-      ? `clamp(8px, ${Math.max(4, 10 - (labelLength - 10) * 0.3)}cqw, 40px)`
+    nameLength > 10
+      ? `clamp(8px, ${Math.max(4, 10 - (nameLength - 10) * 0.3)}cqw, 40px)`
       : "clamp(14px, 12cqw, 60px)";
   return (
     <div
@@ -60,7 +60,11 @@ const IdentityProviderNode = ({ data, selected }: NodeProps) => {
           paddingRight: "10%",
         }}
       >
-        <span className="break-words leading-tight w-full">{data.label}</span>
+        {hasName && (
+          <span className="break-words leading-tight w-full font-medium overflow-hidden text-ellipsis line-clamp-2" style={{ maxWidth: '100%' }}>
+            {data.name}
+          </span>
+        )}
       </div>
     </div>
   );
