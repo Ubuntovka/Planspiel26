@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import config from './config/config';
 
 import exampleRoutes from './api/routes/exampleRoutes';
+import userRoutes from './api/routes/userRoutes';
 import errorHandler from './middleware/error.middleware';
 
 const app: Application = express();
@@ -20,6 +21,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api', exampleRoutes);
+app.use('/api/users/', userRoutes);
 
 // Errors
 app.use(errorHandler);
