@@ -1,0 +1,98 @@
+import User from '../../models/User'
+import {IUser} from '../../models/User'
+
+export const registerUser = async (user: Partial<IUser>) => {
+    const {username, email, password, firstName, lastName} = user
+    if (!username || !email || !password || !firstName || !lastName) {
+        return {
+            error: 'Please provide all the required fields',
+        }
+    }
+    if (password.length < 8) {
+        return {error: 'Password must be at least 8 characters long'};
+    }
+    const existingUser = await User.findOne({$or: [{email}, {username}]})
+    if (existingUser) {
+        return {
+            error: 'User with that email or username already exists.',
+        }
+    }
+    try {
+        const newUser = new User({username, email, password, firstName, lastName})
+        await newUser.save()
+        const token = await newUser.generateAuthToken()
+        return {
+            user: newUser,
+            token,
+        }
+    } catch (err: any) {
+        return { error: err.message || 'Failed to register user' }
+    }
+}
+
+export const loginUser = async (user: Partial<IUser>) => {
+    const {email, password} = user
+    if (!email || !password) {
+        return {
+            error: 'Please provide all the required fields',
+        }
+    }
+    const existingUser = await User.findByCredentials(email, password)
+    if (!existingUser) {
+        return { error: 'Invalid email or password' }
+    }
+    existingUser.lastLoginDate = new Date()
+    await existingUser.save()
+    const token = await existingUser.generateAuthToken()
+    return {
+        user: existingUser,
+        token,
+    }
+}
+
+export const updateUser = async (userId: string, oldPassword: string | undefined, updates: Partial<IUser>) => {
+    const allowedUpdates = ['username', 'email', 'password', 'firstName', 'lastName', 'pictureUrl', 'preferredLanguage']
+    const updateFields = Object.keys(updates)
+
+    if (!oldPassword || oldPassword.trim() === '') {
+        return {error: 'Please provide password.'}
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+        return {error: 'User not found.'}
+    }
+
+    const isValid = await User.findByCredentials(user.email, oldPassword)
+    if (!isValid) {
+        return {error: 'Wrong password'}
+    }
+
+    let updated = false
+
+    updateFields.forEach((field) => {
+        const value = (updates as any)[field]
+        if (allowedUpdates.includes(field) && value !== '' && value !== undefined) {
+            ;(user as any)[field] = value
+            updated = true
+        }
+    })
+
+    if (!updated) {
+        return {error: 'No data found.'}
+    }
+
+    await user.save()
+    return {user}
+}
+
+export const deleteUser = async (userId: string) => {
+
+    const user = await User.findById(userId)
+    if (!user) {
+        return {error: 'User not found.'}
+    }
+
+    await user.deleteOne();
+    return {user}
+}

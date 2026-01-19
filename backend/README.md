@@ -18,6 +18,7 @@ An example file is provided at `backend/.env.example`. This file is only an exam
 
 - Required variables:
   - `MONGODB_URI` — connection string for your MongoDB instance
+  - `JWT_KEY` — secret used to sign JWT access tokens (keep it long and random)
 - Optional variables:
   - `NODE_ENV` — defaults to `development`
   - `PORT` — defaults to `3000`
@@ -27,9 +28,11 @@ Example `.env` (you can paste this into `backend/.env` and adjust):
 NODE_ENV=development
 PORT=3000
 MONGODB_URI=mongodb://localhost:27017/devinche
+JWT_KEY=replace-with-a-long-random-secret
 ```
 Notes:
 - If `MONGODB_URI` is missing, the app will throw an error during startup when loading config.
+- If `JWT_KEY` is missing, auth will fail with 500 when trying to issue tokens.
 
 ## 3) Start the backend server
 Run from the `backend` folder:
