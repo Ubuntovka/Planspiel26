@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Tag, DollarSign, Type as TypeIcon, Calculator } from 'lucide-react';
+import { X, Save, Tag, Euro, Type as TypeIcon, Calculator } from 'lucide-react';
 import type { DiagramNode, NodeData } from '@/types/diagram';
 
 interface PropertiesPanelProps {
@@ -160,7 +160,7 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
             <span className="text-xs font-bold uppercase tracking-wider">Total Project Cost</span>
           </div>
           <span className="text-sm font-mono font-bold" style={{ color: 'var(--editor-text)' }}>
-            {totalCost.toLocaleString()}
+            {totalCost.toLocaleString()}€
           </span>
         </div>
       </div>
@@ -277,7 +277,7 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
               className="flex items-center gap-2 text-xs font-medium mb-2.5"
               style={{ color: 'var(--editor-text-secondary)' }}
             >
-              <DollarSign size={14} />
+              <Euro size={14} />
               <span className="uppercase tracking-wide">Cost</span>
             </label>
             <input
