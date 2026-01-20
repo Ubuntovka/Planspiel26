@@ -179,6 +179,7 @@ const DiagramScreenContent = () => {
         onUpdateNode={onUpdateNode}
         onClose={onPaneClick}
         isOpen={selectedNode !== null}
+        allNodes={nodes}
       />
     </div>
   );

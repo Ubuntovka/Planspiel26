@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Tag, DollarSign, Type as TypeIcon } from 'lucide-react';
+import { X, Save, Tag, DollarSign, Type as TypeIcon, Calculator } from 'lucide-react';
 import type { DiagramNode, NodeData } from '@/types/diagram';
 
 interface PropertiesPanelProps {
@@ -7,13 +7,22 @@ interface PropertiesPanelProps {
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
   onClose: () => void;
   isOpen: boolean;
+  allNodes: DiagramNode[];
 }
 
-const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: PropertiesPanelProps) => {
+const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes }: PropertiesPanelProps) => {
   const [name, setName] = useState<string>('');
   const [type, setType] = useState<string>('');
   const [cost, setCost] = useState<string>('');
   const [isDirty, setIsDirty] = useState<boolean>(false);
+
+  // 1. Total Cost Calculation
+  const totalCost = allNodes.reduce((sum, node) => {
+    const cost = node.data?.cost;
+    const numericCost = typeof cost === 'number' ? cost : parseFloat(cost || '0');
+    return sum + (isNaN(numericCost) ? 0 : numericCost);
+  }, 0);
+
 
   useEffect(() => {
     if (selectedNode) {
@@ -91,12 +100,13 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
       >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-6 py-5"
+        className="flex flex-col px-6 py-5 gap-4"
         style={{
           borderBottom: '1px solid var(--editor-border)',
           backgroundColor: 'var(--editor-surface)',
         }}
       >
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
             className="p-2 rounded-lg"
@@ -136,6 +146,25 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
           <X size={20} />
         </button>
       </div>
+
+        {/* Total Cost */}
+        <div 
+          className="flex items-center justify-between px-4 py-2.5 rounded-lg" 
+          style={{ 
+            backgroundColor: 'rgba(13, 110, 253, 0.08)', 
+            border: '1px dashed var(--editor-accent)' 
+          }}
+        >
+          <div className="flex items-center gap-2" style={{ color: 'var(--editor-accent)' }}>
+            <Calculator size={14} />
+            <span className="text-xs font-bold uppercase tracking-wider">Total Project Cost</span>
+          </div>
+          <span className="text-sm font-mono font-bold" style={{ color: 'var(--editor-text)' }}>
+            {totalCost.toLocaleString()}
+          </span>
+        </div>
+      </div>
+      
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
