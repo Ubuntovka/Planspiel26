@@ -18,7 +18,6 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
   const [showDetails, setShowDetails] = useState<boolean>(false);
   const [extraData, setExtraData] = useState<Record<string, string>>({});
 
-
   // Total Cost Calculation
   const costSummary = useMemo(() => {
     const nodesWithCost = allNodes
