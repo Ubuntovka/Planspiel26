@@ -16,6 +16,8 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
   const [cost, setCost] = useState<string>('');
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [showDetails, setShowDetails] = useState<boolean>(false);
+  const [extraData, setExtraData] = useState<Record<string, string>>({});
+
 
   // Total Cost Calculation
   const costSummary = useMemo(() => {
@@ -43,11 +45,13 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
       setName(selectedNode.data.name || '');
       setType(selectedNode.data.type || '');
       setCost(selectedNode.data.cost?.toString() || '');
+      setExtraData(selectedNode.data.extra || {});
       setIsDirty(false);
     } else {
       setName('');
       setType('');
       setCost('');
+      setExtraData({});
       setIsDirty(false);
     }
   }, [selectedNode]);
@@ -70,6 +74,11 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
     setIsDirty(nameChanged || typeChanged || costChanged);
   }, [name, type, cost, selectedNode]);
 
+  const handleExtraChange = (key: string, value: string) => {
+    setExtraData(prev => ({ ...prev, [key]: value }));
+    setIsDirty(true);
+  };
+
   const handleSave = () => {
     if (!selectedNode || !isDirty) return;
     
@@ -77,6 +86,7 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
       name: name.trim() || undefined,
       type: type.trim() || undefined,
       cost: cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined,
+      extra: extraData,
     };
 
     onUpdateNode(selectedNode.id, updatedData);
@@ -224,6 +234,23 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
             onSave={handleSave} 
             placeholder="Enter amount (e.g. 500)" 
           />
+
+          {ADDITIONAL_FIELDS[selectedNode.type] && (
+          <div className="pt-5 space-y-5 border-t border-(--editor-border)">
+            {ADDITIONAL_FIELDS[selectedNode.type].map((field) => (
+              <PropertyInput
+                key={field.key}
+                label={field.label}
+                icon={field.icon}
+                value={extraData[field.key] || ''}
+                onChange={(val: string) => handleExtraChange(field.key, val)}
+                onSave={handleSave}
+                placeholder={`${field.label}...`}
+              />
+            ))}
+          </div>
+        )}
+
         </div>
 
         {/* Footer Section */}
@@ -262,5 +289,34 @@ const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder }: an
     />
   </div>
 );
+
+// Additional Fields Configuration Based on Node Type
+const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any; placeholder?: string }[]> = {
+  // Application Context
+  applicationNode: [
+    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Base URL (e.g. https://...)' },
+    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'X509 key identifier' },
+    { label: 'Sign-In Support', key: 'signInSupport', icon: <Calculator size={14} />, placeholder: 'Boolean (true/false)' },
+    { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes before invalid' }
+  ],
+  
+  // Web Service Context
+  serviceNode: [
+    // { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Service base URL' },
+    // { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'Service certificate ID' }
+  ],
+  
+  // Realm Context
+  securityRealmNode: [
+    // { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'STS base URL' },
+    // { label: 'Allocate IP', key: 'allocateIP', icon: <TypeIcon size={14} />, placeholder: 'IDP redirect URL' }
+  ],
+  
+  // Identity Provider Context
+  identityProviderNode: [
+    // { label: 'Accounts', key: 'accounts', icon: <Tag size={14} />, placeholder: 'Set of accounts' },
+    // { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes at IP' }
+  ]
+};
 
 export default PropertiesPanel;
