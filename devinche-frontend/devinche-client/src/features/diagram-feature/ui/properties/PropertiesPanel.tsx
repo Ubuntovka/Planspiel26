@@ -20,15 +20,21 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
   // Total Cost Calculation
   const costSummary = useMemo(() => {
     const nodesWithCost = allNodes
-      .map(node => ({
-        id: node.id,
-        name: node.data?.name || 'Unnamed Node',
-        cost: typeof node.data?.cost === 'number' ? node.data.cost : parseFloat(node.data?.cost || '0')
-      }))
+      .map(node => {
+        const rawCost = node.data?.cost;
+        const numericCost = typeof rawCost === 'number' 
+          ? rawCost 
+          : parseFloat(String(rawCost || '0').replaceAll(',', ''));
+        
+        return {
+          id: node.id,
+          name: node.data?.name || 'Unnamed Node',
+          cost: numericCost
+        };
+      })
       .filter(item => !isNaN(item.cost) && item.cost > 0);
 
     const total = nodesWithCost.reduce((sum, item) => sum + item.cost, 0);
-    
     return { nodesWithCost, total };
   }, [allNodes]);
 
@@ -111,53 +117,69 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
                 <p className="text-xs text-(--editor-text-secondary)">Edit node details</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-lg text-(--editor-text-secondary) hover:bg-(--editor-surface-hover)">
+            <button onClick={onClose} className="p-2 rounded-lg text-(--editor-text-secondary) hover:bg-(--editor-surface-hover) cursor-pointer">
               <X size={20} />
             </button>
           </div>
 
           {/* Total Project Cost Section */}
-          <div className="flex flex-col overflow-hidden rounded-lg border border-dashed border-(--editor-accent) bg-[rgba(13,110,253,0.05)]">
-            <button 
-              onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center justify-between px-4 py-3 hover:bg-[rgba(13,110,253,0.08)] transition-colors w-full"
-            >
-              <div className="flex items-center gap-2 text-(--editor-accent)">
-                <Calculator size={14} />
-                <span className="text-xs font-bold uppercase tracking-wider">Total Project Cost</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-mono font-bold text-(--editor-text)">
-                  {costSummary.total.toLocaleString()}€
-                </span>
-                {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </div>
-            </button>
+          <div 
+  className={`flex flex-col overflow-hidden rounded-lg border transition-all duration-200 ${
+    showDetails 
+      ? 'border-(--editor-accent) bg-[rgba(13,110,253,0.05)]' 
+      : 'border-(--editor-border) bg-(--editor-surface)'
+  }`}
+>
+  <button 
+    onClick={() => setShowDetails(!showDetails)}
+    className={`flex items-center justify-between px-4 py-3 transition-colors w-full cursor-pointer ${
+      showDetails 
+        ? 'hover:bg-[rgba(13,110,253,0.08)]' 
+        : 'hover:bg-(--editor-surface-hover)'
+    }`}
+  >
+    <div className={`flex items-center gap-2 transition-colors ${
+      showDetails ? 'text-(--editor-accent)' : 'text-(--editor-text)'
+    }`}>
+      <Calculator size={14} />
+      <span className="text-xs font-bold uppercase tracking-wider">Total Project Cost</span>
+    </div>
+    <div className="flex items-center gap-2">
+      <span className={`text-sm font-mono font-bold transition-colors ${
+        showDetails ? 'text-(--editor-text)' : 'text-(--editor-text-secondary)'
+      }`}>
+        {costSummary.total.toLocaleString()}€
+      </span>
+      <div className={showDetails ? 'text-(--editor-accent)' : 'text-(--editor-text-secondary)'}>
+        {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </div>
+    </div>
+  </button>
 
-            {/* Toggle Cost Detail */}
-            {showDetails && (
-              <div className="px-4 pb-3 max-h-48 overflow-y-auto custom-scrollbar border-t border-dashed border-[var(--editor-accent)]/30">
-                <ul className="pt-2 space-y-2">
-                  {costSummary.nodesWithCost.length > 0 ? (
-                    costSummary.nodesWithCost.map((item) => (
-                      <li key={item.id} className="flex justify-between items-center text-[11px]">
-                        <span className="text-(--editor-text-secondary) truncate pr-2 max-w-[180px]">
-                          {item.name}
-                        </span>
-                        <span className="font-mono text-(--editor-text) shrink-0">
-                          {item.cost.toLocaleString()}€
-                        </span>
-                      </li>
-                    ))
-                  ) : (
-                    <li className="text-[11px] text-center py-2 text-(--editor-text-secondary) italic">
-                      No costs assigned yet
-                    </li>
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
+  {/* Toggle Cost Detail */}
+  {showDetails && (
+    <div className="px-4 pb-3 max-h-48 overflow-y-auto custom-scrollbar border-t border-(--editor-accent)/20">
+      <ul className="pt-2 space-y-2">
+        {costSummary.nodesWithCost.length > 0 ? (
+          costSummary.nodesWithCost.map((item) => (
+            <li key={item.id} className="flex justify-between items-center text-[11px]">
+              <span className="text-(--editor-text-secondary) truncate pr-2 max-w-[180px]">
+                {item.name}
+              </span>
+              <span className="font-mono text-(--editor-text) shrink-0">
+                {item.cost.toLocaleString()}€
+              </span>
+            </li>
+          ))
+        ) : (
+          <li className="text-[11px] text-center py-2 text-(--editor-text-secondary) italic">
+            No costs assigned yet
+          </li>
+        )}
+      </ul>
+    </div>
+  )}
+</div>
         </div>
 
         {/* Content Section (Scrollable) */}
