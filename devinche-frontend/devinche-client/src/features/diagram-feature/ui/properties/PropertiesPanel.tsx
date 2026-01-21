@@ -301,14 +301,17 @@ const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any;
   
   // Web Service Context
   serviceNode: [
-    // { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Service base URL' },
-    // { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'Service certificate ID' }
+    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Service endpoint URL' },
+    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'Service certificate ID' },
+    { label: 'Valid protocols', key: 'protocols', icon: <Tag size={14} />, placeholder: 'Valid service protocol' },
+    { label: 'Authentication Type', key: 'authenticationType', icon: <Tag size={14} />, placeholder: 'Authentication type for service' }
   ],
   
   // Realm Context
   securityRealmNode: [
-    // { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'STS base URL' },
-    // { label: 'Allocate IP', key: 'allocateIP', icon: <TypeIcon size={14} />, placeholder: 'IDP redirect URL' }
+    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'STS base URL' },
+    { label: 'Allocate IP', key: 'allocateIP', icon: <TypeIcon size={14} />, placeholder: 'IDP redirect URL' },
+    { label: 'Encryption Type', key: 'encryptionType', icon: <TypeIcon size={14} />, placeholder: 'e.g., AES, RSA' }
   ],
   
   // Identity Provider Context
