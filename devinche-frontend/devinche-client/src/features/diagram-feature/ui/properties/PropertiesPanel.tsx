@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Save, Tag, DollarSign, Type as TypeIcon } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { X, Save, Tag, Euro, Type as TypeIcon, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 import type { DiagramNode, NodeData } from '@/types/diagram';
 
 interface PropertiesPanelProps {
@@ -7,24 +7,50 @@ interface PropertiesPanelProps {
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
   onClose: () => void;
   isOpen: boolean;
+  allNodes: DiagramNode[];
 }
 
-const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: PropertiesPanelProps) => {
+const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes }: PropertiesPanelProps) => {
   const [name, setName] = useState<string>('');
   const [type, setType] = useState<string>('');
   const [cost, setCost] = useState<string>('');
   const [isDirty, setIsDirty] = useState<boolean>(false);
+  const [showDetails, setShowDetails] = useState<boolean>(false);
+  const [extraData, setExtraData] = useState<Record<string, string>>({});
+
+  // Total Cost Calculation
+  const costSummary = useMemo(() => {
+    const nodesWithCost = allNodes
+      .map(node => {
+        const rawCost = node.data?.cost;
+        const numericCost = typeof rawCost === 'number' 
+          ? rawCost 
+          : parseFloat(String(rawCost || '0').replaceAll(',', ''));
+        
+        return {
+          id: node.id,
+          name: node.data?.name || 'Unnamed Node',
+          cost: numericCost
+        };
+      })
+      .filter(item => !isNaN(item.cost) && item.cost > 0);
+
+    const total = nodesWithCost.reduce((sum, item) => sum + item.cost, 0);
+    return { nodesWithCost, total };
+  }, [allNodes]);
 
   useEffect(() => {
     if (selectedNode) {
       setName(selectedNode.data.name || '');
       setType(selectedNode.data.type || '');
       setCost(selectedNode.data.cost?.toString() || '');
+      setExtraData(selectedNode.data.extra || {});
       setIsDirty(false);
     } else {
       setName('');
       setType('');
       setCost('');
+      setExtraData({});
       setIsDirty(false);
     }
   }, [selectedNode]);
@@ -47,6 +73,11 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
     setIsDirty(nameChanged || typeChanged || costChanged);
   }, [name, type, cost, selectedNode]);
 
+  const handleExtraChange = (key: string, value: string) => {
+    setExtraData(prev => ({ ...prev, [key]: value }));
+    setIsDirty(true);
+  };
+
   const handleSave = () => {
     if (!selectedNode || !isDirty) return;
     
@@ -54,6 +85,7 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
       name: name.trim() || undefined,
       type: type.trim() || undefined,
       cost: cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined,
+      extra: extraData,
     };
 
     onUpdateNode(selectedNode.id, updatedData);
@@ -68,281 +100,222 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
     <>
       {/* Backdrop overlay */}
       <div
-        className="fixed inset-0 z-30 transition-opacity duration-300 ease-in-out"
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-          opacity: isOpen ? 1 : 0,
-          pointerEvents: isOpen ? 'auto' : 'none',
-        }}
+        className="fixed inset-0 z-30 transition-opacity duration-300"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', opacity: isOpen ? 1 : 0 }}
         onClick={onClose}
       />
 
-      {/* Drawer */}
       <div
-        className="fixed top-0 right-0 h-full w-96 z-40 transition-transform duration-300 ease-in-out"
+        className="fixed top-0 right-0 h-full w-96 z-40 transition-transform duration-300 ease-in-out flex flex-col"
         style={{
           backgroundColor: 'var(--editor-panel-bg)',
           borderLeft: '1px solid var(--editor-border)',
           boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.12)',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          display: 'flex',
-          flexDirection: 'column',
         }}
       >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-6 py-5"
-        style={{
-          borderBottom: '1px solid var(--editor-border)',
-          backgroundColor: 'var(--editor-surface)',
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="p-2 rounded-lg"
-            style={{
-              backgroundColor: 'var(--editor-accent)',
-              color: 'white',
-              boxShadow: '0 2px 8px rgba(13, 110, 253, 0.25)',
-            }}
-          >
-            <Tag size={18} />
+        {/* Header Section */}
+        <div className="flex flex-col px-6 py-5 gap-4 border-b border-(--editor-border) bg-(--editor-surface)">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-(--editor-accent) text-white shadow-md">
+                <Tag size={18} />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-(--editor-text)">Node Properties</h3>
+                <p className="text-xs text-(--editor-text-secondary)">Edit node details</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-lg text-(--editor-text-secondary) hover:bg-(--editor-surface-hover) cursor-pointer">
+              <X size={20} />
+            </button>
           </div>
-          <div>
-            <h3 className="text-base font-semibold tracking-tight" style={{ color: 'var(--editor-text)' }}>
-              Node Properties
-            </h3>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--editor-text-secondary)' }}>
-              Edit node details
-            </p>
-          </div>
-        </div>
-        <button
-          className="p-2 rounded-lg transition-all duration-200 hover:bg-var(--editor-surface-hover)"
-          style={{
-            color: 'var(--editor-text-secondary)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
-            e.currentTarget.style.color = 'var(--editor-text)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--editor-text-secondary)';
-          }}
-          onClick={onClose}
-          aria-label="Close panel"
-        >
-          <X size={20} />
-        </button>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
-        <div className="space-y-5">
-          {/* Node Type Display */}
+          {/* Total Project Cost Section */}
+          <div 
+  className={`flex flex-col overflow-hidden rounded-lg border transition-all duration-200 ${
+    showDetails 
+      ? 'border-(--editor-accent) bg-[rgba(13,110,253,0.05)]' 
+      : 'border-(--editor-border) bg-(--editor-surface)'
+  }`}
+>
+  <button 
+    onClick={() => setShowDetails(!showDetails)}
+    className={`flex items-center justify-between px-4 py-3 transition-colors w-full cursor-pointer ${
+      showDetails 
+        ? 'hover:bg-[rgba(13,110,253,0.08)]' 
+        : 'hover:bg-(--editor-surface-hover)'
+    }`}
+  >
+    <div className={`flex items-center gap-2 transition-colors ${
+      showDetails ? 'text-(--editor-accent)' : 'text-(--editor-text)'
+    }`}>
+      <Calculator size={14} />
+      <span className="text-xs font-bold uppercase tracking-wider">Total Project Cost</span>
+    </div>
+    <div className="flex items-center gap-2">
+      <span className={`text-sm font-mono font-bold transition-colors ${
+        showDetails ? 'text-(--editor-text)' : 'text-(--editor-text-secondary)'
+      }`}>
+        {costSummary.total.toLocaleString()}€
+      </span>
+      <div className={showDetails ? 'text-(--editor-accent)' : 'text-(--editor-text-secondary)'}>
+        {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </div>
+    </div>
+  </button>
+
+  {/* Toggle Cost Detail */}
+  {showDetails && (
+    <div className="px-4 pb-3 max-h-48 overflow-y-auto custom-scrollbar border-t border-(--editor-accent)/20">
+      <ul className="pt-2 space-y-2">
+        {costSummary.nodesWithCost.length > 0 ? (
+          costSummary.nodesWithCost.map((item) => (
+            <li key={item.id} className="flex justify-between items-center text-[11px]">
+              <span className="text-(--editor-text-secondary) truncate pr-2 max-w-[180px]">
+                {item.name}
+              </span>
+              <span className="font-mono text-(--editor-text) shrink-0">
+                {item.cost.toLocaleString()}€
+              </span>
+            </li>
+          ))
+        ) : (
+          <li className="text-[11px] text-center py-2 text-(--editor-text-secondary) italic">
+            No costs assigned yet
+          </li>
+        )}
+      </ul>
+    </div>
+  )}
+</div>
+        </div>
+
+        {/* Content Section (Scrollable) */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 custom-scrollbar">
+          {/* Node Type (Read-only) */}
           <div>
-            <label className="flex items-center gap-2 text-xs font-medium mb-2.5" style={{ color: 'var(--editor-text-secondary)' }}>
+            <label className="flex items-center gap-2 text-xs font-medium mb-2.5 text-(--editor-text-secondary)">
               <TypeIcon size={14} />
               <span className="uppercase tracking-wide">Node Type</span>
             </label>
-            <div
-              className="px-4 py-3 rounded-lg border transition-colors"
-              style={{
-                backgroundColor: 'var(--editor-surface)',
-                color: 'var(--editor-text)',
-                fontSize: '14px',
-                borderColor: 'var(--editor-border)',
-              }}
-            >
-              <span className="font-medium">{selectedNode.type || 'Unknown'}</span>
+            <div className="px-4 py-3 rounded-lg border border---editor-border) bg-(--editor-surface) text-sm font-medium text-(--editor-text)">
+              {selectedNode.type || 'Unknown'}
             </div>
           </div>
 
-          {/* Name Field */}
-          <div>
-            <label
-              htmlFor="node-name"
-              className="flex items-center gap-2 text-xs font-medium mb-2.5"
-              style={{ color: 'var(--editor-text-secondary)' }}
-            >
-              <Tag size={14} />
-              <span className="uppercase tracking-wide">Name</span>
-            </label>
-            <input
-              id="node-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSave();
-                }
-              }}
-              className="w-full px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none"
-              style={{
-                backgroundColor: 'var(--editor-surface)',
-                color: 'var(--editor-text)',
-                border: '1px solid var(--editor-border)',
-                fontSize: '14px',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--editor-accent)';
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(13, 110, 253, 0.1)';
-                e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--editor-border)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.backgroundColor = 'var(--editor-surface)';
-              }}
-              placeholder="Enter node name"
-            />
-          </div>
+          {/* Name Input */}
+          <PropertyInput 
+            label="Name" 
+            icon={<Tag size={14} />} 
+            value={name} 
+            onChange={setName} 
+            onSave={handleSave} 
+            placeholder="Enter node name" 
+          />
 
-          {/* Type Field */}
-          <div>
-            <label
-              htmlFor="node-type"
-              className="flex items-center gap-2 text-xs font-medium mb-2.5"
-              style={{ color: 'var(--editor-text-secondary)' }}
-            >
-              <TypeIcon size={14} />
-              <span className="uppercase tracking-wide">Type</span>
-            </label>
-            <input
-              id="node-type"
-              type="text"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSave();
-                }
-              }}
-              className="w-full px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none"
-              style={{
-                backgroundColor: 'var(--editor-surface)',
-                color: 'var(--editor-text)',
-                border: '1px solid var(--editor-border)',
-                fontSize: '14px',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--editor-accent)';
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(13, 110, 253, 0.1)';
-                e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--editor-border)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.backgroundColor = 'var(--editor-surface)';
-              }}
-              placeholder="Enter node type"
-            />
-          </div>
+          {/* Type Input */}
+          <PropertyInput 
+            label="Category/Type" 
+            icon={<TypeIcon size={14} />} 
+            value={type} 
+            onChange={setType} 
+            onSave={handleSave} 
+            placeholder="Enter custom type" 
+          />
 
-          {/* Cost Field */}
-          <div>
-            <label
-              htmlFor="node-cost"
-              className="flex items-center gap-2 text-xs font-medium mb-2.5"
-              style={{ color: 'var(--editor-text-secondary)' }}
-            >
-              <DollarSign size={14} />
-              <span className="uppercase tracking-wide">Cost</span>
-            </label>
-            <input
-              id="node-cost"
-              type="text"
-              value={cost}
-              onChange={(e) => setCost(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSave();
-                }
-              }}
-              className="w-full px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none"
-              style={{
-                backgroundColor: 'var(--editor-surface)',
-                color: 'var(--editor-text)',
-                border: '1px solid var(--editor-border)',
-                fontSize: '14px',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--editor-accent)';
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(13, 110, 253, 0.1)';
-                e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--editor-border)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.backgroundColor = 'var(--editor-surface)';
-              }}
-              placeholder="Enter cost (number or text)"
-            />
+          {/* Cost Input */}
+          <PropertyInput 
+            label="Cost" 
+            icon={<Euro size={14} />} 
+            value={cost} 
+            onChange={setCost} 
+            onSave={handleSave} 
+            placeholder="Enter amount (e.g. 500)" 
+          />
+
+          {ADDITIONAL_FIELDS[selectedNode.type] && (
+          <div className="pt-5 space-y-5 border-t border-(--editor-border)">
+            {ADDITIONAL_FIELDS[selectedNode.type].map((field) => (
+              <PropertyInput
+                key={field.key}
+                label={field.label}
+                icon={field.icon}
+                value={extraData[field.key] || ''}
+                onChange={(val: string) => handleExtraChange(field.key, val)}
+                onSave={handleSave}
+                placeholder={`${field.label}...`}
+              />
+            ))}
           </div>
+        )}
+
         </div>
-      </div>
 
-      {/* Footer with Save Button */}
-      <div
-        className="px-6 py-5"
-        style={{
-          borderTop: '1px solid var(--editor-border)',
-          backgroundColor: 'var(--editor-surface)',
-        }}
-      >
-        <button
-          onClick={handleSave}
-          disabled={!isDirty}
-          className="w-full px-4 py-3.5 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2"
-          style={{
-            backgroundColor: isDirty ? 'var(--editor-accent)' : 'var(--editor-surface)',
-            color: isDirty ? 'white' : 'var(--editor-text-secondary)',
-            border: `1px solid ${isDirty ? 'var(--editor-accent)' : 'var(--editor-border)'}`,
-            cursor: isDirty ? 'pointer' : 'not-allowed',
-            opacity: isDirty ? 1 : 0.5,
-            transform: isDirty ? 'scale(1)' : 'scale(0.98)',
-            boxShadow: isDirty ? '0 4px 12px rgba(13, 110, 253, 0.25)' : 'none',
-          }}
-          onMouseEnter={(e) => {
-            if (isDirty) {
-              e.currentTarget.style.backgroundColor = 'var(--editor-accent-hover)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(13, 110, 253, 0.35)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (isDirty) {
-              e.currentTarget.style.backgroundColor = 'var(--editor-accent)';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(13, 110, 253, 0.25)';
-            }
-          }}
-          onMouseDown={(e) => {
-            if (isDirty) {
-              e.currentTarget.style.transform = 'translateY(0) scale(0.98)';
-            }
-          }}
-          onMouseUp={(e) => {
-            if (isDirty) {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }
-          }}
-        >
-          {isDirty ? (
-            <>
-              <Save size={18} />
-              <span>Save Changes</span>
-            </>
-          ) : (
-            <span>No Changes</span>
-          )}
-        </button>
-      </div>
+        {/* Footer Section */}
+        <div className="px-6 py-5 border-t border-(--editor-border) bg-(--editor-surface)">
+          <button
+            onClick={handleSave}
+            disabled={!isDirty}
+            className={`w-full px-4 py-3.5 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 
+              ${isDirty 
+                ? 'bg-(--editor-accent) text-white shadow-lg -translate-y-px active:translate-y-0 shadow-(--editor-accent)/20' 
+                : 'bg-(--editor-surface) text-(--editor-text-secondary) border border-(--editor-border) opacity-50 cursor-not-allowed'
+              }`}
+          >
+            {isDirty ? <><Save size={18} /><span>Save Changes</span></> : <span>No Changes</span>}
+          </button>
+        </div>
       </div>
     </>
   );
+};
+
+// Reusable Property Input Component
+const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder }: any) => (
+  <div>
+    <label className="flex items-center gap-2 text-xs font-medium mb-2.5 text-(--editor-text-secondary)">
+      {icon}
+      <span className="uppercase tracking-wide">{label}</span>
+    </label>
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => e.key === 'Enter' && onSave()}
+      placeholder={placeholder}
+      className="w-full px-4 py-3 rounded-lg border border-(--editor-border) bg-(--editor-surface) text-sm text-(--editor-text) transition-all focus:border-(--editor-accent) focus:ring-4 focus:ring-(--editor-accent)/10 focus:outline-none"
+    />
+  </div>
+);
+
+// Additional Fields Configuration Based on Node Type
+const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any; placeholder?: string }[]> = {
+  // Application Context
+  applicationNode: [
+    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Base URL (e.g. https://...)' },
+    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'X509 key identifier' },
+    { label: 'Sign-In Support', key: 'signInSupport', icon: <Calculator size={14} />, placeholder: 'Boolean (true/false)' },
+    { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes before invalid' }
+  ],
+  
+  // Web Service Context
+  serviceNode: [
+    // { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Service base URL' },
+    // { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'Service certificate ID' }
+  ],
+  
+  // Realm Context
+  securityRealmNode: [
+    // { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'STS base URL' },
+    // { label: 'Allocate IP', key: 'allocateIP', icon: <TypeIcon size={14} />, placeholder: 'IDP redirect URL' }
+  ],
+  
+  // Identity Provider Context
+  identityProviderNode: [
+    // { label: 'Accounts', key: 'accounts', icon: <Tag size={14} />, placeholder: 'Set of accounts' },
+    // { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes at IP' }
+  ]
 };
 
 export default PropertiesPanel;
