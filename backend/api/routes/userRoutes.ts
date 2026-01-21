@@ -7,6 +7,9 @@ import {
     deleteUser
 } from '../controllers/userController'
 import auth, {CustomRequest} from '../../middleware/auth'
+import {OAuth2Client} from 'google-auth-library'
+import config from '../../config/config'
+import crypto from 'crypto'
 
 const router = express.Router()
 
@@ -39,6 +42,124 @@ router.post('/login', async (req: Request, res: Response) => {
         })
     }
     return res.status(200).json(loggedInUser)
+})
+
+// Google OAuth login/signup
+router.post('/oauth/google', async (req: Request, res: Response) => {
+    try {
+        const idToken = req.body.idToken as string | undefined
+        if (!idToken) {
+            return res.status(400).json({ error: 'Missing idToken' })
+        }
+
+        const client = new OAuth2Client(config.googleClientId)
+        const ticket = await client.verifyIdToken({ idToken, audience: config.googleClientId })
+        const payload = ticket.getPayload()
+        if (!payload) {
+            return res.status(401).json({ error: 'Invalid Google token' })
+        }
+
+        const email = payload.email || ''
+        const emailVerified = payload.email_verified
+        const firstName = (payload.given_name || '').trim()
+        const lastName = (payload.family_name || '').trim()
+        const pictureUrl = payload.picture || null
+
+        if (!email || !emailVerified) {
+            return res.status(401).json({ error: 'Google account email not verified' })
+        }
+        if (!firstName || !lastName) {
+            return res.status(400).json({ error: 'Missing name in Google profile' })
+        }
+
+        // Find or create user
+        let user = await (await import('../../models/User')).default.findOne({ email })
+        if (!user) {
+            const randomPassword = crypto.randomBytes(16).toString('hex')
+            const UserModel = (await import('../../models/User')).default
+            user = new UserModel({ email, firstName, lastName, password: randomPassword, pictureUrl }) as any
+        } else {
+            // Update basic profile fields if changed
+            let changed = false
+            if (user.firstName !== firstName) { (user as any).firstName = firstName; changed = true }
+            if (user.lastName !== lastName) { (user as any).lastName = lastName; changed = true }
+            if (pictureUrl && user.pictureUrl !== pictureUrl) { (user as any).pictureUrl = pictureUrl; changed = true }
+            if (changed) { await user.save() }
+        }
+
+        ;(user as any).lastLoginDate = new Date()
+        await (user as any).save()
+        const token = await (user as any).generateAuthToken()
+        return res.status(200).json({ user, token })
+    } catch (err: any) {
+        console.error('Google OAuth error:', err)
+        return res.status(500).json({ error: 'Failed to authenticate with Google' })
+    }
+})
+
+// Google OAuth Authorization Code (popup) exchange endpoint
+router.post('/oauth/google/code', async (req: Request, res: Response) => {
+    try {
+        const code = req.body.code as string | undefined
+        if (!code) {
+            return res.status(400).json({ error: 'Missing authorization code' })
+        }
+
+        const client = new OAuth2Client({
+            clientId: config.googleClientId,
+            clientSecret: config.googleClientSecret,
+            redirectUri: config.googleRedirectUri,
+        })
+
+        // Exchange code for tokens
+        const { tokens } = await client.getToken({ code, redirect_uri: config.googleRedirectUri })
+        if (!tokens || !tokens.id_token) {
+            return res.status(401).json({ error: 'Failed to exchange code for tokens' })
+        }
+
+        // Verify ID token
+        const ticket = await client.verifyIdToken({ idToken: tokens.id_token, audience: config.googleClientId })
+        const payload = ticket.getPayload()
+        if (!payload) {
+            return res.status(401).json({ error: 'Invalid Google token' })
+        }
+
+        const email = payload.email || ''
+        const emailVerified = payload.email_verified
+        const firstName = (payload.given_name || '').trim()
+        const lastName = (payload.family_name || '').trim()
+        const pictureUrl = payload.picture || null
+
+        if (!email || !emailVerified) {
+            return res.status(401).json({ error: 'Google account email not verified' })
+        }
+        if (!firstName || !lastName) {
+            return res.status(400).json({ error: 'Missing name in Google profile' })
+        }
+
+        // Find or create user
+        let user = await (await import('../../models/User')).default.findOne({ email })
+        if (!user) {
+            const randomPassword = crypto.randomBytes(16).toString('hex')
+            const UserModel = (await import('../../models/User')).default
+            user = new UserModel({ email, firstName, lastName, password: randomPassword, pictureUrl }) as any
+        } else {
+            // Update profile fields if changed
+            let changed = false
+            if (user.firstName !== firstName) { (user as any).firstName = firstName; changed = true }
+            if (user.lastName !== lastName) { (user as any).lastName = lastName; changed = true }
+            if (pictureUrl && user.pictureUrl !== pictureUrl) { (user as any).pictureUrl = pictureUrl; changed = true }
+            if (changed) { await user.save() }
+        }
+
+        ;(user as any).lastLoginDate = new Date()
+        await (user as any).save()
+        const token = await (user as any).generateAuthToken()
+        return res.status(200).json({ user, token })
+    } catch (err: any) {
+        console.error('Google OAuth code exchange error:', err)
+        return res.status(500).json({ error: 'Failed to authenticate with Google (code flow)' })
+    }
 })
 
 // Fetch logged in user

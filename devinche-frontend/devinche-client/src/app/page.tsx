@@ -42,9 +42,12 @@ export default function Home() {
                         className="w-full h-full"
                     />
                 </div>
-                <button className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm">
+                <Link
+                    href="/login"
+                    className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
+                >
                     Sign Up
-                </button>
+                </Link>
             </header>
 
             <main className="relative h-[calc(100vh-100px)] flex items-center justify-center">

@@ -21,14 +21,18 @@ An example file is provided at `backend/.env.example`. This file is only an exam
   - `JWT_KEY` — secret used to sign JWT access tokens (keep it long and random)
 - Optional variables:
   - `NODE_ENV` — defaults to `development`
-  - `PORT` — defaults to `3000`
+  - `PORT` — recommended `4000` (defaults to `3000` if unset)
 
 Example `.env` (you can paste this into `backend/.env` and adjust):
 ```env
 NODE_ENV=development
-PORT=3000
+PORT=4000
 MONGODB_URI=mongodb://localhost:27017/devinche
 JWT_KEY=replace-with-a-long-random-secret
+# Google OAuth (Authorization Code with popup)
+GOOGLE_CLIENT_ID=332723524164-9hq53ucjcmv5eedbhnb6nosagif20nv9.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=<your-google-client-secret>
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback/google
 ```
 Notes:
 - If `MONGODB_URI` is missing, the app will throw an error during startup when loading config.
@@ -43,7 +47,28 @@ npm run dev
 # Or regular start (ts-node)
 npm start
 ```
-The server listens on the port defined by `PORT` (default 3000) and uses the current environment from `NODE_ENV`.
+The server listens on the port defined by `PORT` (commonly 4000 for this project; 3000 if unset) and uses the current environment from `NODE_ENV`.
+
+## 3.1) Google OAuth (Popup Code Flow)
+
+This backend supports Google Sign‑In via the Authorization Code flow (popup on the frontend). Configure your Google Cloud Console OAuth client (type: Web application):
+
+- Authorized JavaScript origins: `http://localhost:3000`
+- Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google`
+
+Required backend env vars (in `backend/.env`):
+
+```
+GOOGLE_CLIENT_ID=332723524164-9hq53ucjcmv5eedbhnb6nosagif20nv9.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=<your-google-client-secret>
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback/google
+```
+
+Endpoint used by the frontend to exchange the authorization code for tokens and receive your JWT:
+
+- `POST /api/users/oauth/google/code` with JSON body `{ "code": "<authorization_code>" }`
+
+On success, the backend verifies the Google ID token, creates/updates the user (email, first name, last name, picture), and returns `{ user, token }` where `token` is your app’s JWT.
 
 ## 4) Run the database initialization script (dbInit)
 This script connects to MongoDB using the same configuration and creates sample collections/documents.
@@ -82,7 +107,7 @@ All user-related endpoints are mounted under `/api/users`. The API returns JSON 
 - Errors: `400` with `{ error: string }`
 - Example:
 ```bash
-curl -X POST http://localhost:3000/api/users/register \
+curl -X POST http://localhost:4000/api/users/register \
   -H "Content-Type: application/json" \
   -d '{
     "username":"alice",
@@ -103,7 +128,7 @@ curl -X POST http://localhost:3000/api/users/register \
 - Errors: `400` with `{ error: "Invalid email or password" }` or validation error messages
 - Example:
 ```bash
-curl -X POST http://localhost:3000/api/users/login \
+curl -X POST http://localhost:4000/api/users/login \
   -H "Content-Type: application/json" \
   -d '{"email":"alice@example.com","password":"SuperSecret1"}'
 ```
@@ -116,7 +141,7 @@ curl -X POST http://localhost:3000/api/users/login \
 - Example:
 ```bash
 TOKEN=... # paste the token from register/login
-curl http://localhost:3000/api/users/me -H "Authorization: Bearer $TOKEN"
+curl http://localhost:4000/api/users/me -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Update profile
@@ -131,14 +156,14 @@ curl http://localhost:3000/api/users/me -H "Authorization: Bearer $TOKEN"
 - Errors: `400` with `{ error: string }` (e.g., missing `oldPassword`, no updatable fields provided) or `401` if not authenticated
 - Example (change preferred language):
 ```bash
-curl -X PATCH http://localhost:3000/api/users/update \
+curl -X PATCH http://localhost:4000/api/users/update \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"oldPassword":"SuperSecret1","preferredLanguage":"de"}'
 ```
 - Example (change password):
 ```bash
-curl -X PATCH http://localhost:3000/api/users/update \
+curl -X PATCH http://localhost:4000/api/users/update \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"oldPassword":"SuperSecret1","password":"NewStrongerPass2"}'
@@ -151,7 +176,7 @@ curl -X PATCH http://localhost:3000/api/users/update \
 - Errors: `400` with `{ error: string }` or `401` if not authenticated
 - Example:
 ```bash
-curl -X DELETE http://localhost:3000/api/users/delete -H "Authorization: Bearer $TOKEN"
+curl -X DELETE http://localhost:4000/api/users/delete -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Logout (current device)
@@ -161,7 +186,7 @@ curl -X DELETE http://localhost:3000/api/users/delete -H "Authorization: Bearer 
 - Success response: `200` with `{ message: 'User logged out successfully.' }`
 - Example:
 ```bash
-curl -X POST http://localhost:3000/api/users/logout -H "Authorization: Bearer $TOKEN"
+curl -X POST http://localhost:4000/api/users/logout -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Logout from all devices
@@ -171,7 +196,7 @@ curl -X POST http://localhost:3000/api/users/logout -H "Authorization: Bearer $T
 - Success response: `200` with `{ message: 'User logged out from all devices successfully.' }`
 - Example:
 ```bash
-curl -X POST http://localhost:3000/api/users/logoutall -H "Authorization: Bearer $TOKEN"
+curl -X POST http://localhost:4000/api/users/logoutall -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Notes and Troubleshooting
@@ -179,3 +204,8 @@ curl -X POST http://localhost:3000/api/users/logoutall -H "Authorization: Bearer
 - For update operations you must include `oldPassword` in the JSON body, even if you only change non-sensitive fields.
 - Ensure your `.env` contains both `MONGODB_URI` and `JWT_KEY` and restart the server after changes.
 - Tokens expire after 1 hour; re-login to get a new token if needed.
+
+#### Google OAuth troubleshooting
+- Ensure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` are present in `backend/.env`.
+- The redirect URI in `.env` must exactly match the one configured in Google Cloud Console.
+- Frontend should run on `http://localhost:3000` and call backend at `http://localhost:4000` (or via a proxy). Clear site data for both origins if you change settings.

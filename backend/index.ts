@@ -7,6 +7,7 @@ import config from './config/config';
 
 import exampleRoutes from './api/routes/exampleRoutes';
 import userRoutes from './api/routes/userRoutes';
+import User from './models/User';
 import errorHandler from './middleware/error.middleware';
 
 const app: Application = express();
@@ -31,6 +32,13 @@ async function start() {
   try {
     await mongoose.connect(config.mongoUri);
     console.log('MongoDB connected');
+
+    try {
+      await User.syncIndexes();
+      console.log('User indexes synchronized');
+    } catch (idxErr) {
+      console.warn('Failed to synchronize User indexes:', idxErr);
+    }
 
     app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);

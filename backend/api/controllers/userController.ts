@@ -3,7 +3,7 @@ import {IUser} from '../../models/User'
 
 export const registerUser = async (user: Partial<IUser>) => {
     const {username, email, password, firstName, lastName} = user
-    if (!username || !email || !password || !firstName || !lastName) {
+    if (!email || !password || !firstName || !lastName) {
         return {
             error: 'Please provide all the required fields',
         }
@@ -11,14 +11,14 @@ export const registerUser = async (user: Partial<IUser>) => {
     if (password.length < 8) {
         return {error: 'Password must be at least 8 characters long'};
     }
-    const existingUser = await User.findOne({$or: [{email}, {username}]})
+    const existingUser = await User.findOne({ email })
     if (existingUser) {
         return {
-            error: 'User with that email or username already exists.',
+            error: 'User with that email already exists.',
         }
     }
     try {
-        const newUser = new User({username, email, password, firstName, lastName})
+        const newUser = new User({ email, password, firstName, lastName, username })
         await newUser.save()
         const token = await newUser.generateAuthToken()
         return {

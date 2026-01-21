@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 import config from '../config/config'
 
 export interface IUser extends Document {
-  username: string;
+  username?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -30,7 +30,7 @@ interface UserModel extends Model<IUser, {}, IUserMethods> {
 }
 
 const userSchema = new Schema<IUser>({
-  username: { type: String, required: true, unique: true, trim: true },
+  username: { type: String, required: false, unique: false, trim: true },
   firstName: { type: String, required: true, trim: true },
   lastName: { type: String, required: true, trim: true },
   email: {
