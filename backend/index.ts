@@ -5,8 +5,8 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import config from './config/config';
 
-import exampleRoutes from './api/routes/exampleRoutes';
 import userRoutes from './api/routes/userRoutes';
+import validationRoutes from './api/routes/validationRoutes';
 import User from './models/User';
 import errorHandler from './middleware/error.middleware';
 
@@ -21,8 +21,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api', exampleRoutes);
 app.use('/api/users/', userRoutes);
+app.use('/api/validation/', validationRoutes);
 
 // Errors
 app.use(errorHandler);
