@@ -22,6 +22,7 @@ async function setupDatabase() {
       firstName: 'Maria',
       lastName: 'Ivanova',
       email: 'maria@example.com',
+      password: 'SuperSecurePass1',
       pictureUrl: 'https://example.com/pic.jpg',
       preferredLanguage: 'en',
       isDeleted: false,
