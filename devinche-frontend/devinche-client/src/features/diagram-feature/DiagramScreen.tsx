@@ -22,7 +22,6 @@ import PropertiesPanel from './ui/properties/PropertiesPanel';
 import { useCallback, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import ValidationError from './validation/ValidationError';
-import { validate } from './validation/validate';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -100,22 +99,47 @@ const DiagramScreenContent = () => {
     exportToJson();
   }, [exportToJson]);
 
-  const handleValidation = useCallback(() => {
+  /**
+   * Sends diagram data to backend for validation
+   */
+  const handleValidation = useCallback(async () => {
     const json = exportToJson();
-    if (json) {
-      if (hideTimeoutRef.current !== null) {
-        clearTimeout(hideTimeoutRef.current);
+    if (!json) return;
+
+    if (hideTimeoutRef.current !== null) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+
+    setValidationError(null);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/validation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: json }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Validation failed: ${response.status}`);
       }
 
-      const errors = validate(json);
-      setValidationError(errors);
+      const data = await response.json();
+      const errors = data || [];
+      console.log(data)
+      
+      setValidationError(errors.length ? errors : null);
+    } catch (error) {
+      console.error("Validation error:", error);
+      setValidationError(["Validation request failed. Please try again."]);
+    } finally {
 
       hideTimeoutRef.current = window.setTimeout(() => {
         setValidationError(null);
         hideTimeoutRef.current = null;
-      }, 60000); 
+      }, 60000);
     }
   }, [exportToJson]);
+
 
   const closeValidationError = useCallback(() => {
     if (hideTimeoutRef.current !== null) {
@@ -144,7 +168,6 @@ const DiagramScreenContent = () => {
         flowWrapperRef={flowWrapperRef}
       />
       {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
-      {/* <Exports exportToJson={exportToJson} flowWrapperRef={flowWrapperRef} exportToRdf={exportToRdf} exportToXml={exportToXml} importFromJson={importFromJson}/> */}
 
       <DiagramCanvas
         flowWrapperRef={flowWrapperRef}
