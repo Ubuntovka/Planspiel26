@@ -70,6 +70,55 @@ Endpoint used by the frontend to exchange the authorization code for tokens and 
 
 On success, the backend verifies the Google ID token, creates/updates the user (email, first name, last name, picture), and returns `{ user, token }` where `token` is your app’s JWT.
 
+## 3.2) API documentation (Swagger/OpenAPI)
+
+This project includes interactive API documentation powered by Swagger UI and an OpenAPI 3.0 specification generated from JSDoc comments.
+
+- Swagger UI: http://localhost:PORT/api-docs (e.g., http://localhost:4000/api-docs)
+- Raw OpenAPI JSON: http://localhost:PORT/openapi.json
+
+How it works:
+- The OpenAPI spec is generated at runtime using `swagger-jsdoc` from specially formatted `@openapi` JSDoc blocks in the code.
+- The generator scans the following paths (see `index.ts`):
+  - `./api/routes/**/*.ts`
+  - `./models/**/*.ts`
+- A security scheme `bearerAuth` is defined for JWT-protected endpoints.
+
+Authorize in Swagger UI (for secured endpoints):
+1. Obtain a JWT from `POST /api/users/register` or `POST /api/users/login`.
+2. In Swagger UI, click the “Authorize” button (padlock icon).
+3. For `bearerAuth`, paste your token value without the `Bearer ` prefix. Swagger UI will add it automatically.
+4. Click “Authorize”, then “Close”. You can now call secured endpoints from the UI.
+
+Documenting endpoints with `@openapi` JSDoc:
+- Place a block comment above the route declaration. Example:
+
+```ts
+/**
+ * @openapi
+ * /api/example:
+ *   get:
+ *     tags:
+ *       - Example
+ *     summary: Example endpoint
+ *     responses:
+ *       200:
+ *         description: Successful response
+ */
+```
+
+Reusable schemas and Users API docs:
+- Common request/response schemas (e.g., `User`, `AuthResponse`, `LoginRequest`, `UpdateUserRequest`, etc.) are defined inside `userRoutes.ts` under `components.schemas` and referenced by all user endpoints.
+- All user routes are documented and visible under the `Users` tag in Swagger UI.
+
+Servers/base URL:
+- By default, the OpenAPI `servers` list includes your local server URL (e.g., `http://localhost:<PORT>`). If you deploy the backend, update `servers` in `backend/index.ts` accordingly.
+
+Fetch the spec via curl:
+```bash
+curl http://localhost:4000/openapi.json | jq '.'
+```
+
 ## 4) Run the database initialization script (dbInit)
 This script connects to MongoDB using the same configuration and creates sample collections/documents.
 
