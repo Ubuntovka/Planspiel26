@@ -10,9 +10,12 @@ import userRoutes from './api/routes/userRoutes';
 import User from './models/User';
 import errorHandler from './middleware/error.middleware';
 
+// Swagger
+import swaggerUi from 'swagger-ui-express';
+import swaggerJSDoc from 'swagger-jsdoc';
+
 const app: Application = express();
 const port: number = config.port;
-
 
 // Security & parsing middleware
 app.use(helmet());
@@ -20,12 +23,45 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Swagger setup
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Devinche API',
+      version: '1.0.0',
+      description: 'API documentation for Devinche backend',
+    },
+    servers: [
+      { url: `http://localhost:${port}`, description: 'Local server' },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+  },
+  apis: ['./api/routes/**/*.ts', './models/**/*.ts'],
+};
+const swaggerSpec = swaggerJSDoc(swaggerOptions as any);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Routes
 app.use('/api', exampleRoutes);
 app.use('/api/users/', userRoutes);
 
 // Errors
 app.use(errorHandler);
+
+
+app.get("/openapi.json", (req, res) => {
+  res.json(swaggerSpec);
+});
+
 
 // Connect to Mongo and start server
 async function start() {
@@ -42,6 +78,7 @@ async function start() {
 
     app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
+      console.log(`Swagger UI available at http://localhost:${port}/api-docs`);
     });
   } catch (err) {
     console.error('Failed to connect to MongoDB:', err);
