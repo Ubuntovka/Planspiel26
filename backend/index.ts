@@ -5,7 +5,6 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import config from './config/config';
 
-import exampleRoutes from './api/routes/exampleRoutes';
 import userRoutes from './api/routes/userRoutes';
 import User from './models/User';
 import errorHandler from './middleware/error.middleware';
@@ -51,7 +50,6 @@ const swaggerSpec = swaggerJSDoc(swaggerOptions as any);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
-app.use('/api', exampleRoutes);
 app.use('/api/users/', userRoutes);
 
 // Errors
