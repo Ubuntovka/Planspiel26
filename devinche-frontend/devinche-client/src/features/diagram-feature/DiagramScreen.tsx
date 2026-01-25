@@ -166,6 +166,7 @@ const DiagramScreenContent = () => {
         importFromJson={importFromJson}
         handleValidation={handleValidation}
         flowWrapperRef={flowWrapperRef}
+        allNodes={nodes}
       />
       {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
 

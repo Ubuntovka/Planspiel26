@@ -1,8 +1,10 @@
-import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon } from 'lucide-react';
+import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon, Calculator, ChevronUp, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { exportDiagramToPng } from '../exports/exportToPng';
 import { Download, Upload, FileJson, Image, FileCode } from 'lucide-react';
 import { validate } from '../../validation/validate';
+import { DiagramNode } from '@/types/diagram';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 
 
@@ -20,7 +22,8 @@ interface ToolbarProps {
   exportToXml: () => string;
   importFromJson: (json: string) => void;
   handleValidation?: () => void;
-  flowWrapperRef: React.RefObject<HTMLDivElement>
+  flowWrapperRef: React.RefObject<HTMLDivElement>;
+  allNodes: DiagramNode[];
 }
 
 const Toolbar = ({
@@ -38,8 +41,44 @@ const Toolbar = ({
   exportToXml, 
   importFromJson,
   handleValidation,
+  allNodes=[],
 }: ToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
+  const [showCostDetails, setShowCostDetails] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+
+  const costSummary = useMemo(() => {
+    const nodesWithCost = allNodes
+      .filter(node => {
+        if (!node.data?.cost) return false;
+        const costValue = Number(node.data.cost);
+        return !isNaN(costValue) && costValue > 0;
+      })
+      .map(node => ({
+        id: node.id,
+        name: node.data.label || node.id,
+        cost: Number(node.data.cost)
+      }));
+    
+    const total = nodesWithCost.reduce((sum, item) => sum + item.cost, 0);
+    return { nodesWithCost, total };
+  }, [allNodes]);
+
+ 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCostDetails(false);
+      }
+    };
+
+    if (showCostDetails) {
+      document.addEventListener('mousedown', handleClickOutside, true);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCostDetails]);
+
 
   const handleDownloadJson = () => {
           try {
@@ -301,6 +340,46 @@ const Toolbar = ({
 
       {/* Validation Button */}
       <div onClick={handleValidation} className='hover:cursor-pointer font-medium text-sm'>VALIDATE</div>
+
+      <div className="h-6 mx-1" style={{ borderRight: '1px solid var(--editor-border)' }} />
+
+      {/* Total Cost Button */}
+      <div ref={dropdownRef} className="relative flex items-center ml-2 mr-3 px-3 h-8 rounded-md border border-(--editor-border) bg-(--editor-surface-hover)/50">
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowCostDetails(!showCostDetails)}}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          <Calculator size={14} className="text-(--editor-accent)" />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-(--editor-text-secondary)">Total:</span>
+          <span className="text-sm font-mono font-bold text-(--editor-text)">
+            {costSummary.total.toLocaleString()}€
+          </span>
+          {showCostDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </button>
+
+        {/* Total Cost Dropdown */}
+        {showCostDetails && (
+          <div className="absolute top-10 left-0 w-64 bg-(--editor-panel-bg) border border-(--editor-border) rounded-lg shadow-xl z-50 p-3 flex flex-col gap-2">
+            <h4 className="text-[10px] font-bold text-(--editor-text-secondary) uppercase border-b border-(--editor-border) pb-1">Cost Breakdown</h4>
+            <div className="max-h-48 overflow-y-auto custom-scrollbar">
+              {costSummary.nodesWithCost.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {costSummary.nodesWithCost.map((item) => (
+                    <li key={item.id} className="flex justify-between items-center text-[11px]">
+                      <span className="text-(--editor-text-secondary) truncate pr-2">{item.name}</span>
+                      <span className="font-mono text-(--editor-text) font-semibold">{item.cost.toLocaleString()}€</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-[11px] text-center py-2 text-(--editor-text-secondary) italic">No costs assigned</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="flex-1" />
       <button
