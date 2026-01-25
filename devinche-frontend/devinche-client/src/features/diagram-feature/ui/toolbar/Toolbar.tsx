@@ -1,4 +1,4 @@
-import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon, Calculator, ChevronUp, ChevronDown } from 'lucide-react';
+import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon, Calculator, ChevronUp, ChevronDown, CheckCircle } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { exportDiagramToPng } from '../exports/exportToPng';
 import { Download, Upload, FileJson, Image, FileCode } from 'lucide-react';
@@ -159,7 +159,7 @@ const Toolbar = ({
       <div className="flex items-center gap-1 pr-3 mr-3" style={{ borderRight: '1px solid var(--editor-border)' }}>
         <button
           onClick={onSave}
-          className="p-2 rounded-md transition-colors"
+          className="p-2 rounded-md transition-colors cursor-pointer"
           style={{ 
             color: 'var(--editor-text-secondary)',
           }}
@@ -178,7 +178,7 @@ const Toolbar = ({
         <button
           onClick={onUndo}
           disabled={!canUndo}
-          className="p-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           style={{ 
             color: 'var(--editor-text-secondary)',
           }}
@@ -198,7 +198,7 @@ const Toolbar = ({
         <button
           onClick={onRedo}
           disabled={!canRedo}
-          className="p-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           style={{ 
             color: 'var(--editor-text-secondary)',
           }}
@@ -220,7 +220,7 @@ const Toolbar = ({
       <div className="flex items-center gap-1 pr-3 mr-3" style={{ borderRight: '1px solid var(--editor-border)' }}>
         <button
           onClick={onZoomIn}
-          className="p-2 rounded-md transition-colors"
+          className="p-2 rounded-md transition-colors cursor-pointer"
           style={{ 
             color: 'var(--editor-text-secondary)',
           }}
@@ -238,7 +238,7 @@ const Toolbar = ({
         </button>
         <button
           onClick={onZoomOut}
-          className="p-2 rounded-md transition-colors"
+          className="p-2 rounded-md transition-colors cursor-pointer"
           style={{ 
             color: 'var(--editor-text-secondary)',
           }}
@@ -256,7 +256,7 @@ const Toolbar = ({
         </button>
         <button
           onClick={onFitView}
-          className="p-2 rounded-md transition-colors"
+          className="p-2 rounded-md transition-colors cursor-pointer"
           style={{ 
             color: 'var(--editor-text-secondary)',
           }}
@@ -276,7 +276,7 @@ const Toolbar = ({
       
       <div className="flex items-center gap-1 pr-3 mr-3" style={{ borderRight: '1px solid var(--editor-border)' }}>
       {/* Import Dropdown */}
-        <div className='import-wrapper h-[100%] relative group'>
+        <div className='import-wrapper h-[100%] relative group cursor-pointer'>
           <div className='h-[100%] items-center p-2 rounded-md transition-colors'
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
@@ -289,7 +289,7 @@ const Toolbar = ({
           >
             <Upload  size={16} className='items-center' />        
           </div>
-          <div className='import-dropdown absolute left-0 w-40 bg-white rounded hidden group-hover:block font-medium text-sm' 
+          <div className='import-dropdown absolute left-0 w-40 bg-white rounded hidden group-hover:block font-medium text-sm cursor-pointer' 
             style={{ 
                   backgroundColor: 'var(--editor-panel-bg)',
                   border: '1px solid var(--editor-border)',
@@ -311,7 +311,7 @@ const Toolbar = ({
         </div>
 
         {/* Export Dropdown */}
-        <div className='import-wrapper h-[100%] relative group '>
+        <div className='import-wrapper h-[100%] relative group cursor-pointer'>
           <div className='h-[100%] items-center p-2 rounded-md transition-colors'
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
@@ -339,9 +339,26 @@ const Toolbar = ({
       </div>
 
       {/* Validation Button */}
-      <div onClick={handleValidation} className='hover:cursor-pointer font-medium text-sm'>VALIDATE</div>
-
-      <div className="h-6 mx-1" style={{ borderRight: '1px solid var(--editor-border)' }} />
+      <div className="flex items-center gap-1 pr-3 mr-3" style={{ borderRight: '1px solid var(--editor-border)' }}>
+        <button
+          onClick={handleValidation}
+          className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-semibold transition-colors cursor-pointer"
+          style={{
+            color: 'var(--editor-text-secondary)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+            e.currentTarget.style.color = 'var(--editor-text)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--editor-text-secondary)';
+          }}
+          title="Validate Diagram"
+        >
+          VALIDATE
+        </button>
+      </div>
 
       {/* Total Cost Button */}
       <div ref={dropdownRef} className="relative flex items-center">
@@ -350,7 +367,7 @@ const Toolbar = ({
             e.stopPropagation();
             setShowCostDetails(!showCostDetails)
           }}
-          className="flex items-center gap-2 p-2 rounded-md transition-colors"
+          className="flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer"
           style={{ 
             color: 'var(--editor-text-secondary)',
             backgroundColor: showCostDetails ? 'var(--editor-surface-hover)' : 'transparent'
@@ -412,7 +429,7 @@ const Toolbar = ({
       <div className="flex-1" />
       <button
         onClick={toggleTheme}
-        className="p-2 rounded-md transition-colors"
+        className="p-2 rounded-md transition-colors cursor-pointer"
         style={{ 
           color: 'var(--editor-text-secondary)',
         }}
