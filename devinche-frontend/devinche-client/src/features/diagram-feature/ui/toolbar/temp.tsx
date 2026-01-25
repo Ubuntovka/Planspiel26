@@ -47,6 +47,26 @@ const Toolbar = ({
   const [showCostDetails, setShowCostDetails] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const buttonBaseStyle = {
+    color: 'var(--editor-text-secondary)',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    if ((e.currentTarget as HTMLButtonElement).disabled) return;
+    e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+    e.currentTarget.style.color = 'var(--editor-text)';
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    if (e.currentTarget.id === 'cost-btn' && showCostDetails) return;
+    
+    e.currentTarget.style.backgroundColor = 'transparent';
+    e.currentTarget.style.color = 'var(--editor-text-secondary)';
+  };
 
   const costSummary = useMemo(() => {
     const nodesWithCost = allNodes
