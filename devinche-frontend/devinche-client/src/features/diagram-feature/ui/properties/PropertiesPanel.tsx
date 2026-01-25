@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { X, Save, Tag, Euro, Type as TypeIcon, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Save, Tag, Euro, Type as TypeIcon, Calculator } from 'lucide-react';
 import type { DiagramNode, NodeData } from '@/types/diagram';
 
 interface PropertiesPanelProps {
@@ -15,7 +15,6 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
   const [cost, setCost] = useState<string>('');
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [extraData, setExtraData] = useState<Record<string, string>>({});
-
 
   useEffect(() => {
     if (selectedNode) {
