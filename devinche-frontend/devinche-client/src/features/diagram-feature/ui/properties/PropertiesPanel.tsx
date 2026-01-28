@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { X, Save, Tag, Euro, Type as TypeIcon, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Save, Tag, Euro, Type as TypeIcon, Calculator } from 'lucide-react';
 import type { DiagramNode, NodeData } from '@/types/diagram';
 
 interface PropertiesPanelProps {
@@ -7,37 +7,14 @@ interface PropertiesPanelProps {
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
   onClose: () => void;
   isOpen: boolean;
-  allNodes: DiagramNode[];
 }
 
-const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes }: PropertiesPanelProps) => {
+const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: PropertiesPanelProps) => {
   const [name, setName] = useState<string>('');
   const [type, setType] = useState<string>('');
   const [cost, setCost] = useState<string>('');
   const [isDirty, setIsDirty] = useState<boolean>(false);
-  const [showDetails, setShowDetails] = useState<boolean>(false);
   const [extraData, setExtraData] = useState<Record<string, string>>({});
-
-  // Total Cost Calculation
-  const costSummary = useMemo(() => {
-    const nodesWithCost = allNodes
-      .map(node => {
-        const rawCost = node.data?.cost;
-        const numericCost = typeof rawCost === 'number' 
-          ? rawCost 
-          : parseFloat(String(rawCost || '0').replaceAll(',', ''));
-        
-        return {
-          id: node.id,
-          name: node.data?.name || 'Unnamed Node',
-          cost: numericCost
-        };
-      })
-      .filter(item => !isNaN(item.cost) && item.cost > 0);
-
-    const total = nodesWithCost.reduce((sum, item) => sum + item.cost, 0);
-    return { nodesWithCost, total };
-  }, [allNodes]);
 
   useEffect(() => {
     if (selectedNode) {
@@ -130,65 +107,6 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen, allNodes
               <X size={20} />
             </button>
           </div>
-
-          {/* Total Project Cost Section */}
-          <div 
-  className={`flex flex-col overflow-hidden rounded-lg border transition-all duration-200 ${
-    showDetails 
-      ? 'border-(--editor-accent) bg-[rgba(13,110,253,0.05)]' 
-      : 'border-(--editor-border) bg-(--editor-surface)'
-  }`}
->
-  <button 
-    onClick={() => setShowDetails(!showDetails)}
-    className={`flex items-center justify-between px-4 py-3 transition-colors w-full cursor-pointer ${
-      showDetails 
-        ? 'hover:bg-[rgba(13,110,253,0.08)]' 
-        : 'hover:bg-(--editor-surface-hover)'
-    }`}
-  >
-    <div className={`flex items-center gap-2 transition-colors ${
-      showDetails ? 'text-(--editor-accent)' : 'text-(--editor-text)'
-    }`}>
-      <Calculator size={14} />
-      <span className="text-xs font-bold uppercase tracking-wider">Total Project Cost</span>
-    </div>
-    <div className="flex items-center gap-2">
-      <span className={`text-sm font-mono font-bold transition-colors ${
-        showDetails ? 'text-(--editor-text)' : 'text-(--editor-text-secondary)'
-      }`}>
-        {costSummary.total.toLocaleString()}€
-      </span>
-      <div className={showDetails ? 'text-(--editor-accent)' : 'text-(--editor-text-secondary)'}>
-        {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-      </div>
-    </div>
-  </button>
-
-  {/* Toggle Cost Detail */}
-  {showDetails && (
-    <div className="px-4 pb-3 max-h-48 overflow-y-auto custom-scrollbar border-t border-(--editor-accent)/20">
-      <ul className="pt-2 space-y-2">
-        {costSummary.nodesWithCost.length > 0 ? (
-          costSummary.nodesWithCost.map((item) => (
-            <li key={item.id} className="flex justify-between items-center text-[11px]">
-              <span className="text-(--editor-text-secondary) truncate pr-2 max-w-[180px]">
-                {item.name}
-              </span>
-              <span className="font-mono text-(--editor-text) shrink-0">
-                {item.cost.toLocaleString()}€
-              </span>
-            </li>
-          ))
-        ) : (
-          <li className="text-[11px] text-center py-2 text-(--editor-text-secondary) italic">
-            No costs assigned yet
-          </li>
-        )}
-      </ul>
-    </div>
-  )}
-</div>
         </div>
 
         {/* Content Section (Scrollable) */}
