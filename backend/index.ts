@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import config from './config/config';
 
 import userRoutes from './api/routes/userRoutes';
+import validationRoutes from './api/routes/validationRoutes';
 import User from './models/User';
 import errorHandler from './middleware/error.middleware';
 
@@ -51,6 +52,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
 app.use('/api/users/', userRoutes);
+app.use('/api/validation/', validationRoutes);
 
 // Errors
 app.use(errorHandler);
