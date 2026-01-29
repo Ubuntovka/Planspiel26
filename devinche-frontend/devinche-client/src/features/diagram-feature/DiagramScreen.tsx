@@ -22,6 +22,7 @@ import PropertiesPanel from './ui/properties/PropertiesPanel';
 import { useCallback, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import ValidationError from './validation/ValidationError';
+import { DiagramEdge } from '@/types/diagram';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -61,6 +62,7 @@ const DiagramScreenContent = () => {
     exportToXml,
     importFromJson,
     setNodes,
+    setEdges,
     selectedEdgeType,
     setSelectedEdgeType,
     onMoveEnd,
@@ -124,10 +126,38 @@ const DiagramScreenContent = () => {
       }
 
       const data = await response.json();
-      const errors = data || [];
-      console.log(data)
+      const errors = data.errors.errors || [];
+      const sources = data.errors.sources || [];
+      console.log(sources)
+      const errorNodeIds = new Set(
+        sources.map((item: { id: any; }) => item.id)
+      );
+      console.log(errorNodeIds)
+      setNodes(nds => 
+        nds.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            hasError: errorNodeIds.has(node.id)
+          }
+        }))
+      );
+
+      const errorEdgeIds = new Set(
+        sources.map((item: { id: any; }) => item.id)
+      );
+      console.log(errorEdgeIds)
+      setEdges((eds: DiagramEdge[]) => 
+        eds.map((edge: DiagramEdge) => ({
+          ...edge,
+          data: {
+            ...edge.data,
+            hasError: errorEdgeIds.has(edge.id)
+          }
+        }))
+      );
       
-      setValidationError(errors.length ? errors : null);
+      setValidationError(errors.length ? errors : []);
     } catch (error) {
       console.error("Validation error:", error);
       setValidationError(["Validation request failed. Please try again."]);
@@ -203,7 +233,6 @@ const DiagramScreenContent = () => {
         onUpdateNode={onUpdateNode}
         onClose={onPaneClick}
         isOpen={selectedNode !== null}
-        allNodes={nodes}
       />
     </div>
   );

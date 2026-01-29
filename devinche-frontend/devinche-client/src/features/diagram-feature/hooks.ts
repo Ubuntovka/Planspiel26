@@ -774,6 +774,7 @@ export const useDiagram = (): UseDiagramReturn => {
         exportToXml,
         importFromJson,
         setNodes,
+        setEdges,
         selectedEdgeType,
         setSelectedEdgeType,
         onMoveEnd,

@@ -59,6 +59,7 @@ export interface UseDiagramReturn {
   exportToXml: () => string;
   importFromJson: (json: string) => void;
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
+  setEdges: React.Dispatch<React.SetStateAction<DiagramEdge[]>>;
   selectedEdgeType: string;
   setSelectedEdgeType: React.Dispatch<React.SetStateAction<string>>;
   onMoveEnd: (event: any, viewport: { x: number; y: number; zoom: number }) => void;
