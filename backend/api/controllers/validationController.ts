@@ -70,22 +70,25 @@ export interface DiagramEdge extends BaseEdge {
  * @param diagramState Current diagram state as JSON string
  * @returns List of validation error messages
  */
-export async function validate(diagramState: string | null): Promise<string[]> {
-    if (!diagramState || diagramState == null) return [];
-
+export async function validate(diagramState: string | null): Promise<{errors: string[], sources: any[]}> {
+    if (!diagramState || diagramState == null) return {errors: [], sources: []};
     let diagramJson: DiagramState;
     try {
         diagramJson = JSON.parse(diagramState) as DiagramState;
     } catch {
-        return ['Invalid diagram JSON'];
+        return {errors: ['Invalid diagram JSON'], sources: []};
     }
 
     const { nodes, edges } = diagramJson;
     const errors: string[] = [];
-
+    const errorSources: any[] = [];
     for (const node of nodes) {
         if(node.type === "securityRealmNode") {
-            errors.push(...checkSecurityRealmChildren(node, nodes))
+            const err = checkSecurityRealmChildren(node, nodes);
+            if(err.length > 0) {
+                errorSources.push(node);
+                errors.push(...err);
+            }
         }
     }
     for (const edge of edges) {
@@ -99,16 +102,28 @@ export async function validate(diagramState: string | null): Promise<string[]> {
             errors.push(`Invalid use of Identity Provider node in edge from ${sourceNode?.id} to ${targetNode?.id}.`);
         }
         if(edge.type === 'invocation') {
-            errors.push(...checkInvocationRelationships(sourceNode, targetNode));
+            const err = checkInvocationRelationships(sourceNode, targetNode);
+            if(err.length > 0) {
+                errorSources.push(edge);
+                errors.push(...err);
+            }
         }
         if(edge.type === 'trust') {
-            errors.push(...checkTrustRelationships(sourceNode, targetNode));
+            const err = checkTrustRelationships(sourceNode, targetNode);
+            if(err.length > 0) {    
+                errorSources.push(edge);
+                errors.push(...err);
+            }
         }
         if(edge.type === 'legacy') {
-            errors.push(...checkLegacyRelationships(sourceNode, targetNode));
+            const err = checkLegacyRelationships(sourceNode, targetNode);
+            if(err.length > 0) {
+                errorSources.push(edge);
+                errors.push(...err);
+            }
         }
     }
-    return errors;
+    return {errors: errors, sources: errorSources};
 }
 
 const checkSecurityRealmChildren = (sourceNode: DiagramNode, nodes: DiagramNode[]): string[] => {
