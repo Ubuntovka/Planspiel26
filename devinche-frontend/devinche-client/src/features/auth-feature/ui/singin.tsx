@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Inria_Serif } from 'next/font/google';
+import ThemeToggleButton from '@/components/ThemeToggleButton';
 
 // Minimal types for Google Identity Services (GIS) OAuth Code flow
 type GoogleOAuthCodeResponse = {
@@ -189,7 +190,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`}>
+        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="login">
             <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -211,12 +212,15 @@ export default function LoginPage() {
                         className="w-full h-full"
                     />
                 </Link>
-                <Link
-                    href="/"
-                    className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
-                >
-                    Home
-                </Link>
+                <div className="flex items-center gap-3">
+                  <ThemeToggleButton />
+                  <Link
+                      href="/"
+                      className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
+                  >
+                      Home
+                  </Link>
+                </div>
             </header>
 
             <div className="fixed bottom-0 left-8 z-0">
@@ -344,6 +348,37 @@ export default function LoginPage() {
                     </div>
                 </div>
             </main>
+            <style jsx>{`
+              :global([data-theme="dark"]) [data-page="login"] {
+                background: var(--editor-bg);
+                color: var(--editor-text);
+              }
+              :global([data-theme="dark"]) [data-page="login"] header {
+                background: var(--editor-surface);
+                border-bottom: 1px solid var(--editor-border);
+              }
+              :global([data-theme="dark"]) [data-page="login"] h1 {
+                color: var(--editor-text);
+              }
+              :global([data-theme="dark"]) [data-page="login"] .pointer-events-none {
+                background-image:
+                  linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                  linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+              }
+              :global([data-theme="dark"]) [data-page="login"] input::placeholder {
+                color: var(--editor-text-secondary);
+              }
+              :global([data-theme="dark"]) [data-page="login"] input {
+                color: var(--editor-text);
+                border-color: var(--editor-border-light) !important;
+              }
+              :global([data-theme="dark"]) [data-page="login"] button.w-full {
+                background: var(--editor-accent) !important;
+              }
+              :global([data-theme="dark"]) [data-page="login"] button.w-full:hover {
+                background: var(--editor-accent-hover) !important;
+              }
+            `}</style>
         </div>
     );
 }
