@@ -23,10 +23,14 @@ import { useCallback, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import ValidationError from './validation/ValidationError';
 import { DiagramEdge } from '@/types/diagram';
+import DatasetNode from './ui/nodes/DatasetNode';
+import { AiProcessNode } from './ui/nodes/AiProcessNode';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
+    aiProcessNode: AiProcessNode,
     dataProviderNode: DataProviderNode,
+    datasetNode: DatasetNode,
     applicationNode: ApplicationNode,
     resizableNode: ResizableNode,
     securityRealmNode: SecurityRealmNode,
