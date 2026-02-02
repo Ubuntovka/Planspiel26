@@ -179,6 +179,32 @@ useEffect(() => {
               )}
             </>
           )}
+
+          {/* Fields for edges */}
+          {isEdge && selectedEdge?.type && EDGE_ADDITIONAL_FIELDS[selectedEdge.type] && (
+            <div className="pt-5 space-y-5 border-t border-(--editor-border)">
+              {EDGE_ADDITIONAL_FIELDS[selectedEdge.type].map((field) => {
+                const { key, condition, ...rest } = field;
+
+                if (condition && !condition(extraData)) return null;
+
+                return (
+                  <PropertyInput
+                    key={key} 
+                    label={rest.label}
+                    icon={rest.icon}
+                    type={rest.type}
+                    options={rest.options}
+                    placeholder={rest.placeholder}
+                    description={rest.description}
+                    value={extraData[key] || ''}
+                    onChange={(val: string) => handleExtraChange(key, val)}
+                    onSave={handleSave}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Footer Section */}
@@ -307,5 +333,149 @@ const ADDITIONAL_FIELDS: Record<string, {
   ]
 };
 
+const EDGE_ADDITIONAL_FIELDS: Record<string, any[]> = {
+  invocation: [
+    { 
+      label: 'Protocol', 
+      key: 'protocol', 
+      icon: <TypeIcon size={14} />, 
+      type: 'select', 
+      options: ['REST API', 'SOAP', 'gRPC', 'GraphQL', 'WebSocket', 'Webhook', 'Other'], 
+      placeholder: 'Select protocol type',
+      description: 'The communication standard or architectural style used for this connection.' 
+    },
+    { 
+      label: 'Custom Protocol', 
+      key: 'customProtocol', 
+      icon: <TypeIcon size={14} />, 
+      placeholder: 'e.g. MQTT, AMQP, Thrift',
+      condition: (data: any) => data.protocol === 'Other' 
+    },
+    { 
+      label: 'Endpoint Path', 
+      key: 'path', 
+      icon: <LinkIcon size={14} />, 
+      placeholder: 'e.g. /api/v1/resource',
+      description: 'The target URI path, resource identifier, or action name.' 
+    },
+    { 
+      label: 'Method', 
+      key: 'method', 
+      type: 'select', 
+      options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
+      icon: <Tag size={14} />,
+      condition: (data: any) => data.protocol === 'REST API'
+    },
+    { 
+      label: 'SOAP Action', 
+      key: 'soapAction', 
+      icon: <Tag size={14} />, 
+      placeholder: 'e.g. GetUserDetails',
+      description: 'The specific operation defined in the SOAP message header.',
+      condition: (data: any) => data.protocol === 'SOAP'
+    },
+    { 
+      label: 'WSDL URL', 
+      key: 'wsdl', 
+      icon: <LinkIcon size={14} />, 
+      placeholder: 'https://example.com/service?wsdl',
+      description: 'The location of the Web Services Description Language file.',
+      condition: (data: any) => data.protocol === 'SOAP'
+    },
+    { 
+      label: 'Event Type', 
+      key: 'eventType', 
+      icon: <Tag size={14} />, 
+      placeholder: 'e.g. subscribe, publish, message',
+      description: 'The specific event or message type for full-duplex communication.',
+      condition: (data: any) => data.protocol === 'WebSocket'
+    },
+    { 
+      label: 'Trigger Event', 
+      key: 'triggerEvent', 
+      icon: <Tag size={14} />, 
+      placeholder: 'e.g. payment.captured, order.created',
+      description: 'The external event that initiates this callback or webhook.',
+      condition: (data: any) => data.protocol === 'Webhook'
+    },
+    { 
+      label: 'Timeout (ms)', 
+      key: 'timeout', 
+      icon: <Calculator size={14} />, 
+      placeholder: 'e.g. 5000',
+      description: 'Maximum time in milliseconds to wait for a response.'
+    }
+  ],
+  trust: [
+    { 
+      label: 'Auth Strategy', 
+      key: 'authStrategy', 
+      icon: <Tag size={14} />, 
+      type: 'select', 
+      options: ['OAuth2/OIDC', 'JWT', 'mTLS', 'API Key', 'SAML 2.0'],
+      description: 'The mechanism used to establish a trusted identity between services.' 
+    },
+    { 
+      label: 'Token Issuer', 
+      key: 'issuer', 
+      icon: <LinkIcon size={14} />, 
+      placeholder: 'https://auth.example.com',
+      description: 'The authority (IdP/STS) that issues and signs the security tokens.' 
+    },
+    { 
+      label: 'Allowed Scopes', 
+      key: 'scopes', 
+      icon: <Tag size={14} />, 
+      placeholder: 'e.g. openid, profile, read:user',
+      description: 'The specific permissions or scopes granted via this trust relationship.' 
+    },
+    { 
+      label: 'Verification Info', 
+      key: 'verification', 
+      icon: <Info size={14} />, 
+      placeholder: 'e.g. JWKS URL or Public Key ID',
+      description: 'How the receiving service verifies the authenticity of the token.' 
+    }
+  ],
+  legacy: [
+    { 
+      label: 'Legacy System Type', 
+      key: 'legacyProtocol', 
+      icon: <TypeIcon size={14} />, 
+      type: 'select', 
+      options: ['SOAP (Legacy)', 'FTP/SFTP', 'Telnet', 'Direct DB Link', 'Custom'],
+      description: 'An outdated or proprietary protocol used for connecting to legacy environments.'
+    },
+    { 
+      label: 'Custom Type', 
+      key: 'customLegacyProtocol', 
+      icon: <TypeIcon size={14} />, 
+      placeholder: 'Specify protocol name',
+      condition: (data: any) => data.legacyProtocol === 'Custom' 
+    },
+    { 
+      label: 'Certificate ID', 
+      key: 'certificateId', 
+      icon: <Tag size={14} />, 
+      placeholder: 'X.509 Thumbprint or ID',
+      description: 'The unique identifier for the digital certificate required for secure handshake.' 
+    },
+    { 
+      label: 'Connection Method', 
+      key: 'connectionMethod', 
+      type: 'select', 
+      options: ['VPN Tunnel', 'Direct Connect', 'Reverse Proxy', 'IP Whitelist'],
+      icon: <LinkIcon size={14} />,
+      description: 'The network-level connection strategy used to bridge the environments.'
+    },
+    { 
+      label: 'Maintenance Window', 
+      key: 'maintenance', 
+      icon: <Calculator size={14} />, 
+      placeholder: 'e.g. Sun 01:00-05:00 UTC',
+      description: 'Scheduled downtime or synchronization cycles of the legacy system.' 
+    }
+  ]
+};
 
 export default PropertiesPanel;
