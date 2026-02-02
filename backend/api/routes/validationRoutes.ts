@@ -19,8 +19,7 @@ router.post('/', async (req: ValidationRequest, res: Response) => {
       });
     }
 
-    const errors = validate(data); 
-
+    const errors = await validate(data); 
     return res.status(200).json({ errors });
   } catch (error) {
     console.error('Validation error:', error);

@@ -330,6 +330,60 @@ export const useDiagram = (): UseDiagramReturn => {
         saveToStorage();
     }, [saveToStorage]);
 
+    const validate = async (newEdge: DiagramEdge) => {
+    const currentNodes = getNodes() as DiagramNode[];
+    const currentEdges = getEdges() as DiagramEdge[];
+
+     const edgesForValidation = [...currentEdges, newEdge];
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/validation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: { nodes: currentNodes, edges: edgesForValidation } }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Validation failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const errors = data.errors.errors || [];
+      const sources = data.errors.sources || [];
+      console.log(sources)
+      const errorNodeIds = new Set(
+        sources.map((item: { id: any; }) => item.id)
+      );
+      console.log(errorNodeIds)
+      setNodes(nds => 
+        nds.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            hasError: errorNodeIds.has(node.id)
+          }
+        }))
+      );
+
+      const errorEdgeIds = new Set(
+        sources.map((item: { id: any; }) => item.id)
+      );
+      console.log(errorEdgeIds)
+      setEdges((eds: DiagramEdge[]) => 
+        eds.map((edge: DiagramEdge) => ({
+          ...edge,
+          data: {
+            ...edge.data,
+            hasError: errorEdgeIds.has(edge.id)
+          }
+        }))
+      );
+      
+    } catch (error) {
+      console.error("Validation error:", error);
+    } 
+  }
+
     // Connection handler
     const onConnect = useCallback((params: Connection) => {
         if (!params.source || !params.target) return;
@@ -343,6 +397,8 @@ export const useDiagram = (): UseDiagramReturn => {
             markerEnd: { type: MarkerType.ArrowClosed, color: '#808080' },
         };
         setEdges((eds) => addEdge(newEdge, eds) as DiagramEdge[]);
+        console.log("SWT")
+        validate(newEdge)
         // snapshot after connect
         setTimeout(() => {
             saveToStorage();
@@ -774,6 +830,7 @@ export const useDiagram = (): UseDiagramReturn => {
         exportToXml,
         importFromJson,
         setNodes,
+        setEdges,
         selectedEdgeType,
         setSelectedEdgeType,
         onMoveEnd,

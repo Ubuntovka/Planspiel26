@@ -19,6 +19,7 @@ export default function ValidationError({ errors, handleClose }: { errors: strin
                         <li key={index}>{error}</li>
                     ))}
                 </ul>
+                <a href="/validation-rules" className="text-red-900 underline"><br />Learn more about validation rules</a>
             </div>
         );
     } else {

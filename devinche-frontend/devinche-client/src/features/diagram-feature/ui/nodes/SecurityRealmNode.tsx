@@ -9,7 +9,8 @@ const SecurityRealmNode = ({
   data,
   selected,
 }: NodeProps<SecurityRealmDataNode>) => {
-  const strokeColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
+  const errorColor = "#FF4D4F";
+  const strokeColor = data.hasError ? errorColor : (selected ? "var(--editor-accent)" : "var(--editor-text)");
   const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
   const fillColor = "var(--editor-surface)";
   const fixedStrokeWidth = 3;

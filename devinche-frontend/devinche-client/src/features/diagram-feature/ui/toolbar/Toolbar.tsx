@@ -2,7 +2,6 @@ import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon, Calculator, Ch
 import { useTheme } from '@/contexts/ThemeContext';
 import { exportDiagramToPng } from '../exports/exportToPng';
 import { Download, Upload, FileJson, Image, FileCode } from 'lucide-react';
-import { validate } from '../../validation/validate';
 import { DiagramNode } from '@/types/diagram';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
