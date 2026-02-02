@@ -162,7 +162,7 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
                 value={extraData[field.key] || ''}
                 onChange={(val: string) => handleExtraChange(field.key, val)}
                 onSave={handleSave}
-                placeholder={`${field.label}...`}
+                placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
               />
             ))}
           </div>
