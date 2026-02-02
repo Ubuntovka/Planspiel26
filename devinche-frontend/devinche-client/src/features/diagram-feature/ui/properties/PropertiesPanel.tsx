@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Tag, Euro, Type as TypeIcon, Calculator } from 'lucide-react';
+import { X, Save, Tag, Euro, Type as TypeIcon, Calculator, Info } from 'lucide-react';
 import type { DiagramNode, NodeData } from '@/types/diagram';
 
 interface PropertiesPanelProps {
@@ -165,6 +165,7 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
                 onChange={(val: string) => handleExtraChange(field.key, val)}
                 onSave={handleSave}
                 placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+                description={field.description}
               />
             ))}
           </div>
@@ -191,13 +192,25 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
   );
 };
 
-const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder, type, options }: any) => (
-  <div>
+const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder, type, options, description }: any) => (
+  <div className="group relative">
+    <div className="flex items-center justify-between">
     <label className="flex items-center gap-2 text-xs font-medium mb-2.5 text-(--editor-text-secondary)">
       {icon}
       <span className="uppercase tracking-wide">{label}</span>
     </label>
-    
+    {description && (
+        <div className="relative flex items-center group/tooltip">
+          <Info size={13} className="text-(--editor-text-secondary) opacity-50 hover:opacity-100 transition-opacity cursor-help" />
+          
+          {/* Tooltip Popup */}
+          <div className="absolute bottom-full right-0 mb-2 w-56 p-2 bg-gray-900 text-white text-[11px] leading-relaxed rounded-md shadow-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50 pointer-events-none border border-white/10">
+            {description}
+            <div className="absolute top-full right-1.5 border-[5px] border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )}
+    </div>
     {type === 'select' ? (
       <select
         value={value}
@@ -224,77 +237,67 @@ const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder, type
 );
 
 // Additional Fields Configuration Based on Node Type
-const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any; placeholder?: string; type?: 'select' | 'text'; options?: string[]; }[]> = {
-  // Application Context
+const ADDITIONAL_FIELDS: Record<string, { 
+  label: string; 
+  key: string; 
+  icon: any; 
+  placeholder?: string; 
+  type?: 'select' | 'text'; 
+  options?: string[]; 
+  description?: string;
+}[]> = {
   applicationNode: [
-    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Base URL (e.g. https://...)' },
-    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'X509 key identifier' },
-    { label: 'Sign-In Support', key: 'signInSupport', icon: <Calculator size={14} />, placeholder: 'Boolean (true/false)' },
-    { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes before invalid' }
+    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Base URL (e.g. https://...)', description: 'The root URL where the application is hosted.' },
+    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'X509 key identifier', description: 'The unique identifier for the SSL/TLS certificate used by this application.' },
+    { label: 'Sign-In Support', key: 'signInSupport', icon: <Calculator size={14} />, placeholder: 'Boolean (true/false)', description: 'Indicates if the application supports user authentication.' },
+    { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes before invalid', description: 'The duration of inactivity before a user session expires.' }
   ],
   
-  // Web Service Context
   serviceNode: [
-    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Service endpoint URL' },
-    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'Service certificate ID' },
-    { label: 'Valid protocols', key: 'protocols', icon: <Tag size={14} />, placeholder: 'Valid service protocol' },
-    { label: 'Authentication Type', key: 'authenticationType', icon: <Tag size={14} />, placeholder: 'Authentication type for service' }
+    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Service endpoint URL', description: 'The specific API endpoint URL for this service.' },
+    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'Service certificate ID', description: 'The certificate ID required for secure service-to-service communication.' },
+    { label: 'Valid protocols', key: 'protocols', icon: <Tag size={14} />, placeholder: 'Valid service protocol', description: 'Supported communication protocols (e.g., REST, SOAP, gRPC).' },
+    { label: 'Authentication Type', key: 'authenticationType', icon: <Tag size={14} />, placeholder: 'Authentication type', description: 'The method used to authenticate requests (e.g., Bearer Token, API Key).' }
   ],
-  // Dataset Context
+
   datasetNode: [
-    { label: 'Format', key: 'format', icon: <TypeIcon size={14} />, placeholder: 'e.g., CSV, JSON' },
-    { label: 'Size', key: 'size', icon: <Calculator size={14} />, placeholder: 'e.g., 500MB' },
-    { label: 'Source', key: 'source', icon: <Tag size={14} />, placeholder: 'Data source description' }
+    { label: 'Format', key: 'format', icon: <TypeIcon size={14} />, placeholder: 'e.g., CSV, JSON', description: 'The data structure format of the dataset.' },
+    { label: 'Size', key: 'size', icon: <Calculator size={14} />, placeholder: 'e.g., 500MB', description: 'The total storage size or estimated volume of the data.' },
+    { label: 'Source', key: 'source', icon: <Tag size={14} />, placeholder: 'Data source description', description: 'The origin or system from which this data is collected.' }
   ],
-  // AI Process Context
+
   aiProcessNode: [
-    { label: 'Algorithm', key: 'algorithm', icon: <TypeIcon size={14} />, placeholder: 'e.g., Neural Network' },
-    { label: 'Accuracy', key: 'accuracy', icon: <Calculator size={14} />, placeholder: 'e.g., 95%' }
+    { label: 'Algorithm', key: 'algorithm', icon: <TypeIcon size={14} />, placeholder: 'e.g., Neural Network', description: 'The specific machine learning algorithm or logic used in this process.' },
+    { label: 'Accuracy', key: 'accuracy', icon: <Calculator size={14} />, placeholder: 'e.g., 95%', description: 'The measured or target performance accuracy for this model.' }
   ],
-  // Realm Context
+
   securityRealmNode: [
-    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'STS base URL' },
-    { label: 'Allocate IP', key: 'allocateIP', icon: <TypeIcon size={14} />, placeholder: 'IDP redirect URL' },
-    { label: 'Encryption Type', key: 'encryptionType', icon: <TypeIcon size={14} />, placeholder: 'e.g., AES, RSA' }
+    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'STS base URL', description: 'The base URL for the Security Token Service (STS).' },
+    { label: 'Allocate IP', key: 'allocateIP', icon: <TypeIcon size={14} />, placeholder: 'IDP redirect URL', description: 'The endpoint for the Identity Provider (IDP) redirection.' },
+    { label: 'Encryption Type', key: 'encryptionType', icon: <TypeIcon size={14} />, placeholder: 'e.g., AES, RSA', description: 'The cryptographic algorithm used for securing data within this realm.' }
   ],
+
   aiApplicationNode: [
-    { 
-      label: 'Model Family', 
-      key: 'modelFamily', 
-      icon: <Tag size={14} />, 
-      placeholder: 'e.g., GPT-4, Claude 3.5, Llama 3' 
-    },
-    { 
-      label: 'Specific Version', 
-      key: 'modelVersion', 
-      icon: <Calculator size={14} />, 
-      placeholder: 'e.g., turbo-preview, sonnet-20241022' 
-    },
-    { label: 'System Prompt', key: 'systemPrompt', icon: <TypeIcon size={14} />, placeholder: 'Define AI role...' },
-    { label: 'Temperature', key: 'temperature', icon: <Calculator size={14} />, placeholder: '0.0 to 1.0' },
-    { label: 'Max Tokens', key: 'maxTokens', icon: <Calculator size={14} />, placeholder: 'Max response length' },
-    { label: 'Knowledge Base', key: 'knowledgeBase', icon: <Tag size={14} />, placeholder: 'RAG source or Vector DB ID' }
+    { label: 'Model Family', key: 'modelFamily', icon: <Tag size={14} />, placeholder: 'e.g., GPT-4, Claude 3.5', description: 'The broader category or lineage of the AI model being used.' },
+    { label: 'Specific Version', key: 'modelVersion', icon: <Calculator size={14} />, placeholder: 'e.g., turbo-preview', description: 'The exact version or snapshot of the model to ensure reproducibility.' },
+    { label: 'System Prompt', key: 'systemPrompt', icon: <TypeIcon size={14} />, placeholder: 'Define AI role...', description: 'The core instructions that guide the AI behavior and persona.' },
+    { label: 'Temperature', key: 'temperature', icon: <Calculator size={14} />, placeholder: '0.0 to 1.0', description: 'Controls randomness: 0 is deterministic, 1 is highly creative.' },
+    { label: 'Max Tokens', key: 'maxTokens', icon: <Calculator size={14} />, placeholder: 'Max response length', description: 'The maximum limit of tokens allowed in the generated response.' },
+    { label: 'Knowledge Base', key: 'knowledgeBase', icon: <Tag size={14} />, placeholder: 'RAG source or Vector DB ID', description: 'Reference to the external data used for Retrieval Augmented Generation (RAG).' }
   ],
 
   aiServiceNode: [
-    { 
-      label: 'Provider', 
-      key: 'provider', 
-      icon: <Tag size={14} />, 
-      type: 'select', 
-      options: ['OpenAI', 'Anthropic', 'Google Cloud', 'AWS Bedrock', 'Azure OpenAI', 'Self-Hosted'],
-      placeholder: 'Select a provider' 
-    },
-    { label: 'Model Version', key: 'modelVersion', icon: <Tag size={14} />, placeholder: 'Active version info' },
-    { label: 'Endpoint URL', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'https://api...' },
-    { label: 'API Quota', key: 'apiQuota', icon: <Calculator size={14} />, placeholder: 'RPM limit' },
-    { label: 'Latency Target', key: 'latencyTarget', icon: <Calculator size={14} />, placeholder: 'e.g., 200ms' }
+    { label: 'Provider', key: 'provider', icon: <Tag size={14} />, type: 'select', options: ['OpenAI', 'Anthropic', 'Google Cloud', 'AWS Bedrock', 'Azure OpenAI', 'Self-Hosted'], placeholder: 'Select a provider', description: 'The platform or company providing the AI infrastructure.' },
+    { label: 'Model Version', key: 'modelVersion', icon: <Tag size={14} />, placeholder: 'Active version info', description: 'The version of the service API currently in use.' },
+    { label: 'Endpoint URL', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'https://api...', description: 'The dedicated API gateway URL for the AI service.' },
+    { label: 'API Quota', key: 'apiQuota', icon: <Calculator size={14} />, placeholder: 'RPM limit', description: 'The maximum number of requests permitted per minute (RPM).' },
+    { label: 'Latency Target', key: 'latencyTarget', icon: <Calculator size={14} />, placeholder: 'e.g., 200ms', description: 'The desired response time threshold for the service.' }
   ],
-  // Identity Provider Context
-  identityProviderNode: [
+    identityProviderNode: [
     // { label: 'Accounts', key: 'accounts', icon: <Tag size={14} />, placeholder: 'Set of accounts' },
     // { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes at IP' }
   ]
 };
+
 
 export default PropertiesPanel;
