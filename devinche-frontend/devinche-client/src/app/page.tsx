@@ -2,14 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const router = useRouter();
+    const { isAuthenticated, logout } = useAuth();
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -21,42 +20,6 @@ export default function Home() {
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
-
-    useEffect(() => {
-        const readAuth = () => {
-            try {
-                const token = localStorage.getItem('authToken');
-                setIsAuthenticated(!!token);
-            } catch {
-                setIsAuthenticated(false);
-            }
-        };
-
-        readAuth();
-
-        const onStorage = (e: StorageEvent) => {
-            if (e.key === 'authToken') {
-                readAuth();
-            }
-        };
-        window.addEventListener('storage', onStorage);
-
-        const onFocus = () => readAuth();
-        window.addEventListener('focus', onFocus);
-
-        return () => {
-            window.removeEventListener('storage', onStorage);
-            window.removeEventListener('focus', onFocus);
-        };
-    }, []);
-
-    const handleLogout = useCallback(() => {
-        try {
-            localStorage.removeItem('authToken');
-        } catch {}
-        setIsAuthenticated(false);
-        router.refresh();
-    }, [router]);
 
     return (
         <div className="min-h-screen bg-[#e8eaed] relative overflow-hidden" data-page="home">
@@ -85,7 +48,7 @@ export default function Home() {
                     <ThemeToggleButton />
                     {isAuthenticated ? (
                         <button
-                            onClick={handleLogout}
+                            onClick={() => logout()}
                             className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
                             aria-label="Log out"
                         >

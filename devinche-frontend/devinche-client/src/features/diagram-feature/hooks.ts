@@ -31,7 +31,7 @@ export const useDiagram = (): UseDiagramReturn => {
     const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
     const [selectedNode, setSelectedNode] = useState<DiagramNode | null>(null);
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
-    const { screenToFlowPosition, getIntersectingNodes, getNodes, getEdges } = useReactFlow();
+    const { screenToFlowPosition, getIntersectingNodes, getNodes, getEdges, getNode } = useReactFlow();
 
     // History helpers (max 3 snapshots)
     type Snapshot = ReactFlowJsonObject<DiagramNode, DiagramEdge>;
@@ -488,11 +488,16 @@ export const useDiagram = (): UseDiagramReturn => {
         setSelectedNode(null);
     }, []);
 
-    // Node click handler - select node for properties panel
-    const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-        const diagramNode = node as DiagramNode;
-        setSelectedNode(diagramNode);
+    // Node click handler – selection only (no properties panel); panel opens via context menu "Properties"
+    const onNodeClick = useCallback((_event: React.MouseEvent, _node: Node) => {
+        // no-op: properties panel opens via context menu "Properties" only
     }, []);
+
+    // Open properties panel for a node (e.g. from context menu "Properties")
+    const openPropertiesForNode = useCallback((nodeId: string) => {
+        const node = getNode(nodeId);
+        if (node) setSelectedNode(node as DiagramNode);
+    }, [getNode]);
 
     // Update node data handler
     const onUpdateNode = useCallback((nodeId: string, data: Partial<import('@/types/diagram').NodeData>) => {
@@ -824,6 +829,7 @@ export const useDiagram = (): UseDiagramReturn => {
         selectAllNodes,
         onPaneClick,
         closeMenu,
+        openPropertiesForNode,
         onFlowInit,
         exportToJson,
         exportToRdf, 

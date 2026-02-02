@@ -25,6 +25,7 @@ import ValidationError from './validation/ValidationError';
 import { DiagramEdge } from '@/types/diagram';
 import DatasetNode from './ui/nodes/DatasetNode';
 import { AiProcessNode } from './ui/nodes/AiProcessNode';
+import MonaChatFab from './ui/MonaChatFab';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -60,6 +61,8 @@ const DiagramScreenContent = () => {
     resetCanvas,
     selectAllNodes,
     onPaneClick,
+    closeMenu,
+    openPropertiesForNode,
     onFlowInit,
     exportToJson,
     exportToRdf,
@@ -85,7 +88,9 @@ const DiagramScreenContent = () => {
 
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-  const contextMenuProps = menu ? { ...menu, resetCanvas, selectAllNodes } : null;
+  const contextMenuProps = menu
+    ? { ...menu, resetCanvas, selectAllNodes, closeMenu, onOpenProperties: openPropertiesForNode }
+    : null;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
 
@@ -217,6 +222,7 @@ const DiagramScreenContent = () => {
         onEdgeContextMenu={onEdgeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
+        onCloseMenu={closeMenu}
         menu={contextMenuProps}
         onFlowInit={onFlowInit}
         setNodes={setNodes}
@@ -238,6 +244,7 @@ const DiagramScreenContent = () => {
         onClose={onPaneClick}
         isOpen={selectedNode !== null}
       />
+      <MonaChatFab />
     </div>
   );
 };

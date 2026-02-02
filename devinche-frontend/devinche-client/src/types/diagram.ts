@@ -52,7 +52,8 @@ export interface UseDiagramReturn {
   resetCanvas: () => void;
   selectAllNodes: () => void;
   onPaneClick: () => void;
-  closeMenu: () => void,
+  closeMenu: () => void;
+  openPropertiesForNode: (nodeId: string) => void;
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   exportToJson: () => string | null;
   exportToRdf: () => string;
