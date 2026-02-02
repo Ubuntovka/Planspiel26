@@ -2,14 +2,17 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import ThemeToggleButton from '@/components/ThemeToggleButton';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            // Calculate position relative to viewport center
             const x = (e.clientX - window.innerWidth / 2) / 50;
             const y = (e.clientY - window.innerHeight / 2) / 50;
             setMousePosition({ x, y });
@@ -19,8 +22,44 @@ export default function Home() {
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
+    useEffect(() => {
+        const readAuth = () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                setIsAuthenticated(!!token);
+            } catch {
+                setIsAuthenticated(false);
+            }
+        };
+
+        readAuth();
+
+        const onStorage = (e: StorageEvent) => {
+            if (e.key === 'authToken') {
+                readAuth();
+            }
+        };
+        window.addEventListener('storage', onStorage);
+
+        const onFocus = () => readAuth();
+        window.addEventListener('focus', onFocus);
+
+        return () => {
+            window.removeEventListener('storage', onStorage);
+            window.removeEventListener('focus', onFocus);
+        };
+    }, []);
+
+    const handleLogout = useCallback(() => {
+        try {
+            localStorage.removeItem('authToken');
+        } catch {}
+        setIsAuthenticated(false);
+        router.refresh();
+    }, [router]);
+
     return (
-        <div className="min-h-screen bg-[#e8eaed] relative overflow-hidden">
+        <div className="min-h-screen bg-[#e8eaed] relative overflow-hidden" data-page="home">
             <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -42,12 +81,25 @@ export default function Home() {
                         className="w-full h-full"
                     />
                 </div>
-                <Link
-                    href="/login"
-                    className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
-                >
-                    Sign Up
-                </Link>
+                <div className="flex items-center gap-3">
+                    <ThemeToggleButton />
+                    {isAuthenticated ? (
+                        <button
+                            onClick={handleLogout}
+                            className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
+                            aria-label="Log out"
+                        >
+                            Log out
+                        </button>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
+                        >
+                            Sign In
+                        </Link>
+                    )}
+                </div>
             </header>
 
             <main className="relative h-[calc(100vh-100px)] flex items-center justify-center">
@@ -88,6 +140,31 @@ export default function Home() {
                     </Link>
                 </div>
             </main>
+            <style jsx>{`
+              :global([data-theme="dark"]) [data-page="home"] {
+                background: var(--editor-bg);
+                color: var(--editor-text);
+              }
+              :global([data-theme="dark"]) [data-page="home"] header {
+                background: var(--editor-surface);
+                border-bottom: 1px solid var(--editor-border);
+              }
+              :global([data-theme="dark"]) [data-page="home"] h1 {
+                color: var(--editor-text);
+              }
+              :global([data-theme="dark"]) [data-page="home"] p {
+                color: var(--editor-text-secondary);
+              }
+              :global([data-theme="dark"]) [data-page="home"] a.inline-block {
+                background: var(--editor-warning);
+                color: #111827;
+              }
+              :global([data-theme="dark"]) [data-page="home"] .pointer-events-none {
+                background-image:
+                  linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                  linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+              }
+            `}</style>
         </div>
     );
 }

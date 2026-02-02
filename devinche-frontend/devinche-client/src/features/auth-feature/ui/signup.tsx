@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Inria_Serif } from 'next/font/google';
+import ThemeToggleButton from '@/components/ThemeToggleButton';
 
 const inriaSerif = Inria_Serif({
     weight: ['300', '400', '700'],
@@ -79,7 +80,7 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`}>
+        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="signup">
             <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -102,12 +103,15 @@ export default function SignUpPage() {
                         className="w-full h-full"
                     />
                 </Link>
-                <Link
-                    href="/"
-                    className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
-                >
-                    Home
-                </Link>
+                <div className="flex items-center gap-3">
+                    <ThemeToggleButton />
+                    <Link
+                        href="/"
+                        className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
+                    >
+                        Home
+                    </Link>
+                </div>
             </header>
 
 
@@ -238,6 +242,43 @@ export default function SignUpPage() {
                     </div>
                 </div>
             </main>
+            <style jsx>{`
+              :global([data-theme="dark"]) [data-page="signup"] {
+                background: var(--editor-bg);
+                color: var(--editor-text);
+              }
+              :global([data-theme="dark"]) [data-page="signup"] header {
+                background: var(--editor-surface);
+                border-bottom: 1px solid var(--editor-border);
+              }
+              :global([data-theme="dark"]) [data-page="signup"] h1 {
+                color: var(--editor-text);
+              }
+              :global([data-theme="dark"]) [data-page="signup"] .pointer-events-none {
+                background-image:
+                  linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                  linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+              }
+              :global([data-theme="dark"]) [data-page="signup"] input::placeholder {
+                color: var(--editor-text-secondary);
+              }
+              :global([data-theme="dark"]) [data-page="signup"] input {
+                color: var(--editor-text);
+                border-color: var(--editor-border-light) !important;
+              }
+              :global([data-theme="dark"]) [data-page="signup"] button.w-full {
+                background: var(--editor-accent) !important;
+              }
+              :global([data-theme="dark"]) [data-page="signup"] button.w-full:hover {
+                background: var(--editor-accent-hover) !important;
+              }
+              :global([data-theme="dark"]) [data-page="signup"] p.text-xs {
+                color: var(--editor-text-secondary);
+              }
+              :global([data-theme="dark"]) [data-page="signup"] .rounded-3xl {
+                box-shadow: 0 8px 16px var(--editor-shadow-lg) !important;
+              }
+            `}</style>
         </div>
     );
 }
