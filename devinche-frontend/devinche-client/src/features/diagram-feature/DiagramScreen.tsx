@@ -85,6 +85,9 @@ const DiagramScreenContent = () => {
     selectedNode,
     onNodeClick,
     onUpdateNode,
+    onUpdateEdge,
+    selectedEdge,
+    onEdgeClick,
   } = useDiagram();
 
 
@@ -231,6 +234,7 @@ const DiagramScreenContent = () => {
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
       />
       <PalettePanel 
         selectedEdgeType={selectedEdgeType}
@@ -238,9 +242,11 @@ const DiagramScreenContent = () => {
       />
       <PropertiesPanel
         selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
         onUpdateNode={onUpdateNode}
+        onUpdateEdge={onUpdateEdge}
         onClose={onPaneClick}
-        isOpen={selectedNode !== null}
+        isOpen={selectedNode !== null || selectedEdge !== null}
       />
     </div>
   );

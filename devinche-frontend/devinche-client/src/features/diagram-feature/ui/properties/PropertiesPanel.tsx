@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Tag, Euro, Type as TypeIcon, Calculator, Info } from 'lucide-react';
-import type { DiagramNode, NodeData } from '@/types/diagram';
+import { X, Save, Tag, Euro, Type as TypeIcon, Calculator, Info, LinkIcon } from 'lucide-react';
+import type { DiagramEdge, DiagramNode, NodeData } from '@/types/diagram';
 
 interface PropertiesPanelProps {
   selectedNode: DiagramNode | null;
+  selectedEdge: DiagramEdge | null;
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
+  onUpdateEdge: (edgeId: string, data: Partial<DiagramEdge>) => void;
   onClose: () => void;
   isOpen: boolean;
 }
 
-const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: PropertiesPanelProps) => {
+const PropertiesPanel = ({ selectedNode, selectedEdge, onUpdateNode, onUpdateEdge, onClose, isOpen }: PropertiesPanelProps) => {
   const [name, setName] = useState<string>('');
   const [type, setType] = useState<string>('');
   const [cost, setCost] = useState<string>('');
@@ -17,28 +19,27 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
   const [extraData, setExtraData] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (selectedNode) {
+    if (selectedEdge) {
+      setName(selectedEdge.label?.toString() || '');
+      setType('');
+      setCost('');
+      setExtraData((selectedEdge.data?.extra ?? {}) as Record<string, string>);
+      setIsDirty(false);
+    } else if (selectedNode) {
       setName(selectedNode.data.name || '');
       setType(selectedNode.data.type || '');
       setCost(selectedNode.data.cost?.toString() || '');
       setExtraData(selectedNode.data.extra || {});
       setIsDirty(false);
-    } else {
-      setName('');
-      setType('');
-      setCost('');
-      setExtraData({});
-      setIsDirty(false);
     }
-  }, [selectedNode]);
+  }, [selectedNode, selectedEdge]);
 
-  // Check if form is dirty (has unsaved changes)
-  useEffect(() => {
-    if (!selectedNode) {
-      setIsDirty(false);
-      return;
-    }
-
+useEffect(() => {
+  if (selectedEdge) {
+    const currentName = name.trim() || undefined;
+    const nameChanged = currentName !== (selectedEdge.label || undefined);
+    setIsDirty(nameChanged); 
+  } else if (selectedNode) {
     const currentName = name.trim() || undefined;
     const currentType = type.trim() || undefined;
     const currentCost = cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined;
@@ -48,7 +49,8 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
     const costChanged = JSON.stringify(currentCost) !== JSON.stringify(selectedNode.data.cost || undefined);
 
     setIsDirty(nameChanged || typeChanged || costChanged);
-  }, [name, type, cost, selectedNode]);
+  }
+}, [name, type, cost, selectedNode, selectedEdge]);
 
   const handleExtraChange = (key: string, value: string) => {
     setExtraData(prev => ({ ...prev, [key]: value }));
@@ -56,26 +58,32 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
   };
 
   const handleSave = () => {
-    if (!selectedNode || !isDirty) return;
-    
-    const updatedData: Partial<NodeData> = {
-      name: name.trim() || undefined,
-      type: type.trim() || undefined,
-      cost: cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined,
-      extra: extraData,
-    };
+    if (!isDirty) return;
 
-    onUpdateNode(selectedNode.id, updatedData);
-    setIsDirty(false);
+    if (selectedEdge) {
+      onUpdateEdge(selectedEdge.id, { 
+        label: name.trim() || undefined,
+        data: { ...selectedEdge.data, extra: extraData } 
+      });
+      setIsDirty(false);
+    } else if (selectedNode) {
+      const updatedData: Partial<NodeData> = {
+        name: name.trim() || undefined,
+        type: type.trim() || undefined,
+        cost: cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined,
+        extra: extraData,
+      };
+      onUpdateNode(selectedNode.id, updatedData);
+      setIsDirty(false);
+    }
   };
 
-  if (!selectedNode || !isOpen) {
+  if (!isOpen || (!selectedNode && !selectedEdge)) {
     return null;
   }
-
+  const isEdge = !!selectedEdge;
   return (
     <>
-      {/* Backdrop overlay */}
       <div
         className="fixed inset-0 z-30 transition-opacity duration-300"
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', opacity: isOpen ? 1 : 0 }}
@@ -91,16 +99,19 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
         }}
       >
-        {/* Header Section */}
         <div className="flex flex-col px-6 py-5 gap-4 border-b border-(--editor-border) bg-(--editor-surface)">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-(--editor-accent) text-white shadow-md">
-                <Tag size={18} />
+                {isEdge ? <LinkIcon size={18} /> : <Tag size={18} />}
               </div>
               <div>
-                <h3 className="text-base font-semibold text-(--editor-text)">Node Properties</h3>
-                <p className="text-xs text-(--editor-text-secondary)">Edit node details</p>
+                <h3 className="text-base font-semibold text-(--editor-text)">
+                  {isEdge ? 'Edge Properties' : 'Node Properties'}
+                </h3>
+                <p className="text-xs text-(--editor-text-secondary)">
+                  {isEdge ? 'Edit connection details' : 'Edit node details'}
+                </p>
               </div>
             </div>
             <button onClick={onClose} className="p-2 rounded-lg text-(--editor-text-secondary) hover:bg-(--editor-surface-hover) cursor-pointer">
@@ -109,68 +120,65 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
           </div>
         </div>
 
-        {/* Content Section (Scrollable) */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 custom-scrollbar">
-          {/* Node Type (Read-only) */}
+          
+          {/* Read-only Type Info */}
           <div>
             <label className="flex items-center gap-2 text-xs font-medium mb-2.5 text-(--editor-text-secondary)">
               <TypeIcon size={14} />
-              <span className="uppercase tracking-wide">Node Type</span>
+              <span className="uppercase tracking-wide">{isEdge ? 'Edge Type' : 'Node Type'}</span>
             </label>
-            <div className="px-4 py-3 rounded-lg border border---editor-border) bg-(--editor-surface) text-sm font-medium text-(--editor-text)">
-              {selectedNode.type || 'Unknown'}
+            <div className="px-4 py-3 rounded-lg border border-(--editor-border) bg-(--editor-surface) text-sm font-medium text-(--editor-text)">
+              {isEdge ? (selectedEdge.type || 'Standard') : (selectedNode?.type || 'Unknown')}
             </div>
           </div>
 
-          {/* Name Input */}
+          {/* Label/Name Input */}
           <PropertyInput 
-            label="Name" 
+            label={isEdge ? "Label" : "Name"} 
             icon={<Tag size={14} />} 
             value={name} 
             onChange={setName} 
             onSave={handleSave} 
-            placeholder="Enter node name" 
+            placeholder={isEdge ? "Connection label" : "Enter node name"} 
           />
 
-          {/* Type Input */}
-          <PropertyInput 
-            label="Category/Type" 
-            icon={<TypeIcon size={14} />} 
-            value={type} 
-            onChange={setType} 
-            onSave={handleSave} 
-            placeholder="Enter custom type" 
-          />
-
-          {/* Cost Input */}
-          <PropertyInput 
-            label="Cost" 
-            icon={<Euro size={14} />} 
-            value={cost} 
-            onChange={setCost} 
-            onSave={handleSave} 
-            placeholder="Enter amount (e.g. 500)" 
-          />
-
-          {ADDITIONAL_FIELDS[selectedNode.type] && (
-          <div className="pt-5 space-y-5 border-t border-(--editor-border)">
-            {ADDITIONAL_FIELDS[selectedNode.type].map((field) => (
-              <PropertyInput
-                key={field.key}
-                label={field.label}
-                icon={field.icon}
-                type={field.type}     
-                options={field.options} 
-                value={extraData[field.key] || ''}
-                onChange={(val: string) => handleExtraChange(field.key, val)}
-                onSave={handleSave}
-                placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-                description={field.description}
+          {/* Fields for nodes */}
+          {!isEdge && (
+            <>
+              <PropertyInput 
+                label="Category/Type" 
+                icon={<TypeIcon size={14} />} 
+                value={type} 
+                onChange={setType} 
+                onSave={handleSave} 
+                placeholder="Enter custom type" 
               />
-            ))}
-          </div>
-        )}
-
+              <PropertyInput 
+                label="Cost" 
+                icon={<Euro size={14} />} 
+                value={cost} 
+                onChange={setCost} 
+                onSave={handleSave} 
+                placeholder="Enter amount (e.g. 500)" 
+              />
+              
+              {/* additional node fields */}
+              {selectedNode && ADDITIONAL_FIELDS[selectedNode.type] && (
+                <div className="pt-5 space-y-5 border-t border-(--editor-border)">
+                  {ADDITIONAL_FIELDS[selectedNode.type].map(({ key, ...rest }) => (
+                    <PropertyInput
+                      key={key}
+                      {...rest}
+                      value={extraData[key] || ''}
+                      onChange={(val: string) => handleExtraChange(key, val)}
+                      onSave={handleSave}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Footer Section */}
@@ -216,7 +224,7 @@ const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder, type
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-4 py-3 rounded-lg border border-(--editor-border) bg-(--editor-surface) text-sm text-(--editor-text) appearance-none focus:border-(--editor-accent) focus:outline-none"
-        style={{ backgroundImage: 'url("data:image/svg+xml,...")' }} // 화살표 아이콘 추가 가능
+        style={{ backgroundImage: 'url("data:image/svg+xml,...")' }} 
       >
         <option value="" disabled>{placeholder}</option>
         {options.map((opt: string) => (

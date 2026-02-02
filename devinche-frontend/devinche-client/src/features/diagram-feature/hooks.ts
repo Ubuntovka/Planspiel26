@@ -30,6 +30,7 @@ export const useDiagram = (): UseDiagramReturn => {
     const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
     const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
     const [selectedNode, setSelectedNode] = useState<DiagramNode | null>(null);
+    const [selectedEdge, setSelectedEdge] = useState<DiagramEdge | null>(null);
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
     const { screenToFlowPosition, getIntersectingNodes, getNodes, getEdges } = useReactFlow();
 
@@ -483,16 +484,49 @@ export const useDiagram = (): UseDiagramReturn => {
         setMenu(null);
     }, []);
 
-    const onPaneClick = useCallback(() => {
-        setMenu(null);
-        setSelectedNode(null);
-    }, []);
 
-    // Node click handler - select node for properties panel
-    const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-        const diagramNode = node as DiagramNode;
-        setSelectedNode(diagramNode);
-    }, []);
+
+const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    setSelectedEdge(edge as DiagramEdge);
+    setSelectedNode(null);
+}, []);
+
+
+const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    setSelectedNode(node as DiagramNode);
+    setSelectedEdge(null); 
+}, []);
+
+
+const onPaneClick = useCallback(() => {
+    setMenu(null);
+    setSelectedNode(null);
+    setSelectedEdge(null); 
+}, []);
+
+const onUpdateEdge = useCallback((edgeId: string, data: Partial<any>) => {
+    setEdges((eds) => {
+        const updatedEdges = eds.map((edge) => {
+            if (edge.id === edgeId) {
+                return { 
+                    ...edge, 
+                    data: { ...edge.data, ...data },
+                    label: data.label ?? data.name ?? edge.label 
+                };
+            }
+            return edge;
+        });
+        setSelectedEdge((current) => {
+            if (current && current.id === edgeId) {
+                const updated = updatedEdges.find((e) => e.id === edgeId);
+                return updated || null;
+            }
+            return current;
+        });
+        setTimeout(() => saveToStorage(), 0);
+        return updatedEdges;
+    });
+}, [saveToStorage]);
 
     // Update node data handler
     const onUpdateNode = useCallback((nodeId: string, data: Partial<import('@/types/diagram').NodeData>) => {
@@ -845,6 +879,9 @@ export const useDiagram = (): UseDiagramReturn => {
         selectedNode,
         onNodeClick,
         onUpdateNode,
+        selectedEdge,     
+        onEdgeClick,      
+        onUpdateEdge,          
     };
 };
 
