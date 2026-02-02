@@ -159,6 +159,8 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
                 key={field.key}
                 label={field.label}
                 icon={field.icon}
+                type={field.type}     
+                options={field.options} 
                 value={extraData[field.key] || ''}
                 onChange={(val: string) => handleExtraChange(field.key, val)}
                 onSave={handleSave}
@@ -189,26 +191,40 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
   );
 };
 
-// Reusable Property Input Component
-const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder }: any) => (
+const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder, type, options }: any) => (
   <div>
     <label className="flex items-center gap-2 text-xs font-medium mb-2.5 text-(--editor-text-secondary)">
       {icon}
       <span className="uppercase tracking-wide">{label}</span>
     </label>
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onKeyDown={(e) => e.key === 'Enter' && onSave()}
-      placeholder={placeholder}
-      className="w-full px-4 py-3 rounded-lg border border-(--editor-border) bg-(--editor-surface) text-sm text-(--editor-text) transition-all focus:border-(--editor-accent) focus:ring-4 focus:ring-(--editor-accent)/10 focus:outline-none"
-    />
+    
+    {type === 'select' ? (
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-3 rounded-lg border border-(--editor-border) bg-(--editor-surface) text-sm text-(--editor-text) appearance-none focus:border-(--editor-accent) focus:outline-none"
+        style={{ backgroundImage: 'url("data:image/svg+xml,...")' }} // 화살표 아이콘 추가 가능
+      >
+        <option value="" disabled>{placeholder}</option>
+        {options.map((opt: string) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    ) : (
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && onSave()}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 rounded-lg border border-(--editor-border) bg-(--editor-surface) text-sm text-(--editor-text) transition-all focus:border-(--editor-accent) focus:ring-4 focus:ring-(--editor-accent)/10 focus:outline-none"
+      />
+    )}
   </div>
 );
 
 // Additional Fields Configuration Based on Node Type
-const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any; placeholder?: string }[]> = {
+const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any; placeholder?: string; type?: 'select' | 'text'; options?: string[]; }[]> = {
   // Application Context
   applicationNode: [
     { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Base URL (e.g. https://...)' },
@@ -242,19 +258,37 @@ const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any;
     { label: 'Encryption Type', key: 'encryptionType', icon: <TypeIcon size={14} />, placeholder: 'e.g., AES, RSA' }
   ],
   aiApplicationNode: [
-    { label: 'Model Name', key: 'modelName', icon: <TypeIcon size={14} />, placeholder: 'e.g., GPT-4, Claude-3' },
-    { label: 'Temperature', key: 'temperature', icon: <Calculator size={14} />, placeholder: '0.0 ~ 1.0 (Creativity control)' },
-    { label: 'System Prompt', key: 'systemPrompt', icon: <Tag size={14} />, placeholder: 'Define AI personality/role' },
+    { 
+      label: 'Model Family', 
+      key: 'modelFamily', 
+      icon: <Tag size={14} />, 
+      placeholder: 'e.g., GPT-4, Claude 3.5, Llama 3' 
+    },
+    { 
+      label: 'Specific Version', 
+      key: 'modelVersion', 
+      icon: <Calculator size={14} />, 
+      placeholder: 'e.g., turbo-preview, sonnet-20241022' 
+    },
+    { label: 'System Prompt', key: 'systemPrompt', icon: <TypeIcon size={14} />, placeholder: 'Define AI role...' },
+    { label: 'Temperature', key: 'temperature', icon: <Calculator size={14} />, placeholder: '0.0 to 1.0' },
     { label: 'Max Tokens', key: 'maxTokens', icon: <Calculator size={14} />, placeholder: 'Max response length' },
-    { label: 'Knowledge Base', key: 'knowledgeBase', icon: <Tag size={14} />, placeholder: 'RAG source identifier' }
+    { label: 'Knowledge Base', key: 'knowledgeBase', icon: <Tag size={14} />, placeholder: 'RAG source or Vector DB ID' }
   ],
-  // AI Service Context (LLM API 또는 추론 엔진 서비스)
+
   aiServiceNode: [
-    { label: 'Endpoint URL', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Inference API endpoint' },
-    { label: 'Provider', key: 'provider', icon: <Tag size={14} />, placeholder: 'e.g., OpenAI, Anthropic, Local' },
-    { label: 'API Quota', key: 'apiQuota', icon: <Calculator size={14} />, placeholder: 'Requests per minute (RPM)' },
-    { label: 'Latency Target', key: 'latencyTarget', icon: <Calculator size={14} />, placeholder: 'Target response time (ms)' },
-    { label: 'Streaming', key: 'streamingSupport', icon: <Tag size={14} />, placeholder: 'Boolean (true/false)' }
+    { 
+      label: 'Provider', 
+      key: 'provider', 
+      icon: <Tag size={14} />, 
+      type: 'select', 
+      options: ['OpenAI', 'Anthropic', 'Google Cloud', 'AWS Bedrock', 'Azure OpenAI', 'Self-Hosted'],
+      placeholder: 'Select a provider' 
+    },
+    { label: 'Model Version', key: 'modelVersion', icon: <Tag size={14} />, placeholder: 'Active version info' },
+    { label: 'Endpoint URL', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'https://api...' },
+    { label: 'API Quota', key: 'apiQuota', icon: <Calculator size={14} />, placeholder: 'RPM limit' },
+    { label: 'Latency Target', key: 'latencyTarget', icon: <Calculator size={14} />, placeholder: 'e.g., 200ms' }
   ],
   // Identity Provider Context
   identityProviderNode: [
