@@ -241,7 +241,21 @@ const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any;
     { label: 'Allocate IP', key: 'allocateIP', icon: <TypeIcon size={14} />, placeholder: 'IDP redirect URL' },
     { label: 'Encryption Type', key: 'encryptionType', icon: <TypeIcon size={14} />, placeholder: 'e.g., AES, RSA' }
   ],
-  
+  aiApplicationNode: [
+    { label: 'Model Name', key: 'modelName', icon: <TypeIcon size={14} />, placeholder: 'e.g., GPT-4, Claude-3' },
+    { label: 'Temperature', key: 'temperature', icon: <Calculator size={14} />, placeholder: '0.0 ~ 1.0 (Creativity control)' },
+    { label: 'System Prompt', key: 'systemPrompt', icon: <Tag size={14} />, placeholder: 'Define AI personality/role' },
+    { label: 'Max Tokens', key: 'maxTokens', icon: <Calculator size={14} />, placeholder: 'Max response length' },
+    { label: 'Knowledge Base', key: 'knowledgeBase', icon: <Tag size={14} />, placeholder: 'RAG source identifier' }
+  ],
+  // AI Service Context (LLM API 또는 추론 엔진 서비스)
+  aiServiceNode: [
+    { label: 'Endpoint URL', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Inference API endpoint' },
+    { label: 'Provider', key: 'provider', icon: <Tag size={14} />, placeholder: 'e.g., OpenAI, Anthropic, Local' },
+    { label: 'API Quota', key: 'apiQuota', icon: <Calculator size={14} />, placeholder: 'Requests per minute (RPM)' },
+    { label: 'Latency Target', key: 'latencyTarget', icon: <Calculator size={14} />, placeholder: 'Target response time (ms)' },
+    { label: 'Streaming', key: 'streamingSupport', icon: <Tag size={14} />, placeholder: 'Boolean (true/false)' }
+  ],
   // Identity Provider Context
   identityProviderNode: [
     // { label: 'Accounts', key: 'accounts', icon: <Tag size={14} />, placeholder: 'Set of accounts' },

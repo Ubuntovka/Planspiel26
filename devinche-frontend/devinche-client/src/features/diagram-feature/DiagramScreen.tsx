@@ -25,16 +25,20 @@ import ValidationError from './validation/ValidationError';
 import { DiagramEdge } from '@/types/diagram';
 import DatasetNode from './ui/nodes/DatasetNode';
 import { AiProcessNode } from './ui/nodes/AiProcessNode';
+import AiApplicationNode from './ui/nodes/AiApplicationNode';
+import AiServiceNode from './ui/nodes/AiServiceNode';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
     aiProcessNode: AiProcessNode,
     dataProviderNode: DataProviderNode,
     datasetNode: DatasetNode,
+    aiApplicationNode: AiApplicationNode,
     applicationNode: ApplicationNode,
     resizableNode: ResizableNode,
     securityRealmNode: SecurityRealmNode,
     serviceNode: ServiceNode,
+    aiServiceNode: AiServiceNode,
     identityProviderNode: IdentityProviderNode,
 };
 
