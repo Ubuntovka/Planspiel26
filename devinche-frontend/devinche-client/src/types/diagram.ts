@@ -72,11 +72,8 @@ export interface UseDiagramReturn {
   canUndo: boolean;
   canRedo: boolean;
   selectedNode: DiagramNode | null;
-  selectedEdge: DiagramEdge | null;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
-  onEdgeClick: (event: React.MouseEvent, edge: Edge) => void;
-  onUpdateEdge: (edgeId: string, data: Partial<DiagramEdge>) => void;
 }
 
 // Node component props

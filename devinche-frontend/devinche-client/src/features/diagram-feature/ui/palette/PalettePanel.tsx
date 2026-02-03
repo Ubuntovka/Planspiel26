@@ -76,38 +76,6 @@ const AiNodes: PaletteItem[] = [
 
         ),
     },
-    {
-        id: 'ai-application-node',
-        type: 'node',
-        label: 'AI Application',
-        nodeType: 'aiApplicationNode',
-        icon: (
-            <svg width="18" height="18" viewBox="0 0 87 88" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M1.94713 15.1788C1.94713 8.03705 7.73668 2.24748 14.8785 2.24748H72.351C79.4928 2.24748 85.2823 8.03704 85.2823 15.1788V72.6513C85.2823 79.7931 79.4928 85.5827 72.351 85.5827H14.8785C7.73669 85.5827 1.94713 79.7931 1.94713 72.6513V15.1788Z"
-                    stroke="currentColor"
-                    strokeWidth="2.87363"
-                />
-                <circle cx="43.6147" cy="43.9151" r="12" fill="#000000" stroke="none" />
-            </svg>
-        ),
-    },
-    {
-        id: 'ai-service-node',
-        type: 'node',
-        label: 'AI Service',
-        nodeType: 'aiServiceNode',
-        icon: (
-            <svg width="18" height="18" viewBox="0 0 86 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M31.7544 8.43415C36.7317 -0.186735 49.1748 -0.186749 54.1521 8.43413L82.1492 56.9266C87.1265 65.5475 80.9049 76.3236 70.9504 76.3236H14.9561C5.0016 76.3236 -1.22 65.5475 3.75727 56.9266L31.7544 8.43415Z"
-                    stroke="currentColor"
-                    strokeWidth="2.87363"
-                />
-                <circle cx="43.5" cy="48" r="10" fill="#000000" stroke="none" />
-            </svg>
-        ),
-    },
 ]
 
 const Tools: PaletteItem[] = [

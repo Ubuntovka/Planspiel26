@@ -25,20 +25,16 @@ import ValidationError from './validation/ValidationError';
 import { DiagramEdge } from '@/types/diagram';
 import DatasetNode from './ui/nodes/DatasetNode';
 import { AiProcessNode } from './ui/nodes/AiProcessNode';
-import AiApplicationNode from './ui/nodes/AiApplicationNode';
-import AiServiceNode from './ui/nodes/AiServiceNode';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
     aiProcessNode: AiProcessNode,
     dataProviderNode: DataProviderNode,
     datasetNode: DatasetNode,
-    aiApplicationNode: AiApplicationNode,
     applicationNode: ApplicationNode,
     resizableNode: ResizableNode,
     securityRealmNode: SecurityRealmNode,
     serviceNode: ServiceNode,
-    aiServiceNode: AiServiceNode,
     identityProviderNode: IdentityProviderNode,
 };
 
@@ -85,9 +81,6 @@ const DiagramScreenContent = () => {
     selectedNode,
     onNodeClick,
     onUpdateNode,
-    onUpdateEdge,
-    selectedEdge,
-    onEdgeClick,
   } = useDiagram();
 
 
@@ -234,7 +227,6 @@ const DiagramScreenContent = () => {
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
       />
       <PalettePanel 
         selectedEdgeType={selectedEdgeType}
@@ -242,11 +234,9 @@ const DiagramScreenContent = () => {
       />
       <PropertiesPanel
         selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
         onUpdateNode={onUpdateNode}
-        onUpdateEdge={onUpdateEdge}
         onClose={onPaneClick}
-        isOpen={selectedNode !== null || selectedEdge !== null}
+        isOpen={selectedNode !== null}
       />
     </div>
   );
