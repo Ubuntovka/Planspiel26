@@ -22,6 +22,7 @@ interface ContextMenuProps extends ContextMenuState {
   resetCanvas?: () => void;
   selectAllNodes?: () => void;
   onOpenProperties?: (nodeId: string) => void;
+  closeMenu?: () => void;
 }
 
 const IconNode = () => <SquareRounded fontSize="small" />;
@@ -47,6 +48,7 @@ export default function ContextMenu({
   resetCanvas,
   selectAllNodes,
   onOpenProperties,
+  closeMenu,
   ...props
 }: ContextMenuProps) {
   const { getNode, getEdges, deleteElements, setNodes } = useReactFlow();
@@ -161,7 +163,7 @@ export default function ContextMenu({
         )}
 
         {/* Actions */}
-        {/* <div className="context-menu__section">
+        <div className="context-menu__section">
           <div className="context-menu__section-label">Actions</div>
           <div className="context-menu__actions">
           {isCanvasMenu && (
@@ -233,6 +235,7 @@ export default function ContextMenu({
               onClick={() => {
                 deleteItem();
                 onClick?.();
+                closeMenu?.();
               }}
             >
               <span className="context-menu-item__icon">
@@ -242,62 +245,7 @@ export default function ContextMenu({
             </button>
           )}
         </div>
-        </div> */}
-        {/* Actions 섹션 */}
-<div className="context-menu__section">
-  <div className="context-menu__section-label">Actions</div>
-  <div className="context-menu__actions">
-    
-    {/* 1. Canvas 전용 액션 (기존 유지) */}
-    {isCanvasMenu && (
-      <>
-        <button type="button" className="context-menu-item" onClick={() => { handleResetCanvas(); onClick?.(); }}>
-          <span className="context-menu-item__icon"><IconPane /></span>
-          <span>Reset canvas</span>
-        </button>
-        {/* ... Select All 생략 */}
-      </>
-    )}
-
-    {/* 2. [수정] Node와 Edge 공통 Properties 액션 */}
-    {(elementType === "node" || elementType === "edge") && (
-      <button
-        type="button"
-        className="context-menu-item"
-        onClick={() => {
-          // id와 타입을 함께 넘겨주어 PropertiesPanel이 무엇을 렌더링할지 알게 합니다.
-          onOpenProperties?.(id); 
-          onClick?.(); // 메뉴 닫기
-        }}
-      >
-        <span className="context-menu-item__icon">
-          <IconProperties />
-        </span>
-        <span>Properties</span>
-      </button>
-    )}
-
-    {/* 3. Node 전용 액션 (Duplicate 등) */}
-    {elementType === "node" && (
-      <button type="button" className="context-menu-item" onClick={() => { duplicateNode(); onClick?.(); }}>
-        <span className="context-menu-item__icon"><IconDuplicate /></span>
-        <span>Duplicate node</span>
-      </button>
-    )}
-
-    {/* 4. 공통 삭제 액션 */}
-    {!isCanvasMenu && (
-      <button
-        type="button"
-        className="context-menu-item context-menu-item--danger"
-        onClick={() => { deleteItem(); onClick?.(); }}
-      >
-        <span className="context-menu-item__icon"><IconDelete /></span>
-        <span>Delete {elementType === "node" ? "node" : "edge"}</span>
-      </button>
-    )}
-  </div>
-</div>
+        </div>
       </div>
     </div>
   );

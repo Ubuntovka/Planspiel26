@@ -154,15 +154,20 @@ const PropertiesPanel = ({
               <PropertyInput label="Category" icon={<TypeIcon size={14} />} value={type} onChange={setType} onSave={handleSave} />
               <PropertyInput label="Cost" icon={<Euro size={14} />} value={cost} onChange={setCost} onSave={handleSave} />
               
-              {selectedNode && ADDITIONAL_FIELDS[selectedNode.type]?.map((field) => (
-                <PropertyInput
-                  key={field.key}
-                  {...field}
-                  value={extraData[field.key] || ""}
-                  onChange={(val) => handleExtraChange(field.key, val)}
-                  onSave={handleSave}
-                />
-              ))}
+              {selectedNode && ADDITIONAL_FIELDS[selectedNode.type]?.map((field) => {
+
+                const { key, ...fieldProps } = field;
+                
+                return (
+                  <PropertyInput
+                    key={key}          
+                    {...fieldProps}   
+                    value={extraData[key] || ""}
+                    onChange={(val) => handleExtraChange(key, val)}
+                    onSave={handleSave}
+                  />
+                );
+              })}
             </>
           )}
 
