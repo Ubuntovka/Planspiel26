@@ -1,6 +1,9 @@
 "use client";
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ReactFlowProvider } from '@xyflow/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDiagram } from './hooks';
 import DiagramCanvas from './ui/DiagramCanvas';
 import { ProcessUnitNode } from "./ui/nodes/ProcessUnitNode";
@@ -19,7 +22,7 @@ import Legacy from './ui/edges/Legacy';
 import Toolbar from './ui/toolbar/Toolbar';
 import PalettePanel from './ui/palette/PalettePanel';
 import PropertiesPanel from './ui/properties/PropertiesPanel';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import ValidationError from './validation/ValidationError';
 import { DiagramEdge } from '@/types/diagram';
@@ -46,7 +49,13 @@ const edgeTypes: EdgeTypes = {
     legacy:Legacy
 };
 
-const DiagramScreenContent = () => {
+interface DiagramScreenContentProps {
+  diagramId?: string | null;
+}
+
+const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
+  const { getToken, isAuthenticated } = useAuth();
+  const router = useRouter();
   const {
     nodes,
     edges,
@@ -84,7 +93,11 @@ const DiagramScreenContent = () => {
     selectedNode,
     onNodeClick,
     onUpdateNode,
-  } = useDiagram();
+    diagramName,
+    onRenameDiagram,
+    saveDiagram,
+    saveDiagramAs,
+  } = useDiagram({ diagramId: diagramId ?? undefined, getToken });
 
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
@@ -93,6 +106,10 @@ const DiagramScreenContent = () => {
     : null;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
+  const [nameInput, setNameInput] = useState(diagramName ?? 'Untitled Diagram');
+  useEffect(() => {
+    setNameInput(diagramName ?? 'Untitled Diagram');
+  }, [diagramName]);
 
   const handleZoomIn = useCallback(() => {
     zoomIn();
@@ -106,9 +123,31 @@ const DiagramScreenContent = () => {
     fitView();
   }, [fitView]);
 
-  const handleSave = useCallback(() => {
-    exportToJson();
-  }, [exportToJson]);
+  const handleSave = useCallback(async () => {
+    if (saveDiagram) return saveDiagram();
+    return true;
+  }, [saveDiagram]);
+
+  const handleSaveAs = useCallback(
+    async (name: string) => {
+      if (!saveDiagramAs) return null;
+      const id = await saveDiagramAs(name);
+      if (id) router.push(`/editor/${id}`);
+      return id;
+    },
+    [saveDiagramAs, router]
+  );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (saveDiagram) saveDiagram();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [saveDiagram]);
 
   /**
    * Sends diagram data to backend for validation
@@ -190,8 +229,46 @@ const DiagramScreenContent = () => {
 
   return (
     <div className="relative w-screen h-screen">
+      {diagramId && (
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 shrink-0"
+          style={{ backgroundColor: 'var(--editor-surface)', borderBottom: '1px solid var(--editor-border)' }}
+        >
+          <Link
+            href="/editor"
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-[var(--editor-surface-hover)] transition-colors"
+            style={{ color: 'var(--editor-text-secondary)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Back
+          </Link>
+          {onRenameDiagram && (
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onBlur={async () => {
+                const val = nameInput.trim() || 'Untitled Diagram';
+                if (val !== (diagramName ?? 'Untitled Diagram')) {
+                  await onRenameDiagram(val);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur();
+              }}
+              className="flex-1 min-w-0 px-2 py-1 rounded border-0 bg-transparent font-medium focus:outline-none focus:ring-1"
+              style={{ color: 'var(--editor-text)', maxWidth: 300 }}
+            />
+          )}
+        </div>
+      )}
       <Toolbar
         onSave={handleSave}
+        onSaveAs={handleSaveAs}
+        diagramName={diagramName ?? 'Untitled Diagram'}
+        isLoggedIn={isAuthenticated}
         onUndo={onUndo}
         onRedo={onRedo}
         canUndo={canUndo}
@@ -249,10 +326,14 @@ const DiagramScreenContent = () => {
   );
 };
 
-const DiagramScreen = () => {
+interface DiagramScreenProps {
+  diagramId?: string | null;
+}
+
+const DiagramScreen = ({ diagramId }: DiagramScreenProps) => {
   return (
     <ReactFlowProvider>
-      <DiagramScreenContent />
+      <DiagramScreenContent diagramId={diagramId} />
     </ReactFlowProvider>
   );
 };

@@ -59,12 +59,14 @@ export default function LoginPage() {
     const codeClientRef = useRef<GoogleCodeClient | null>(null);
 
     const returnUrl = searchParams.get('returnUrl') || '/editor';
+    // Always redirect to /editor (diagrams selection) after login, never directly to editor/[id]
+    const postLoginUrl = returnUrl.startsWith('/editor/') ? '/editor' : returnUrl;
 
     useEffect(() => {
         if (isAuthenticated) {
-            router.replace(returnUrl);
+            router.replace(postLoginUrl);
         }
-    }, [isAuthenticated, router, returnUrl]);
+    }, [isAuthenticated, router, postLoginUrl]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,7 +76,7 @@ export default function LoginPage() {
         try {
             const { user, token } = await apiLogin(email, password);
             setSession(token, user);
-            router.push(returnUrl);
+            router.push(postLoginUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
         } finally {
@@ -139,7 +141,7 @@ export default function LoginPage() {
                                     if (data.token && data.user) {
                                         setSession(data.token, data.user);
                                     }
-                                    router.push(returnUrl);
+                                    router.push(postLoginUrl);
                                 } catch (e) {
                                     setError('Failed to login with Google');
                                 }

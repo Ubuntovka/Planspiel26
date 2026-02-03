@@ -19,59 +19,48 @@ import type { DiagramNode, DiagramEdge, ContextMenuState, UseDiagramReturn } fro
 import { exportDiagramToRdfTurtle } from "./ui/exports/exportToRdf";
 import { NODE_DEFAULT_SIZE } from "./data/nodeSizes";
 import { exportDiagramToXML } from "./ui/exports/exportToXML";
+import { listDiagrams, getDiagram, createDiagram, updateDiagram, renameDiagram as apiRenameDiagram } from "./api";
 
 const STORAGE_KEY = 'diagram.flow';
 const STORAGE_PTR_KEY = 'diagram.flow.ptr';
 
-export const useDiagram = (): UseDiagramReturn => {
+export interface UseDiagramOptions {
+  diagramId?: string | null;
+  getToken?: () => string | null;
+}
+
+export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
+    const { diagramId, getToken } = options || {};
+    const useBackend = !!getToken; // when logged in, use backend (diagramId optional for auto mode)
+    const currentDiagramIdRef = useRef<string | null>(diagramId ?? null);
     const [nodes, setNodes] = useState<DiagramNode[]>(initialNodes);
     const [edges, setEdges] = useState<DiagramEdge[]>(initialEdges);
     const [menu, setMenu] = useState<ContextMenuState | null>(null);
     const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
     const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
     const [selectedNode, setSelectedNode] = useState<DiagramNode | null>(null);
+    const [diagramName, setDiagramName] = useState<string | null>(null);
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
     const { screenToFlowPosition, getIntersectingNodes, getNodes, getEdges, getNode } = useReactFlow();
 
-    // History helpers (max 3 snapshots)
+    // In-memory history for backend mode (undo/redo)
     type Snapshot = ReactFlowJsonObject<DiagramNode, DiagramEdge>;
+    const backendHistoryRef = useRef<Snapshot[]>([]);
+    const backendPtrRef = useRef(0);
+    const pendingViewportRef = useRef<Viewport | null>(null);
 
+    // In-memory history for undo/redo (no auto-persist; persist only on Save)
     const readHistory = useCallback((): Snapshot[] => {
-        if (typeof window === 'undefined') return [];
-        try {
-            const raw = window.localStorage.getItem(STORAGE_KEY);
-            if (!raw) return [];
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-                return parsed as Snapshot[];
-            }
-            // migrate legacy single snapshot to array
-            return [parsed as Snapshot];
-        } catch (e) {
-            console.warn('Failed to parse history from storage', e);
-            return [];
-        }
+        return backendHistoryRef.current;
     }, []);
 
     const readPtr = useCallback((): number => {
-        if (typeof window === 'undefined') return 0;
-        try {
-            const raw = window.localStorage.getItem(STORAGE_PTR_KEY);
-            const n = raw != null ? Number(raw) : NaN;
-            return Number.isFinite(n) ? n : 0;
-        } catch {
-            return 0;
-        }
+        return backendPtrRef.current;
     }, []);
 
     const writeHistory = useCallback((hist: Snapshot[], ptr: number) => {
-        if (typeof window === 'undefined') return;
-        try {
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(hist));
-            window.localStorage.setItem(String(STORAGE_PTR_KEY), String(ptr));
-        } catch (e) {
-            console.warn('Failed to write history to storage', e);
-        }
+        backendHistoryRef.current = hist;
+        backendPtrRef.current = ptr;
     }, []);
 
     // Normalize a snapshot for comparison (sort nodes/edges and keep only essential viewport fields)
@@ -191,6 +180,7 @@ export const useDiagram = (): UseDiagramReturn => {
 
     // legacy single-snapshot loader retained for initial mount
     const loadSaved = useCallback((): ReactFlowJsonObject<DiagramNode, DiagramEdge> | null => {
+        if (useBackend) return null;
         if (typeof window === 'undefined') return null;
         try {
             const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -200,16 +190,159 @@ export const useDiagram = (): UseDiagramReturn => {
             console.warn('Failed to parse saved diagram from storage', e);
             return null;
         }
-    }, []);
+    }, [useBackend]);
 
-    // persist flow to storage (push snapshot)
+    // push snapshot for undo/redo only (no auto-persist; user must click Save)
     const saveToStorage = useCallback((overrideNodes?: DiagramNode[], overrideEdges?: DiagramEdge[]) => {
-        if (restoringRef.current) return; // avoid pushing while applying a snapshot
+        if (restoringRef.current) return;
         pushSnapshot(overrideNodes, overrideEdges);
     }, [pushSnapshot]);
 
+    // Explicit save: persist to backend or localStorage (called only when user clicks Save)
+    const saveDiagram = useCallback(async (): Promise<boolean> => {
+        if (restoringRef.current) return false;
+        const snap = takeSnapshot();
+        const nodes = Array.isArray(snap.nodes) ? snap.nodes : [];
+        const edges = Array.isArray(snap.edges) ? snap.edges : [];
+        const viewport = snap.viewport as Viewport | undefined;
+        const viewportPayload = viewport ? { x: viewport.x ?? 0, y: viewport.y ?? 0, zoom: viewport.zoom ?? 1 } : undefined;
+
+        if (useBackend && getToken) {
+            const token = getToken();
+            if (!token) return false;
+            try {
+                const id = currentDiagramIdRef.current;
+                if (id) {
+                    await updateDiagram(token, id, { nodes, edges, viewport: viewportPayload });
+                } else {
+                    const { diagram } = await createDiagram(token, {
+                        name: diagramName || 'Untitled Diagram',
+                        nodes,
+                        edges,
+                        viewport: viewportPayload,
+                    });
+                    currentDiagramIdRef.current = diagram._id;
+                    setDiagramName(diagram.name || 'Untitled Diagram');
+                }
+                return true;
+            } catch (e) {
+                console.warn('Failed to save diagram to backend', e);
+                return false;
+            }
+        }
+
+        // Not logged in: persist to localStorage
+        if (typeof window === 'undefined') return false;
+        try {
+            const hist = readHistory();
+            const ptr = readPtr();
+            const snapToSave = hist[ptr] ?? snap;
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify([snapToSave]));
+            window.localStorage.setItem(STORAGE_PTR_KEY, String(0));
+            return true;
+        } catch (e) {
+            console.warn('Failed to save diagram to localStorage', e);
+            return false;
+        }
+    }, [useBackend, getToken, takeSnapshot, diagramName, readHistory, readPtr]);
+
+    // Save As: create new diagram with current content and given name (logged in only)
+    const saveDiagramAs = useCallback(async (name: string): Promise<string | null> => {
+        if (!useBackend || !getToken) return null;
+        const token = getToken();
+        if (!token) return null;
+        const snap = takeSnapshot();
+        const nodes = Array.isArray(snap.nodes) ? snap.nodes : [];
+        const edges = Array.isArray(snap.edges) ? snap.edges : [];
+        const viewport = snap.viewport as Viewport | undefined;
+        const viewportPayload = viewport ? { x: viewport.x ?? 0, y: viewport.y ?? 0, zoom: viewport.zoom ?? 1 } : undefined;
+        const trimmed = (name || '').trim() || 'Untitled Diagram';
+        try {
+            const { diagram } = await createDiagram(token, {
+                name: trimmed,
+                nodes,
+                edges,
+                viewport: viewportPayload,
+            });
+            currentDiagramIdRef.current = diagram._id;
+            setDiagramName(trimmed);
+            return diagram._id;
+        } catch (e) {
+            console.warn('Failed to save diagram as', e);
+            return null;
+        }
+    }, [useBackend, getToken, takeSnapshot]);
+
     // On mount: load saved nodes/edges (supports legacy object or history array)
+    // When useBackend: fetch from API (diagramId or auto: most recent diagram)
     useEffect(() => {
+        if (useBackend && getToken) {
+            const token = getToken();
+            if (!token) return;
+            let cancelled = false;
+
+            const loadById = (id: string) =>
+                getDiagram(token, id).then(({ diagram }) => {
+                    if (cancelled) return;
+                    currentDiagramIdRef.current = id;
+                    setDiagramName(diagram.name || 'Untitled Diagram');
+                    const vp = diagram.viewport || { x: 0, y: 0, zoom: 1 };
+                    pendingViewportRef.current = vp;
+                    const snap: Snapshot = {
+                        nodes: Array.isArray(diagram.nodes) ? diagram.nodes : [],
+                        edges: Array.isArray(diagram.edges) ? diagram.edges : [],
+                        viewport: vp,
+                    };
+                    backendHistoryRef.current = [snap];
+                    backendPtrRef.current = 0;
+                    writeHistory([snap], 0);
+                    applySnapshot(snap);
+                    updateUndoRedoFlags([snap], 0);
+                });
+
+            if (diagramId) {
+                currentDiagramIdRef.current = diagramId;
+                loadById(diagramId).catch((e) => {
+                    if (!cancelled) console.warn('Failed to load diagram from backend', e);
+                    setDiagramName('Untitled Diagram');
+                    const snap = { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } } as Snapshot;
+                    backendHistoryRef.current = [snap];
+                    backendPtrRef.current = 0;
+                    writeHistory([snap], 0);
+                    applySnapshot(snap);
+                    updateUndoRedoFlags([snap], 0);
+                });
+            } else {
+                // Auto mode: load most recent diagram or start empty
+                listDiagrams(token)
+                    .then(({ diagrams: list }) => {
+                        if (cancelled) return;
+                        const mostRecent = list?.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+                        if (mostRecent) {
+                            return loadById(mostRecent._id);
+                        }
+                        // No diagrams - start empty
+                        const snap = { nodes: initialNodes, edges: initialEdges, viewport: { x: 0, y: 0, zoom: 1 } } as Snapshot;
+                        backendHistoryRef.current = [snap];
+                        backendPtrRef.current = 0;
+                        writeHistory([snap], 0);
+                        applySnapshot(snap);
+                        updateUndoRedoFlags([snap], 0);
+                    })
+                    .catch((e) => {
+                        if (!cancelled) console.warn('Failed to list diagrams', e);
+                        const snap = { nodes: initialNodes, edges: initialEdges, viewport: { x: 0, y: 0, zoom: 1 } } as Snapshot;
+                        backendHistoryRef.current = [snap];
+                        backendPtrRef.current = 0;
+                        writeHistory([snap], 0);
+                        applySnapshot(snap);
+                        updateUndoRedoFlags([snap], 0);
+                    });
+            }
+            return () => { cancelled = true; };
+        }
+
+        setDiagramName(null);
         const saved = loadSaved();
         if (saved) {
             if (Array.isArray(saved)) {
@@ -220,7 +353,6 @@ export const useDiagram = (): UseDiagramReturn => {
                 updateUndoRedoFlags(hist, ptr);
             } else {
                 const obj = saved as Snapshot;
-                // migrate legacy to history array with single snapshot
                 const hist = [obj];
                 const ptr = 0;
                 writeHistory(hist, ptr);
@@ -228,24 +360,30 @@ export const useDiagram = (): UseDiagramReturn => {
                 updateUndoRedoFlags(hist, ptr);
             }
         } else {
-            // initialize history with initial state
             const snap = takeSnapshot();
             writeHistory([snap], 0);
             updateUndoRedoFlags([snap], 0);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [useBackend, diagramId]);
 
     // reactflow initial state handler
     const onFlowInit = useCallback(
         (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => { 
         setRfInstance(instance);
-        // apply saved viewport if available
-        const saved = loadSaved();
-        const vp = saved?.viewport;
-        if (vp) {
-            const { x = 0, y = 0, zoom = 1 } = vp as Viewport;
+        // apply saved viewport if available (from localStorage or backend)
+        const pendingVp = pendingViewportRef.current;
+        if (pendingVp) {
+            const { x = 0, y = 0, zoom = 1 } = pendingVp;
             instance.setViewport({ x, y, zoom });
+            pendingViewportRef.current = null;
+        } else {
+            const saved = loadSaved();
+            const vp = saved?.viewport;
+            if (vp) {
+                const { x = 0, y = 0, zoom = 1 } = vp as Viewport;
+                instance.setViewport({ x, y, zoom });
+            }
         }
         },
         [loadSaved]
@@ -812,7 +950,16 @@ export const useDiagram = (): UseDiagramReturn => {
         });
     }, [getIntersectingNodes, setNodes, getNodes, getEdges, saveToStorage]);
 
-
+    const onRenameDiagram = useCallback(async (name: string) => {
+        if (!useBackend || !getToken) return;
+        const id = currentDiagramIdRef.current;
+        if (!id) return;
+        const token = getToken();
+        if (!token) return;
+        const trimmed = (name || '').trim() || 'Untitled Diagram';
+        await apiRenameDiagram(token, id, trimmed);
+        setDiagramName(trimmed);
+    }, [useBackend, getToken]);
 
     return {
         nodes,
@@ -851,6 +998,10 @@ export const useDiagram = (): UseDiagramReturn => {
         selectedNode,
         onNodeClick,
         onUpdateNode,
+        diagramName,
+        onRenameDiagram,
+        saveDiagram,
+        saveDiagramAs,
     };
 };
 

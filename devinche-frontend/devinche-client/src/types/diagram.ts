@@ -75,6 +75,10 @@ export interface UseDiagramReturn {
   selectedNode: DiagramNode | null;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
+  diagramName?: string | null;
+  onRenameDiagram?: (name: string) => Promise<void>;
+  saveDiagram?: () => Promise<boolean>;
+  saveDiagramAs?: (name: string) => Promise<string | null>;
 }
 
 // Node component props
