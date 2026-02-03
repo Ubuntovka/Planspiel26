@@ -1,228 +1,203 @@
-import { useState, useEffect } from 'react';
-import { X, Save, Tag, Euro, Type as TypeIcon, Calculator } from 'lucide-react';
-import type { DiagramNode, NodeData } from '@/types/diagram';
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { X, Save, Tag, Euro, Type as TypeIcon, Calculator } from "lucide-react";
+import type { DiagramNode, NodeData } from "@/types/diagram";
 
 interface PropertiesPanelProps {
   selectedNode: DiagramNode | null;
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
   onClose: () => void;
   isOpen: boolean;
+  allNodes?: DiagramNode[];
 }
 
 const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: PropertiesPanelProps) => {
-  const [name, setName] = useState<string>('');
-  const [type, setType] = useState<string>('');
-  const [cost, setCost] = useState<string>('');
+  const [name, setName] = useState<string>("");
+  const [type, setType] = useState<string>("");
+  const [cost, setCost] = useState<string>("");
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [extraData, setExtraData] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (selectedNode) {
-      setName(selectedNode.data.name || '');
-      setType(selectedNode.data.type || '');
-      setCost(selectedNode.data.cost?.toString() || '');
+      setName(selectedNode.data.name || "");
+      setType(selectedNode.data.type || "");
+      setCost(selectedNode.data.cost?.toString() || "");
       setExtraData(selectedNode.data.extra || {});
       setIsDirty(false);
     } else {
-      setName('');
-      setType('');
-      setCost('');
+      setName("");
+      setType("");
+      setCost("");
       setExtraData({});
       setIsDirty(false);
     }
   }, [selectedNode]);
 
-  // Check if form is dirty (has unsaved changes)
   useEffect(() => {
     if (!selectedNode) {
       setIsDirty(false);
       return;
     }
-
     const currentName = name.trim() || undefined;
     const currentType = type.trim() || undefined;
     const currentCost = cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined;
-
     const nameChanged = currentName !== (selectedNode.data.name || undefined);
     const typeChanged = currentType !== (selectedNode.data.type || undefined);
     const costChanged = JSON.stringify(currentCost) !== JSON.stringify(selectedNode.data.cost || undefined);
-
-    setIsDirty(nameChanged || typeChanged || costChanged);
+    setIsDirty(!!(nameChanged || typeChanged || costChanged));
   }, [name, type, cost, selectedNode]);
 
   const handleExtraChange = (key: string, value: string) => {
-    setExtraData(prev => ({ ...prev, [key]: value }));
+    setExtraData((prev) => ({ ...prev, [key]: value }));
     setIsDirty(true);
   };
 
   const handleSave = () => {
     if (!selectedNode || !isDirty) return;
-    
     const updatedData: Partial<NodeData> = {
       name: name.trim() || undefined,
       type: type.trim() || undefined,
       cost: cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined,
       extra: extraData,
     };
-
     onUpdateNode(selectedNode.id, updatedData);
     setIsDirty(false);
   };
 
-  if (!selectedNode || !isOpen) {
-    return null;
-  }
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleKeyDown]);
+
+  if (!selectedNode || !isOpen) return null;
+
+  const nodeTypeLabel = selectedNode.type?.replace(/([A-Z])/g, " $1").trim() || "Unknown";
+  const addlFields = ADDITIONAL_FIELDS[selectedNode.type];
 
   return (
-    <>
-      {/* Backdrop overlay */}
+    <div
+      className="properties-modal-backdrop"
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="properties-modal-title"
+    >
       <div
-        className="fixed inset-0 z-30 transition-opacity duration-300"
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', opacity: isOpen ? 1 : 0 }}
-        onClick={onClose}
-      />
-
-      <div
-        className="fixed top-0 right-0 h-full w-96 z-40 transition-transform duration-300 ease-in-out flex flex-col"
-        style={{
-          backgroundColor: 'var(--editor-panel-bg)',
-          borderLeft: '1px solid var(--editor-border)',
-          boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.12)',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-        }}
+        className="properties-modal relative"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header Section */}
-        <div className="flex flex-col px-6 py-5 gap-4 border-b border-(--editor-border) bg-(--editor-surface)">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-(--editor-accent) text-white shadow-md">
-                <Tag size={18} />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-(--editor-text)">Node Properties</h3>
-                <p className="text-xs text-(--editor-text-secondary)">Edit node details</p>
-              </div>
-            </div>
-            <button onClick={onClose} className="p-2 rounded-lg text-(--editor-text-secondary) hover:bg-(--editor-surface-hover) cursor-pointer">
-              <X size={20} />
-            </button>
+        <header className="properties-modal__header">
+          <span className="properties-modal__header-icon">
+            <Tag size={22} strokeWidth={2} />
+          </span>
+          <div className="properties-modal__title-wrap">
+            <h2 id="properties-modal-title" className="properties-modal__title">
+              Node properties
+            </h2>
+            <span className="properties-modal__subtitle">{nodeTypeLabel}</span>
           </div>
-        </div>
-
-        {/* Content Section (Scrollable) */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 custom-scrollbar">
-          {/* Node Type (Read-only) */}
-          <div>
-            <label className="flex items-center gap-2 text-xs font-medium mb-2.5 text-(--editor-text-secondary)">
-              <TypeIcon size={14} />
-              <span className="uppercase tracking-wide">Node Type</span>
-            </label>
-            <div className="px-4 py-3 rounded-lg border border---editor-border) bg-(--editor-surface) text-sm font-medium text-(--editor-text)">
-              {selectedNode.type || 'Unknown'}
-            </div>
-          </div>
-
-          {/* Name Input */}
-          <PropertyInput 
-            label="Name" 
-            icon={<Tag size={14} />} 
-            value={name} 
-            onChange={setName} 
-            onSave={handleSave} 
-            placeholder="Enter node name" 
-          />
-
-          {/* Type Input */}
-          <PropertyInput 
-            label="Category/Type" 
-            icon={<TypeIcon size={14} />} 
-            value={type} 
-            onChange={setType} 
-            onSave={handleSave} 
-            placeholder="Enter custom type" 
-          />
-
-          {/* Cost Input */}
-          <PropertyInput 
-            label="Cost" 
-            icon={<Euro size={14} />} 
-            value={cost} 
-            onChange={setCost} 
-            onSave={handleSave} 
-            placeholder="Enter amount (e.g. 500)" 
-          />
-
-          {ADDITIONAL_FIELDS[selectedNode.type] && (
-          <div className="pt-5 space-y-5 border-t border-(--editor-border)">
-            {ADDITIONAL_FIELDS[selectedNode.type].map((field) => (
-              <PropertyInput
-                key={field.key}
-                label={field.label}
-                icon={field.icon}
-                value={extraData[field.key] || ''}
-                onChange={(val: string) => handleExtraChange(field.key, val)}
-                onSave={handleSave}
-                placeholder={`${field.label}...`}
-              />
-            ))}
-          </div>
-        )}
-
-        </div>
-
-        {/* Footer Section */}
-        <div className="px-6 py-5 border-t border-(--editor-border) bg-(--editor-surface)">
           <button
+            type="button"
+            className="properties-modal__close"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
+        </header>
+
+        <div className="properties-modal__body custom-scrollbar">
+          <PropertyInput label="Name" icon={<Tag size={14} />} value={name} onChange={setName} onSave={handleSave} placeholder="Enter node name" />
+          <PropertyInput label="Category / type" icon={<TypeIcon size={14} />} value={type} onChange={setType} onSave={handleSave} placeholder="Enter custom type" />
+          <PropertyInput label="Cost" icon={<Euro size={14} />} value={cost} onChange={setCost} onSave={handleSave} placeholder="e.g. 500" />
+
+          {addlFields && addlFields.length > 0 && (
+            <>
+              <div className="prop-field__divider" />
+              <div className="prop-field__section-label">Additional details</div>
+              {addlFields.map((field) => (
+                <PropertyInput
+                  key={field.key}
+                  label={field.label}
+                  icon={field.icon}
+                  value={extraData[field.key] || ""}
+                  onChange={(val) => handleExtraChange(field.key, val)}
+                  onSave={handleSave}
+                  placeholder={field.placeholder ?? `${field.label}…`}
+                />
+              ))}
+            </>
+          )}
+        </div>
+
+        <footer className="properties-modal__footer">
+          <button
+            type="button"
+            className="properties-modal__save"
             onClick={handleSave}
             disabled={!isDirty}
-            className={`w-full px-4 py-3.5 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 
-              ${isDirty 
-                ? 'bg-(--editor-accent) text-white shadow-lg -translate-y-px active:translate-y-0 shadow-(--editor-accent)/20' 
-                : 'bg-(--editor-surface) text-(--editor-text-secondary) border border-(--editor-border) opacity-50 cursor-not-allowed'
-              }`}
           >
-            {isDirty ? <><Save size={18} /><span>Save Changes</span></> : <span>No Changes</span>}
+            <Save size={18} />
+            <span>{isDirty ? "Save changes" : "No changes"}</span>
           </button>
-        </div>
+        </footer>
       </div>
-    </>
+    </div>
   );
 };
 
-// Reusable Property Input Component
-const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder }: any) => (
-  <div>
-    <label className="flex items-center gap-2 text-xs font-medium mb-2.5 text-(--editor-text-secondary)">
+interface PropertyInputProps {
+  label: string;
+  icon: React.ReactNode;
+  value: string;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  placeholder?: string;
+}
+
+const PropertyInput = ({ label, icon, value, onChange, onSave, placeholder }: PropertyInputProps) => (
+  <div className="prop-field">
+    <label className="prop-field__label">
       {icon}
-      <span className="uppercase tracking-wide">{label}</span>
+      {label}
     </label>
     <input
       type="text"
+      className="prop-field__input"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      onKeyDown={(e) => e.key === 'Enter' && onSave()}
+      onKeyDown={(e) => e.key === "Enter" && onSave()}
       placeholder={placeholder}
-      className="w-full px-4 py-3 rounded-lg border border-(--editor-border) bg-(--editor-surface) text-sm text-(--editor-text) transition-all focus:border-(--editor-accent) focus:ring-4 focus:ring-(--editor-accent)/10 focus:outline-none"
     />
   </div>
 );
 
-// Additional Fields Configuration Based on Node Type
-const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any; placeholder?: string }[]> = {
-  // Application Context
+const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: React.ReactNode; placeholder?: string }[]> = {
   applicationNode: [
-    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Base URL (e.g. https://...)' },
-    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'X509 key identifier' },
-    { label: 'Sign-In Support', key: 'signInSupport', icon: <Calculator size={14} />, placeholder: 'Boolean (true/false)' },
-    { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes before invalid' }
+    { label: "Location", key: "location", icon: <TypeIcon size={14} />, placeholder: "Base URL (e.g. https://…)" },
+    { label: "Certificate ID", key: "certificateId", icon: <Tag size={14} />, placeholder: "X509 key identifier" },
+    { label: "Sign-in support", key: "signInSupport", icon: <Calculator size={14} />, placeholder: "true / false" },
+    { label: "Session timeout", key: "sessionTimeout", icon: <Calculator size={14} />, placeholder: "Minutes" },
   ],
-  
-  // Web Service Context
   serviceNode: [
-    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'Service endpoint URL' },
-    { label: 'Certificate ID', key: 'certificateId', icon: <Tag size={14} />, placeholder: 'Service certificate ID' },
-    { label: 'Valid protocols', key: 'protocols', icon: <Tag size={14} />, placeholder: 'Valid service protocol' },
-    { label: 'Authentication Type', key: 'authenticationType', icon: <Tag size={14} />, placeholder: 'Authentication type for service' }
+    { label: "Location", key: "location", icon: <TypeIcon size={14} />, placeholder: "Service endpoint URL" },
+    { label: "Certificate ID", key: "certificateId", icon: <Tag size={14} />, placeholder: "Certificate ID" },
+    { label: "Valid protocols", key: "protocols", icon: <Tag size={14} />, placeholder: "Protocols" },
+    { label: "Authentication type", key: "authenticationType", icon: <Tag size={14} />, placeholder: "Auth type" },
   ],
   // Dataset Context
   datasetNode: [
@@ -237,16 +212,11 @@ const ADDITIONAL_FIELDS: Record<string, { label: string; key: string; icon: any;
   ],
   // Realm Context
   securityRealmNode: [
-    { label: 'Location', key: 'location', icon: <TypeIcon size={14} />, placeholder: 'STS base URL' },
-    { label: 'Allocate IP', key: 'allocateIP', icon: <TypeIcon size={14} />, placeholder: 'IDP redirect URL' },
-    { label: 'Encryption Type', key: 'encryptionType', icon: <TypeIcon size={14} />, placeholder: 'e.g., AES, RSA' }
+    { label: "Location", key: "location", icon: <TypeIcon size={14} />, placeholder: "STS base URL" },
+    { label: "Allocate IP", key: "allocateIP", icon: <TypeIcon size={14} />, placeholder: "IDP redirect URL" },
+    { label: "Encryption type", key: "encryptionType", icon: <TypeIcon size={14} />, placeholder: "e.g. AES, RSA" },
   ],
-  
-  // Identity Provider Context
-  identityProviderNode: [
-    // { label: 'Accounts', key: 'accounts', icon: <Tag size={14} />, placeholder: 'Set of accounts' },
-    // { label: 'Session Timeout', key: 'sessionTimeout', icon: <Calculator size={14} />, placeholder: 'Minutes at IP' }
-  ]
+  identityProviderNode: [],
 };
 
 export default PropertiesPanel;

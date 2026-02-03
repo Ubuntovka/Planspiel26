@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { login as apiLogin, getApiBase } from '@/features/auth-feature/api';
 
 // Minimal types for Google Identity Services (GIS) OAuth Code flow
 type GoogleOAuthCodeResponse = {
@@ -47,6 +49,8 @@ const inriaSerif = Inria_Serif({
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const { setSession, isAuthenticated } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -54,38 +58,28 @@ export default function LoginPage() {
     const googleScriptLoadedRef = useRef(false);
     const codeClientRef = useRef<GoogleCodeClient | null>(null);
 
+    const returnUrl = searchParams.get('returnUrl') || '/editor';
+    // Always redirect to /editor (diagrams selection) after login, never directly to editor/[id]
+    const postLoginUrl = returnUrl.startsWith('/editor/') ? '/editor' : returnUrl;
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.replace(postLoginUrl);
+        }
+    }, [isAuthenticated, router, postLoginUrl]);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/users/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email,
-                    password,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                setError(data.error || 'Login failed');
-                setIsLoading(false);
-                return;
-            }
-
-            if (data.token) {
-                localStorage.setItem('authToken', data.token);
-            }
-
-            router.push('/editor');
+            const { user, token } = await apiLogin(email, password);
+            setSession(token, user);
+            router.push(postLoginUrl);
         } catch (err) {
-            setError('An error occurred. Please try again.');
+            setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
+        } finally {
             setIsLoading(false);
         }
     };
@@ -121,7 +115,6 @@ export default function LoginPage() {
                 const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '332723524164-9hq53ucjcmv5eedbhnb6nosagif20nv9.apps.googleusercontent.com';
                 if (googleObj && clientId && !codeClientRef.current) {
                     try {
-                        const apiBase = process.env.NEXT_PUBLIC_API_BASE || '';
                         codeClientRef.current = googleObj.accounts.oauth2.initCodeClient({
                             client_id: clientId,
                             ux_mode: 'popup',
@@ -134,6 +127,7 @@ export default function LoginPage() {
                                         setError('Google authorization code missing');
                                         return;
                                     }
+                                    const apiBase = getApiBase();
                                     const res = await fetch(`${apiBase}/api/users/oauth/google/code`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
@@ -144,10 +138,10 @@ export default function LoginPage() {
                                         setError(data?.error || 'Google login failed');
                                         return;
                                     }
-                                    if (data.token) {
-                                        localStorage.setItem('authToken', data.token);
+                                    if (data.token && data.user) {
+                                        setSession(data.token, data.user);
                                     }
-                                    router.push('/editor');
+                                    router.push(postLoginUrl);
                                 } catch (e) {
                                     setError('Failed to login with Google');
                                 }

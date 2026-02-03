@@ -8,7 +8,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 
 interface ToolbarProps {
-  onSave?: () => void;
+  onSave?: () => void | Promise<boolean>;
+  onSaveAs?: (name: string) => Promise<string | null>;
+  diagramName?: string | null;
+  isLoggedIn?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -27,6 +30,9 @@ interface ToolbarProps {
 
 const Toolbar = ({
   onSave,
+  onSaveAs,
+  diagramName,
+  isLoggedIn,
   onUndo,
   onRedo,
   canUndo,
@@ -44,7 +50,13 @@ const Toolbar = ({
 }: ToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
   const [showCostDetails, setShowCostDetails] = useState(false);
+  const [showSaveDropdown, setShowSaveDropdown] = useState(false);
+  const [showSaveAsModal, setShowSaveAsModal] = useState(false);
+  const [saveAsName, setSaveAsName] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<'idle' | 'saved' | 'error'>('idle');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const saveDropdownRef = useRef<HTMLDivElement>(null);
 
 
   const costSummary = useMemo(() => {
@@ -70,13 +82,16 @@ const Toolbar = ({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowCostDetails(false);
       }
+      if (saveDropdownRef.current && !saveDropdownRef.current.contains(event.target as Node)) {
+        setShowSaveDropdown(false);
+      }
     };
 
-    if (showCostDetails) {
+    if (showCostDetails || showSaveDropdown) {
       document.addEventListener('mousedown', handleClickOutside, true);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showCostDetails]);
+  }, [showCostDetails, showSaveDropdown]);
 
 
   const handleDownloadJson = () => {
@@ -150,30 +165,185 @@ const Toolbar = ({
           }
       };
   
+  const handleSave = async () => {
+    if (!onSave) return;
+    setSaving(true);
+    setSaveMessage('idle');
+    try {
+      const result = await onSave();
+      const ok = typeof result === 'boolean' ? result : true;
+      setSaveMessage(ok ? 'saved' : 'error');
+      if (ok) setTimeout(() => setSaveMessage('idle'), 2000);
+    } catch {
+      setSaveMessage('error');
+      setTimeout(() => setSaveMessage('idle'), 2000);
+    } finally {
+      setSaving(false);
+      setShowSaveDropdown(false);
+    }
+  };
+
+  const handleSaveAs = async () => {
+    if (!onSaveAs || !saveAsName.trim()) return;
+    setSaving(true);
+    setSaveMessage('idle');
+    try {
+      const id = await onSaveAs(saveAsName.trim());
+      setSaveMessage(id ? 'saved' : 'error');
+      setShowSaveAsModal(false);
+      setSaveAsName('');
+      setShowSaveDropdown(false);
+    } catch {
+      setSaveMessage('error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="absolute top-0 left-0 right-0 h-12 z-20 flex items-center px-4 gap-1" style={{ 
       backgroundColor: 'var(--editor-surface)', 
       borderBottom: '1px solid var(--editor-border)' 
     }}>
-      <div className="flex items-center gap-1 pr-3 mr-3" style={{ borderRight: '1px solid var(--editor-border)' }}>
-        <button
-          onClick={onSave}
-          className="p-2 rounded-md transition-colors cursor-pointer"
-          style={{ 
-            color: 'var(--editor-text-secondary)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
-            e.currentTarget.style.color = 'var(--editor-text)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--editor-text-secondary)';
-          }}
-          title="Save (Ctrl+S)"
-        >
-          <Save size={16} />
-        </button>
+      <div ref={saveDropdownRef} className="flex items-center gap-1 pr-3 mr-3 relative" style={{ borderRight: '1px solid var(--editor-border)' }}>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="p-2 rounded-md transition-colors cursor-pointer disabled:opacity-50"
+            style={{ color: 'var(--editor-text-secondary)' }}
+            onMouseEnter={(e) => {
+              if (!(e.currentTarget as HTMLButtonElement).disabled) {
+                e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)';
+                e.currentTarget.style.color = 'var(--editor-text)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--editor-text-secondary)';
+            }}
+            title="Save (Ctrl+S)"
+          >
+            <Save size={16} />
+          </button>
+          <div className="relative group">
+            <button
+              onClick={() => setShowSaveDropdown(!showSaveDropdown)}
+              className="p-1 rounded-md transition-colors cursor-pointer"
+              style={{ color: 'var(--editor-text-muted)', fontSize: 10 }}
+              title="More save options"
+            >
+              ▼
+            </button>
+            {showSaveDropdown && (
+              <div
+                className="absolute left-0 top-full mt-1 py-1 rounded shadow-lg z-50 min-w-[140px]"
+                style={{
+                  backgroundColor: 'var(--editor-panel-bg)',
+                  border: '1px solid var(--editor-border)',
+                  boxShadow: '0 8px 16px var(--editor-shadow-lg)',
+                }}
+              >
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--editor-surface-hover)] disabled:opacity-50"
+                  style={{ color: 'var(--editor-text)' }}
+                >
+                  Save
+                </button>
+                {isLoggedIn && onSaveAs && (
+                  <button
+                    onClick={() => {
+                      setSaveAsName(diagramName || 'Untitled Diagram');
+                      setShowSaveAsModal(true);
+                    }}
+                    disabled={saving}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--editor-surface-hover)] disabled:opacity-50"
+                    style={{ color: 'var(--editor-text)' }}
+                  >
+                    Save As...
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        {diagramName && (
+          <span className="text-sm ml-2 truncate max-w-[180px]" style={{ color: 'var(--editor-text-muted)' }} title={diagramName}>
+            {diagramName}
+          </span>
+        )}
+        {saveMessage === 'saved' && (
+          <span className="text-xs ml-1" style={{ color: 'var(--editor-success)' }}>Saved</span>
+        )}
+        {saveMessage === 'error' && (
+          <span className="text-xs ml-1" style={{ color: 'var(--editor-error)' }}>Failed to save</span>
+        )}
+        {showSaveAsModal && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+            onClick={() => setShowSaveAsModal(false)}
+          >
+            <div
+              className="p-4 rounded-lg shadow-xl max-w-sm w-full mx-4"
+              style={{
+                backgroundColor: 'var(--editor-panel-bg)',
+                border: '1px solid var(--editor-border)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--editor-text)' }}>
+                Save As
+              </h3>
+              <p className="text-sm mb-2" style={{ color: 'var(--editor-text-secondary)' }}>
+                Enter a name for the diagram:
+              </p>
+              <input
+                type="text"
+                value={saveAsName}
+                onChange={(e) => setSaveAsName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveAs();
+                  if (e.key === 'Escape') setShowSaveAsModal(false);
+                }}
+                placeholder="Untitled Diagram"
+                className="w-full px-3 py-2 rounded border mb-4"
+                style={{
+                  backgroundColor: 'var(--editor-bg)',
+                  borderColor: 'var(--editor-border)',
+                  color: 'var(--editor-text)',
+                }}
+                autoFocus
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setShowSaveAsModal(false)}
+                  className="px-3 py-2 rounded text-sm"
+                  style={{
+                    backgroundColor: 'var(--editor-surface)',
+                    color: 'var(--editor-text)',
+                    border: '1px solid var(--editor-border)',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveAs}
+                  disabled={saving || !saveAsName.trim()}
+                  className="px-3 py-2 rounded text-sm font-medium disabled:opacity-50"
+                  style={{
+                    backgroundColor: 'var(--editor-accent)',
+                    color: 'white',
+                  }}
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <button
           onClick={onUndo}
           disabled={!canUndo}

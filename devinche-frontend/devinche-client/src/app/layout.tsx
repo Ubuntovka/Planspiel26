@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReactFlowProvider } from "@xyflow/react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +31,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <ReactFlowProvider>
-            {children}
-          </ReactFlowProvider>
+          <AuthProvider>
+            <ReactFlowProvider>
+              {children}
+            </ReactFlowProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

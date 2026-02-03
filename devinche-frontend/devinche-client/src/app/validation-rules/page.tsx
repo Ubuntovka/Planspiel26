@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
-export default function Home() {
+export default function ValidationRulesPage() {
     return (
+        <ProtectedRoute>
         <div className="min-h-screen bg-[#e8eaed] relative overflow-hidden">
             <div
                 className="absolute inset-0 pointer-events-none"
@@ -63,5 +65,6 @@ export default function Home() {
                 </div>
             </main>
         </div>
+        </ProtectedRoute>
     );
 }

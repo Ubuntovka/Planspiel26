@@ -31,11 +31,13 @@ async function setupDatabase() {
     // Create a sample diagram linked to that user
     await Diagram.create({
       userId: user._id,
-      objects: [
-        { key: 'Key 1', value: 'Value 1' },
-        { key: 'Key 2', value: 'Value 2' },
+      name: 'Sample Diagram',
+      nodes: [
+        { id: 'n1', type: 'processUnitNode', position: { x: 0, y: 0 }, data: { label: 'Process Unit' } },
+        { id: 'n2', type: 'dataProviderNode', position: { x: 150, y: 0 }, data: { label: 'Data Provider' } },
       ],
-      connections: [{ key: 'StartToEnd', value: 'Connection between nodes' }],
+      edges: [{ id: 'e1', source: 'n1', target: 'n2', type: 'step' }],
+      viewport: { x: 0, y: 0, zoom: 1 },
     });
 
     console.log('Collections created and sample data inserted!');

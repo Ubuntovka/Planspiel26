@@ -52,7 +52,8 @@ export interface UseDiagramReturn {
   resetCanvas: () => void;
   selectAllNodes: () => void;
   onPaneClick: () => void;
-  closeMenu: () => void,
+  closeMenu: () => void;
+  openPropertiesForNode: (nodeId: string) => void;
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   exportToJson: () => string | null;
   exportToRdf: () => string;
@@ -74,6 +75,10 @@ export interface UseDiagramReturn {
   selectedNode: DiagramNode | null;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
+  diagramName?: string | null;
+  onRenameDiagram?: (name: string) => Promise<void>;
+  saveDiagram?: () => Promise<boolean>;
+  saveDiagramAs?: (name: string) => Promise<string | null>;
 }
 
 // Node component props

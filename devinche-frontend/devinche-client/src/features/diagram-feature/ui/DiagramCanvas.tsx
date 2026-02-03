@@ -28,8 +28,9 @@ interface DiagramCanvasProps {
   onNodeContextMenu: (event: React.MouseEvent, node: Node) => void;
   onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: () => void;
+  onCloseMenu?: () => void;
   onPaneContextMenu: (event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => void;
-  menu: ContextMenuState | null;
+  menu: (ContextMenuState & { closeMenu?: () => void; onOpenProperties?: (nodeId: string) => void }) | null;
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
   selectedEdgeType: string;
@@ -54,6 +55,7 @@ const DiagramCanvas = ({
   onNodeContextMenu,
   onEdgeContextMenu,
   onPaneClick,
+  onCloseMenu,
   onPaneContextMenu,
   menu,
   onFlowInit,
@@ -134,7 +136,7 @@ const DiagramCanvas = ({
           position="bottom-right"
           showInteractive={false}
         />
-        {menu && <ContextMenu onClick={onPaneClick} {...menu} />}
+        {menu && <ContextMenu onClick={onCloseMenu ?? onPaneClick} {...menu} />}
       </ReactFlow>
     </div>
   );

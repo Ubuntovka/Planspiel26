@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { register as apiRegister } from '@/features/auth-feature/api';
 
 const inriaSerif = Inria_Serif({
     weight: ['300', '400', '700'],
@@ -14,12 +16,19 @@ const inriaSerif = Inria_Serif({
 
 export default function SignUpPage() {
     const router = useRouter();
+    const { setSession, isAuthenticated } = useAuth();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.replace('/editor');
+        }
+    }, [isAuthenticated, router]);
 
     const handleSignUp = async () => {
         setError('');
@@ -38,43 +47,18 @@ export default function SignUpPage() {
         }
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    firstName,
-                    lastName,
-                    email,
-                    password,
-                }),
+            const { user, token } = await apiRegister({
+                firstName,
+                lastName,
+                email,
+                password,
             });
-
-            let data: any = null;
-            try {
-                data = await res.json();
-            } catch (_) {
-
-            }
-
-            if (!res.ok) {
-                const msg =
-                    (data && (data.error || data.message)) ||
-                    (res.status ? `${res.status} ${res.statusText}` : 'Registration failed');
-                setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
-                setIsLoading(false);
-                return;
-            }
-
-            if (data && data.token) {
-                localStorage.setItem('authToken', data.token);
-            }
-
+            setSession(token, user);
             router.push('/editor');
-        } catch (err: any) {
-            const msg = err?.message || 'Network error — is the backend running on http://localhost:4000?';
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Network error — is the backend running on http://localhost:4000?';
             setError(msg);
+        } finally {
             setIsLoading(false);
         }
     };

@@ -12,12 +12,16 @@ import {
   Refresh,
   Dashboard,
   SelectAll,
+  ContentCopy,
+  DeleteOutline,
+  Settings,
 } from "@mui/icons-material";
 
 interface ContextMenuProps extends ContextMenuState {
   onClick?: () => void;
   resetCanvas?: () => void;
   selectAllNodes?: () => void;
+  onOpenProperties?: (nodeId: string) => void;
 }
 
 const IconNode = () => <SquareRounded fontSize="small" />;
@@ -28,6 +32,9 @@ const IconTarget = () => <LocationOnOutlined fontSize="small" />;
 const IconPane = () => <Refresh fontSize="small" />;
 const IconCanvas = () => <Dashboard fontSize="small" />;
 const IconSelectAll = () => <SelectAll fontSize="small" />;
+const IconDuplicate = () => <ContentCopy fontSize="small" />;
+const IconDelete = () => <DeleteOutline fontSize="small" />;
+const IconProperties = () => <Settings fontSize="small" />;
 
 export default function ContextMenu({
   id,
@@ -39,9 +46,10 @@ export default function ContextMenu({
   onClick,
   resetCanvas,
   selectAllNodes,
+  onOpenProperties,
   ...props
 }: ContextMenuProps) {
-  const { getNode, getEdges, addNodes, deleteElements, setNodes } = useReactFlow();
+  const { getNode, getEdges, deleteElements, setNodes } = useReactFlow();
 
   const elementType = type;
   const isCanvasMenu = elementType === "canvas";
@@ -105,202 +113,136 @@ export default function ContextMenu({
     selectAllNodes?.();
   }, [selectAllNodes]);
 
+  const headerTitle = isCanvasMenu ? "Canvas" : elementType === "node" ? "Node" : "Edge";
+  const headerSubtitle = isCanvasMenu ? "Diagram" : "Element";
+
   return (
     <div
-      className="absolute rounded-lg shadow-2xl p-3 z-50 flex flex-col gap-2 min-w-[240px]"
-      style={{
-        top,
-        left,
-        right,
-        bottom,
-        backgroundColor: "var(--editor-panel-bg)",
-        border: "1px solid var(--editor-border)",
-        boxShadow: "0 8px 16px var(--editor-shadow-lg)",
-      }}
+      className="context-menu absolute flex flex-col"
+      style={{ top, left, right, bottom }}
       {...props}
     >
       {/* Header */}
-      <div
-        className="flex items-center space-x-2 pb-2 mb-2"
-        style={{ borderBottom: "1px solid var(--editor-border)" }}
-      >
-        <span
-          className="w-4 h-4 flex items-center justify-center"
-          style={{ color: "var(--editor-accent)" }}
-        >
+      <div className="context-menu__header">
+        <span className="context-menu__header-icon">
           {isCanvasMenu ? <IconCanvas /> : elementType === "node" ? <IconNode /> : <IconEdge />}
         </span>
-        <h3
-          className="text-sm font-semibold capitalize m-0 p-0"
-          style={{ color: "var(--editor-text)" }}
-        >
-          {isCanvasMenu ? "Canvas" : elementType}
-        </h3>
+        <div className="context-menu__title-wrap">
+          <h3 className="context-menu__title">{headerTitle}</h3>
+          <p className="context-menu__subtitle">{headerSubtitle}</p>
+        </div>
       </div>
 
-      {/* ID */}
-      {!isCanvasMenu && (
-        <div
-          className="text-xs flex flex-col gap-1"
-          style={{ color: "var(--editor-text-secondary)" }}
-        >
-          <span className="font-medium">ID:</span>
-          <span
-            className="truncate max-w-full font-mono px-2 py-0.5 rounded"
-            style={{
-              backgroundColor: "var(--editor-bg)",
-              color: "var(--editor-text)",
-              border: "1px solid var(--editor-border)",
-            }}
-          >
-            {id}
-          </span>
-        </div>
-      )}
-
-      {/* Node/edge info */}
-      {elementData.length > 0 && !isCanvasMenu && (
-        <div
-          className="pt-2 flex flex-col gap-1.5"
-          style={{ borderTop: "1px solid var(--editor-border)" }}
-        >
-          {elementData.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between text-xs"
-              style={{ color: "var(--editor-text-secondary)" }}
-            >
-              <span className="flex items-center space-x-1 font-medium">
-                <span
-                  className="w-4 h-4 flex items-center justify-center"
-                  style={{ color: "var(--editor-text-muted)" }}
-                >
-                  {item.icon}
-                </span>
-                <span>{item.label}:</span>
-              </span>
-
-              <span className="font-semibold" style={{ color: "var(--editor-text)" }}>
-                {item.value}
-                {item.unit && (
-                  <span
-                    className="ml-1 font-normal"
-                    style={{ color: "var(--editor-text-secondary)" }}
-                  >
-                    {item.unit}
-                  </span>
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Action buttons */}
-      <div
-        className="pt-2 mt-1 flex flex-col gap-1.5"
-        style={{ borderTop: "1px solid var(--editor-border)" }}
-      >
-        {/* Reset Canvas */}
-        {isCanvasMenu && (
-          <button
-            className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition"
-            style={{
-              color: "var(--editor-text)",
-              border: "1px solid transparent",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--editor-surface-hover)";
-              e.currentTarget.style.color = "var(--editor-accent)";
-              e.currentTarget.style.borderColor = "var(--editor-accent)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "var(--editor-text)";
-              e.currentTarget.style.borderColor = "transparent";
-            }}
-            onClick={() => {
-              handleResetCanvas();
-              onClick?.();
-            }}
-          >
-            <IconPane />
-            <span className="ml-1">Reset Canvas</span>
-          </button>
-        )}
-        {/* Select All Nodes (New Button) */} 
-        {isCanvasMenu && (
-          <button
-            className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition"
-            style={{
-              color: "var(--editor-text)",
-              border: "1px solid transparent",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--editor-surface-hover)";
-              e.currentTarget.style.color = "var(--editor-accent)";
-              e.currentTarget.style.borderColor = "var(--editor-accent)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "var(--editor-text)";
-              e.currentTarget.style.borderColor = "transparent";
-            }}
-            onClick={() => {
-              handleSelectAll();
-              onClick?.();
-            }}
-          >
-            <IconSelectAll />
-            <span className="ml-1">Select All</span>
-          </button>
-        )}
-
-        {/* Duplicate Node */}
-        {elementType === "node" && (
-          <button
-            className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition border border-transparent"
-            style={{ color: "var(--editor-text)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--editor-surface-hover)";
-              e.currentTarget.style.color = "var(--editor-accent)";
-              e.currentTarget.style.borderColor = "var(--editor-accent)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "var(--editor-text)";
-              e.currentTarget.style.borderColor = "transparent";
-            }}
-            onClick={() => {
-              duplicateNode();
-              onClick?.();
-            }}
-          >
-            Duplicate Node
-          </button>
-        )}
-
-        {/* Delete node/edge */}
+      <div className="context-menu__body custom-scrollbar">
+        {/* Details: ID + Size / Source+Target */}
         {!isCanvasMenu && (
-          <button
-            className="flex items-center justify-center px-3 py-2 text-sm rounded-md font-medium transition border border-transparent"
-            style={{ color: "var(--editor-error)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--editor-surface-hover)";
-              e.currentTarget.style.borderColor = "var(--editor-error)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.borderColor = "transparent";
-            }}
-            onClick={() => {
-              deleteItem();
-              onClick?.();
-            }}
-          >
-            Delete {elementType === "node" ? "Node" : "Edge"}
-          </button>
+          <div className="context-menu__section">
+            <div className="context-menu__section-label">Details</div>
+            <div className="context-menu__details">
+              <div className="context-menu__id-block">
+                <div className="context-menu__id-label">ID</div>
+                <div className="context-menu__id-value">{id}</div>
+              </div>
+              {elementData.length > 0 &&
+                elementData.map((item, idx) => (
+                  <div key={idx} className="context-menu__info-row">
+                    <span className="context-menu__info-label">
+                      <span className="context-menu__info-icon">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </span>
+                    <span className="context-menu__info-value">
+                      {item.value}
+                      {item.unit ? ` ${item.unit}` : ""}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
         )}
+
+        {/* Actions */}
+        <div className="context-menu__section">
+          <div className="context-menu__section-label">Actions</div>
+          <div className="context-menu__actions">
+          {isCanvasMenu && (
+            <>
+              <button
+                type="button"
+                className="context-menu-item"
+                onClick={() => {
+                  handleResetCanvas();
+                  onClick?.();
+                }}
+              >
+                <span className="context-menu-item__icon">
+                  <IconPane />
+                </span>
+                <span>Reset canvas</span>
+              </button>
+              <button
+                type="button"
+                className="context-menu-item"
+                onClick={() => {
+                  handleSelectAll();
+                  onClick?.();
+                }}
+              >
+                <span className="context-menu-item__icon">
+                  <IconSelectAll />
+                </span>
+                <span>Select all</span>
+              </button>
+            </>
+          )}
+
+          {elementType === "node" && (
+            <>
+              <button
+                type="button"
+                className="context-menu-item"
+                onClick={() => {
+                  onOpenProperties?.(id);
+                  onClick?.();
+                }}
+              >
+                <span className="context-menu-item__icon">
+                  <IconProperties />
+                </span>
+                <span>Properties</span>
+              </button>
+              <button
+                type="button"
+                className="context-menu-item"
+                onClick={() => {
+                  duplicateNode();
+                  onClick?.();
+                }}
+              >
+                <span className="context-menu-item__icon">
+                  <IconDuplicate />
+                </span>
+                <span>Duplicate node</span>
+              </button>
+            </>
+          )}
+
+          {!isCanvasMenu && (
+            <button
+              type="button"
+              className="context-menu-item context-menu-item--danger"
+              onClick={() => {
+                deleteItem();
+                onClick?.();
+              }}
+            >
+              <span className="context-menu-item__icon">
+                <IconDelete />
+              </span>
+              <span>Delete {elementType === "node" ? "node" : "edge"}</span>
+            </button>
+          )}
+        </div>
+        </div>
       </div>
     </div>
   );
