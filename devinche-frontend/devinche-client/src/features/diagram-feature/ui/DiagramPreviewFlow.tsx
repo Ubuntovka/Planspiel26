@@ -16,7 +16,7 @@ import ApplicationNode from './nodes/ApplicationNode';
 import SecurityRealmNode from './nodes/SecurityRealmNode';
 import ServiceNode from './nodes/ServiceNode';
 import IdentityProviderNode from './nodes/IdentityProviderNode';
-import StepEdge from './edges/StepEdge';
+// import StepEdge from './edges/StepEdge';
 import TrustEdge from './edges/TrustEdge';
 import Invocation from './edges/Invocation';
 import Legacy from './edges/Legacy';
@@ -37,7 +37,7 @@ const nodeTypes: NodeTypes = {
 };
 
 const edgeTypes: EdgeTypes = {
-  step: StepEdge,
+  // step: StepEdge,
   trust: TrustEdge,
   invocation: Invocation,
   legacy: Legacy,

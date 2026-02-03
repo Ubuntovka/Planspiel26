@@ -37,7 +37,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     const [edges, setEdges] = useState<DiagramEdge[]>(initialEdges);
     const [menu, setMenu] = useState<ContextMenuState | null>(null);
     const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
-    const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
+    const [selectedEdgeType, setSelectedEdgeType] = useState<string>('invocation');
     const [selectedNode, setSelectedNode] = useState<DiagramNode | null>(null);
     const [selectedEdge, setSelectedEdge] = useState<DiagramEdge | null>(null);
     const [diagramName, setDiagramName] = useState<string | null>(null);

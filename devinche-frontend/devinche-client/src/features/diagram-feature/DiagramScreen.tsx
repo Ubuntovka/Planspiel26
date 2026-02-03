@@ -12,7 +12,7 @@ import ApplicationNode from "./ui/nodes/ApplicationNode";
 import SecurityRealmNode from "./ui/nodes/SecurityRealmNode";
 import ServiceNode from "./ui/nodes/ServiceNode";
 import IdentityProviderNode from "./ui/nodes/IdentityProviderNode";
-import StepEdge from "./ui/edges/StepEdge";
+// import StepEdge from "./ui/edges/StepEdge";
 import type { NodeTypes, EdgeTypes } from '@xyflow/react';
 import TrustEdge from './ui/edges/TrustEdge';
 import Invocation from './ui/edges/Invocation';
@@ -45,7 +45,7 @@ const nodeTypes: NodeTypes = {
 };
 
 const edgeTypes: EdgeTypes = {
-    step: StepEdge,
+    // step: StepEdge,
     trust: TrustEdge,
     invocation: Invocation,
     legacy:Legacy

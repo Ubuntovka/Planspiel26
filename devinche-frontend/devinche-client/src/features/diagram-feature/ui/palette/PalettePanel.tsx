@@ -242,13 +242,13 @@ const Nodes: PaletteItem[] = [
 ];
 
 const Edges: PaletteItem[] = [
-    {
-        id: 'step-edge',
-        type: 'edge',
-        label: 'Step Edge',
-        edgeType: 'step',
-        icon: <ArrowUpIcon size={18} />,
-    },
+    // {
+    //     id: 'step-edge',
+    //     type: 'edge',
+    //     label: 'Step Edge',
+    //     edgeType: 'step',
+    //     icon: <ArrowUpIcon size={18} />,
+    // },
     {
         id: 'trust-edge',
         type: 'edge',
