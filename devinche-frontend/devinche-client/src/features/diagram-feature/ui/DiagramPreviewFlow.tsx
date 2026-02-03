@@ -13,7 +13,6 @@ import { AiProcessNode } from './nodes/AiProcessNode';
 import DataProviderNode from './nodes/DataProviderNode';
 import DatasetNode from './nodes/DatasetNode';
 import ApplicationNode from './nodes/ApplicationNode';
-import ResizableNode from './nodes/ResizableNode';
 import SecurityRealmNode from './nodes/SecurityRealmNode';
 import ServiceNode from './nodes/ServiceNode';
 import IdentityProviderNode from './nodes/IdentityProviderNode';
@@ -31,7 +30,6 @@ const nodeTypes: NodeTypes = {
   datasetNode: DatasetNode,
   applicationNode: ApplicationNode,
   aiApplicationNode: AiApplicationNode,
-  resizableNode: ResizableNode,
   securityRealmNode: SecurityRealmNode,
   serviceNode: ServiceNode,
   aiServiceNode: AiServiceNode,

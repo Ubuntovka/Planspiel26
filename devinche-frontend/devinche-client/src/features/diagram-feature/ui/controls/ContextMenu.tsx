@@ -227,7 +227,23 @@ export default function ContextMenu({
               </button>
             </>
           )}
-
+          {elementType === "edge" && (
+            <>
+              <button
+                type="button"
+                className="context-menu-item"
+                onClick={() => {
+                  onOpenProperties?.(id);
+                  onClick?.();
+                }}
+              >
+                <span className="context-menu-item__icon">
+                  <IconProperties />
+                </span>
+                <span>Properties</span>
+              </button>
+            </>
+          )}
           {!isCanvasMenu && (
             <button
               type="button"

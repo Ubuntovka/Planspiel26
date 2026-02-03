@@ -20,12 +20,6 @@ export const initialNodes: DiagramNode[] = [
     position: { x: -200, y: 0 },
     data: { label: "Application" },
   },
-  // {
-  //   id: "n4",
-  //   type: "resizableNode",
-  //   position: { x: -300, y: 0 },
-  //   data: { label: "resizableNode" },
-  // },
   {
     id: "n5",
     type: "serviceNode",

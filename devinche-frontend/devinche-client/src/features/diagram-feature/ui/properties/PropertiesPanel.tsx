@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X, Save, Tag, Euro, Type as TypeIcon, Calculator, LinkIcon, Info } from "lucide-react";
-import type { DiagramNode, NodeData } from "@/types/diagram";
+import type { DiagramEdge, DiagramNode, NodeData } from "@/types/diagram";
 
 interface PropertiesPanelProps {
   selectedNode: DiagramNode | null;
+  selectedEdge: DiagramEdge | null;
   onUpdateNode: (nodeId: string, data: Partial<NodeData>) => void;
+  onUpdateEdge: (edgeId: string, data: any) => void;
   onClose: () => void;
   isOpen: boolean;
   allNodes?: DiagramNode[];
@@ -24,7 +26,7 @@ const PropertiesPanel = ({
   right,
   bottom 
 }: PropertiesPanelProps & { top?: number; left?: number; right?: number; bottom?: number }) => {
-  const [name, setName] = useState<string>('');
+const [name, setName] = useState<string>('');
   const [type, setType] = useState<string>('');
   const [cost, setCost] = useState<string>('');
   const [isDirty, setIsDirty] = useState<boolean>(false);
@@ -71,7 +73,8 @@ const PropertiesPanel = ({
   }, [name, type, cost, extraData, selectedNode, selectedEdge]);
 
   const handleExtraChange = (key: string, value: string) => {
-    setExtraData(prev => ({ ...prev, [key]: value }));
+    setExtraData((prev) => ({ ...prev, [key]: value }));
+    setIsDirty(true);
   };
 
   const handleSave = () => {
