@@ -29,6 +29,8 @@ import { DiagramEdge } from '@/types/diagram';
 import DatasetNode from './ui/nodes/DatasetNode';
 import { AiProcessNode } from './ui/nodes/AiProcessNode';
 import MonaChatFab from './ui/MonaChatFab';
+import AiApplicationNode from '../../../AiApplicationNode_backup';
+import AiServiceNode from '../../../AiServiceNode_backup';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -36,9 +38,11 @@ const nodeTypes: NodeTypes = {
     dataProviderNode: DataProviderNode,
     datasetNode: DatasetNode,
     applicationNode: ApplicationNode,
+    aiApplicationNode: AiApplicationNode,
     resizableNode: ResizableNode,
     securityRealmNode: SecurityRealmNode,
     serviceNode: ServiceNode,
+    aiServiceNode: AiServiceNode,
     identityProviderNode: IdentityProviderNode,
 };
 

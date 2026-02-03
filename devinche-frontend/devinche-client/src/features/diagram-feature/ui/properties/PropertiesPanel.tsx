@@ -12,70 +12,89 @@ interface PropertiesPanelProps {
   allNodes?: DiagramNode[];
 }
 
-const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: PropertiesPanelProps) => {
-  const [name, setName] = useState<string>("");
-  const [type, setType] = useState<string>("");
-  const [cost, setCost] = useState<string>("");
+const PropertiesPanel = ({ 
+  selectedNode, 
+  selectedEdge, 
+  onUpdateNode, 
+  onUpdateEdge, 
+  onClose, 
+  isOpen,
+  top,
+  left,
+  right,
+  bottom 
+}: PropertiesPanelProps & { top?: number; left?: number; right?: number; bottom?: number }) => {
+  const [name, setName] = useState<string>('');
+  const [type, setType] = useState<string>('');
+  const [cost, setCost] = useState<string>('');
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [extraData, setExtraData] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (selectedNode) {
-      setName(selectedNode.data.name || "");
-      setType(selectedNode.data.type || "");
-      setCost(selectedNode.data.cost?.toString() || "");
+    if (selectedEdge) {
+      setName(selectedEdge.label?.toString() || '');
+      setType('');
+      setCost('');
+      setExtraData((selectedEdge.data?.extra ?? {}) as Record<string, string>);
+      setIsDirty(false);
+    } else if (selectedNode) {
+      setName(selectedNode.data.name || '');
+      setType(selectedNode.data.type || '');
+      setCost(selectedNode.data.cost?.toString() || '');
       setExtraData(selectedNode.data.extra || {});
       setIsDirty(false);
-    } else {
-      setName("");
-      setType("");
-      setCost("");
-      setExtraData({});
-      setIsDirty(false);
     }
-  }, [selectedNode]);
+  }, [selectedNode, selectedEdge]);
 
   useEffect(() => {
-    if (!selectedNode) {
+    if (!selectedNode && !selectedEdge) {
       setIsDirty(false);
       return;
     }
-    const currentName = name.trim() || undefined;
-    const currentType = type.trim() || undefined;
-    const currentCost = cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined;
-    const nameChanged = currentName !== (selectedNode.data.name || undefined);
-    const typeChanged = currentType !== (selectedNode.data.type || undefined);
-    const costChanged = JSON.stringify(currentCost) !== JSON.stringify(selectedNode.data.cost || undefined);
-    setIsDirty(!!(nameChanged || typeChanged || costChanged));
-  }, [name, type, cost, selectedNode]);
+    
+    let changed = false;
+    if (selectedEdge) {
+      const currentName = name.trim() || undefined;
+      changed = currentName !== (selectedEdge.label || undefined) ||
+                JSON.stringify(extraData) !== JSON.stringify(selectedEdge.data?.extra || {});
+    } else if (selectedNode) {
+      const currentName = name.trim() || undefined;
+      const currentType = type.trim() || undefined;
+      const currentCost = cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined;
+
+      changed = currentName !== (selectedNode.data.name || undefined) ||
+                currentType !== (selectedNode.data.type || undefined) ||
+                JSON.stringify(currentCost) !== JSON.stringify(selectedNode.data.cost || undefined) ||
+                JSON.stringify(extraData) !== JSON.stringify(selectedNode.data.extra || {});
+    }
+    setIsDirty(changed);
+  }, [name, type, cost, extraData, selectedNode, selectedEdge]);
 
   const handleExtraChange = (key: string, value: string) => {
-    setExtraData((prev) => ({ ...prev, [key]: value }));
-    setIsDirty(true);
+    setExtraData(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSave = () => {
-    if (!selectedNode || !isDirty) return;
-    const updatedData: Partial<NodeData> = {
-      name: name.trim() || undefined,
-      type: type.trim() || undefined,
-      cost: cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined,
-      extra: extraData,
-    };
-    onUpdateNode(selectedNode.id, updatedData);
+    if (!isDirty) return;
+    if (selectedEdge) {
+      onUpdateEdge(selectedEdge.id, { 
+        label: name.trim() || undefined,
+        data: { ...selectedEdge.data, extra: extraData } 
+      });
+    } else if (selectedNode) {
+      onUpdateNode(selectedNode.id, {
+        name: name.trim() || undefined,
+        type: type.trim() || undefined,
+        cost: cost.trim() ? (isNaN(Number(cost)) ? cost : Number(cost)) : undefined,
+        extra: extraData,
+      });
+    }
     setIsDirty(false);
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    },
-    [onClose]
-  );
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -83,65 +102,83 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleKeyDown]);
 
-  if (!selectedNode || !isOpen) return null;
+  if (!isOpen || (!selectedNode && !selectedEdge)) return null;
 
-  const nodeTypeLabel = selectedNode.type?.replace(/([A-Z])/g, " $1").trim() || "Unknown";
-  const addlFields = ADDITIONAL_FIELDS[selectedNode.type];
+  const isEdge = !!selectedEdge;
+  const nodeTypeLabel = isEdge 
+    ? (selectedEdge.type || 'Connection') 
+    : (selectedNode?.type?.replace(/([A-Z])/g, " $1").trim() || "Unknown");
 
   return (
     <div
       className="properties-modal-backdrop"
-      onClick={handleBackdropClick}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="properties-modal-title"
     >
       <div
-        className="properties-modal relative"
+        className="properties-modal relative flex flex-col" 
+        style={{ 
+          top, left, right, bottom,
+          position: (top || left) ? 'absolute' : 'relative'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="properties-modal__header">
           <span className="properties-modal__header-icon">
-            <Tag size={22} strokeWidth={2} />
+            {isEdge ? <LinkIcon size={22} /> : <Tag size={22} />}
           </span>
           <div className="properties-modal__title-wrap">
-            <h2 id="properties-modal-title" className="properties-modal__title">
-              Node properties
+            <h2 className="properties-modal__title">
+              {isEdge ? 'Edge properties' : 'Node properties'}
             </h2>
             <span className="properties-modal__subtitle">{nodeTypeLabel}</span>
           </div>
-          <button
-            type="button"
-            className="properties-modal__close"
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button type="button" className="properties-modal__close" onClick={onClose} aria-label="Close">
             <X size={20} />
           </button>
         </header>
 
         <div className="properties-modal__body custom-scrollbar">
-          <PropertyInput label="Name" icon={<Tag size={14} />} value={name} onChange={setName} onSave={handleSave} placeholder="Enter node name" />
-          <PropertyInput label="Category / type" icon={<TypeIcon size={14} />} value={type} onChange={setType} onSave={handleSave} placeholder="Enter custom type" />
-          <PropertyInput label="Cost" icon={<Euro size={14} />} value={cost} onChange={setCost} onSave={handleSave} placeholder="e.g. 500" />
+          <PropertyInput 
+            label={isEdge ? "Label" : "Name"} 
+            icon={<Tag size={14} />} 
+            value={name} 
+            onChange={setName} 
+            onSave={handleSave} 
+            placeholder={isEdge ? "Connection label" : "Enter node name"} 
+          />
 
-          {addlFields && addlFields.length > 0 && (
+          {!isEdge && (
             <>
-              <div className="prop-field__divider" />
-              <div className="prop-field__section-label">Additional details</div>
-              {addlFields.map((field) => (
+              <PropertyInput label="Category" icon={<TypeIcon size={14} />} value={type} onChange={setType} onSave={handleSave} />
+              <PropertyInput label="Cost" icon={<Euro size={14} />} value={cost} onChange={setCost} onSave={handleSave} />
+              
+              {selectedNode && ADDITIONAL_FIELDS[selectedNode.type]?.map((field) => (
                 <PropertyInput
                   key={field.key}
-                  label={field.label}
-                  icon={field.icon}
+                  {...field}
                   value={extraData[field.key] || ""}
                   onChange={(val) => handleExtraChange(field.key, val)}
                   onSave={handleSave}
-                  placeholder={field.placeholder ?? `${field.label}…`}
                 />
               ))}
             </>
           )}
+
+          {isEdge && selectedEdge?.type && EDGE_ADDITIONAL_FIELDS[selectedEdge.type]?.map((field) => {
+            const { key, condition, ...rest } = field;
+            if (condition && !condition(extraData)) return null;
+            return (
+              <PropertyInput
+                key={key} 
+                {...rest}
+                value={extraData[key] || ''}
+                onChange={(val: string) => handleExtraChange(key, val)}
+                onSave={handleSave}
+              />
+            );
+          })}
         </div>
 
         <footer className="properties-modal__footer">
@@ -159,6 +196,7 @@ const PropertiesPanel = ({ selectedNode, onUpdateNode, onClose, isOpen }: Proper
     </div>
   );
 };
+
 
 interface PropertyInputProps {
   label: string;

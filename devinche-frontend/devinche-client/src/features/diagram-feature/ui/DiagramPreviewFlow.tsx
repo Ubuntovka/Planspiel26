@@ -21,6 +21,8 @@ import StepEdge from './edges/StepEdge';
 import TrustEdge from './edges/TrustEdge';
 import Invocation from './edges/Invocation';
 import Legacy from './edges/Legacy';
+import AiServiceNode from './nodes/AiServiceNode';
+import AiApplicationNode from './nodes/AiApplicationNode';
 
 const nodeTypes: NodeTypes = {
   processUnitNode: ProcessUnitNode,
@@ -28,9 +30,11 @@ const nodeTypes: NodeTypes = {
   dataProviderNode: DataProviderNode,
   datasetNode: DatasetNode,
   applicationNode: ApplicationNode,
+  aiApplicationNode: AiApplicationNode,
   resizableNode: ResizableNode,
   securityRealmNode: SecurityRealmNode,
   serviceNode: ServiceNode,
+  aiServiceNode: AiServiceNode,
   identityProviderNode: IdentityProviderNode,
 };
 
