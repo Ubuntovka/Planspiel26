@@ -13,14 +13,15 @@ import { AiProcessNode } from './nodes/AiProcessNode';
 import DataProviderNode from './nodes/DataProviderNode';
 import DatasetNode from './nodes/DatasetNode';
 import ApplicationNode from './nodes/ApplicationNode';
-import ResizableNode from './nodes/ResizableNode';
 import SecurityRealmNode from './nodes/SecurityRealmNode';
 import ServiceNode from './nodes/ServiceNode';
 import IdentityProviderNode from './nodes/IdentityProviderNode';
-import StepEdge from './edges/StepEdge';
+// import StepEdge from './edges/StepEdge';
 import TrustEdge from './edges/TrustEdge';
 import Invocation from './edges/Invocation';
 import Legacy from './edges/Legacy';
+import AiServiceNode from './nodes/AiServiceNode';
+import AiApplicationNode from './nodes/AiApplicationNode';
 
 const nodeTypes: NodeTypes = {
   processUnitNode: ProcessUnitNode,
@@ -28,14 +29,15 @@ const nodeTypes: NodeTypes = {
   dataProviderNode: DataProviderNode,
   datasetNode: DatasetNode,
   applicationNode: ApplicationNode,
-  resizableNode: ResizableNode,
+  aiApplicationNode: AiApplicationNode,
   securityRealmNode: SecurityRealmNode,
   serviceNode: ServiceNode,
+  aiServiceNode: AiServiceNode,
   identityProviderNode: IdentityProviderNode,
 };
 
 const edgeTypes: EdgeTypes = {
-  step: StepEdge,
+  // step: StepEdge,
   trust: TrustEdge,
   invocation: Invocation,
   legacy: Legacy,

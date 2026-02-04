@@ -106,10 +106,10 @@ export function exportDiagramToRdfTurtle(
         edgeClass = 'wam:LegacyEdge';
         predicate = 'wam:legacyConnectsTo';
         break;
-      case 'step':
-        edgeClass = 'wam:StepEdge';
-        predicate = 'wam:stepConnectsTo';
-        break;
+      // case 'step':
+      //   edgeClass = 'wam:StepEdge';
+      //   predicate = 'wam:stepConnectsTo';
+      //   break;
     }
 
     // edge instance

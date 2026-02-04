@@ -1,6 +1,6 @@
 // TODO: Add Handles for trust, invocation
 
-import { Handle, Position, NodeResizer, Node, NodeProps } from "@xyflow/react";
+import { NodeResizer, Node, NodeProps } from "@xyflow/react";
 import type { SecurityRealmData } from "@/types/diagram";
 
 type SecurityRealmDataNode = Node<SecurityRealmData>;
@@ -80,7 +80,7 @@ const SecurityRealmNode = ({
           }}
         >
           {hasName && (
-            <span className="break-words line-clamp-3 w-full pr-2 font-medium">
+            <span className="wrap-break-words line-clamp-3 w-full pr-2 font-medium">
               {data.name}
             </span>
           )}

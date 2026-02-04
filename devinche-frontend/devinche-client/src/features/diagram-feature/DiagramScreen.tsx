@@ -9,11 +9,10 @@ import DiagramCanvas from './ui/DiagramCanvas';
 import { ProcessUnitNode } from "./ui/nodes/ProcessUnitNode";
 import DataProviderNode from "./ui/nodes/DataProviderNode";
 import ApplicationNode from "./ui/nodes/ApplicationNode";
-import ResizableNode from "./ui/nodes/ResizableNode";
 import SecurityRealmNode from "./ui/nodes/SecurityRealmNode";
 import ServiceNode from "./ui/nodes/ServiceNode";
 import IdentityProviderNode from "./ui/nodes/IdentityProviderNode";
-import StepEdge from "./ui/edges/StepEdge";
+// import StepEdge from "./ui/edges/StepEdge";
 import type { NodeTypes, EdgeTypes } from '@xyflow/react';
 import TrustEdge from './ui/edges/TrustEdge';
 import Invocation from './ui/edges/Invocation';
@@ -29,6 +28,8 @@ import { DiagramEdge } from '@/types/diagram';
 import DatasetNode from './ui/nodes/DatasetNode';
 import { AiProcessNode } from './ui/nodes/AiProcessNode';
 import MonaChatFab from './ui/MonaChatFab';
+import AiApplicationNode from './ui/nodes/AiApplicationNode';
+import AiServiceNode from './ui/nodes/AiServiceNode';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -36,14 +37,15 @@ const nodeTypes: NodeTypes = {
     dataProviderNode: DataProviderNode,
     datasetNode: DatasetNode,
     applicationNode: ApplicationNode,
-    resizableNode: ResizableNode,
+    aiApplicationNode: AiApplicationNode,
     securityRealmNode: SecurityRealmNode,
     serviceNode: ServiceNode,
+    aiServiceNode: AiServiceNode,
     identityProviderNode: IdentityProviderNode,
 };
 
 const edgeTypes: EdgeTypes = {
-    step: StepEdge,
+    // step: StepEdge,
     trust: TrustEdge,
     invocation: Invocation,
     legacy:Legacy
@@ -71,7 +73,6 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     selectAllNodes,
     onPaneClick,
     closeMenu,
-    openPropertiesForNode,
     onFlowInit,
     exportToJson,
     exportToRdf,
@@ -91,19 +92,28 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     canUndo,
     canRedo,
     selectedNode,
+    selectedEdge,
     onNodeClick,
     onUpdateNode,
+    onUpdateEdge,
     diagramName,
     onRenameDiagram,
     saveDiagram,
     saveDiagramAs,
+    openProperties,
   } = useDiagram({ diagramId: diagramId ?? undefined, getToken });
 
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-  const contextMenuProps = menu
-    ? { ...menu, resetCanvas, selectAllNodes, closeMenu, onOpenProperties: openPropertiesForNode }
-    : null;
+const contextMenuProps = menu
+  ? { 
+      ...menu, 
+      resetCanvas, 
+      selectAllNodes, 
+      closeMenu, 
+      onOpenProperties: (id: string) => openProperties(id, menu.type)
+    }
+  : null;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
   const [nameInput, setNameInput] = useState(diagramName ?? 'Untitled Diagram');
@@ -317,9 +327,11 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
       />
       <PropertiesPanel
         selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
         onUpdateNode={onUpdateNode}
+        onUpdateEdge={onUpdateEdge}
         onClose={onPaneClick}
-        isOpen={selectedNode !== null}
+        isOpen={selectedNode !== null || selectedEdge !== null}
       />
       <MonaChatFab />
     </div>

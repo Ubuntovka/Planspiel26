@@ -37,8 +37,9 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     const [edges, setEdges] = useState<DiagramEdge[]>(initialEdges);
     const [menu, setMenu] = useState<ContextMenuState | null>(null);
     const [rfInstance, setRfInstance] = useState<ReactFlowInstance<DiagramNode, DiagramEdge> | null>(null);
-    const [selectedEdgeType, setSelectedEdgeType] = useState<string>('step');
+    const [selectedEdgeType, setSelectedEdgeType] = useState<string>('invocation');
     const [selectedNode, setSelectedNode] = useState<DiagramNode | null>(null);
+    const [selectedEdge, setSelectedEdge] = useState<DiagramEdge | null>(null);
     const [diagramName, setDiagramName] = useState<string | null>(null);
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
     const { screenToFlowPosition, getIntersectingNodes, getNodes, getEdges, getNode } = useReactFlow();
@@ -624,6 +625,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     const onPaneClick = useCallback(() => {
         setMenu(null);
         setSelectedNode(null);
+        setSelectedEdge(null); 
     }, []);
 
     // Node click handler – selection only (no properties panel); panel opens via context menu "Properties"
@@ -631,11 +633,22 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         // no-op: properties panel opens via context menu "Properties" only
     }, []);
 
-    // Open properties panel for a node (e.g. from context menu "Properties")
-    const openPropertiesForNode = useCallback((nodeId: string) => {
-        const node = getNode(nodeId);
-        if (node) setSelectedNode(node as DiagramNode);
-    }, [getNode]);
+
+    const openProperties = useCallback((id: string, type?: string) => {
+        if (type === 'edge') {
+            const edge = edges.find((e) => e.id === id); 
+            if (edge) {
+                setSelectedEdge(edge);
+                setSelectedNode(null);
+            }
+        } else {
+            const node = nodes.find((n) => n.id === id);
+            if (node) {
+                setSelectedNode(node);
+                setSelectedEdge(null);
+            }
+        }
+    }, [nodes, edges]); 
 
     // Update node data handler
     const onUpdateNode = useCallback((nodeId: string, data: Partial<import('@/types/diagram').NodeData>) => {
@@ -670,6 +683,19 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
             return updated;
         });
     }, [saveToStorage]);
+
+    const onUpdateEdge = useCallback((edgeId: string, data: any) => {
+    setEdges((eds) =>
+        eds.map((e) => {
+            if (e.id === edgeId) {
+                return { ...e, ...data };
+            }
+            return e;
+        })
+    );
+    setSelectedEdge((current) => (current?.id === edgeId ? { ...current, ...data } : current));
+}, []);
+
 
     const selectAllNodes = useCallback(() => {
         setNodes((nds) =>
@@ -976,7 +1002,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         selectAllNodes,
         onPaneClick,
         closeMenu,
-        openPropertiesForNode,
+        openProperties,
         onFlowInit,
         exportToJson,
         exportToRdf, 
@@ -996,8 +1022,10 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         canUndo,
         canRedo,
         selectedNode,
+        selectedEdge,
         onNodeClick,
         onUpdateNode,
+        onUpdateEdge,
         diagramName,
         onRenameDiagram,
         saveDiagram,

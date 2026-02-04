@@ -22,6 +22,7 @@ interface ContextMenuProps extends ContextMenuState {
   resetCanvas?: () => void;
   selectAllNodes?: () => void;
   onOpenProperties?: (nodeId: string) => void;
+  closeMenu?: () => void;
 }
 
 const IconNode = () => <SquareRounded fontSize="small" />;
@@ -47,6 +48,7 @@ export default function ContextMenu({
   resetCanvas,
   selectAllNodes,
   onOpenProperties,
+  closeMenu,
   ...props
 }: ContextMenuProps) {
   const { getNode, getEdges, deleteElements, setNodes } = useReactFlow();
@@ -225,7 +227,23 @@ export default function ContextMenu({
               </button>
             </>
           )}
-
+          {elementType === "edge" && (
+            <>
+              <button
+                type="button"
+                className="context-menu-item"
+                onClick={() => {
+                  onOpenProperties?.(id);
+                  onClick?.();
+                }}
+              >
+                <span className="context-menu-item__icon">
+                  <IconProperties />
+                </span>
+                <span>Properties</span>
+              </button>
+            </>
+          )}
           {!isCanvasMenu && (
             <button
               type="button"
@@ -233,6 +251,7 @@ export default function ContextMenu({
               onClick={() => {
                 deleteItem();
                 onClick?.();
+                closeMenu?.();
               }}
             >
               <span className="context-menu-item__icon">

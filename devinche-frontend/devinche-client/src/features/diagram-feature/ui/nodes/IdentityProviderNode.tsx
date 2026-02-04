@@ -61,7 +61,7 @@ const IdentityProviderNode = ({ data, selected }: NodeProps) => {
         }}
       >
         {hasName && (
-          <span className="break-words leading-tight w-full font-medium overflow-hidden text-ellipsis line-clamp-2" style={{ maxWidth: '100%' }}>
+          <span className="wrap-break-words leading-tight w-full font-medium overflow-hidden text-ellipsis line-clamp-2" style={{ maxWidth: '100%' }}>
             {data.name}
           </span>
         )}
