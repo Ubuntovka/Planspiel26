@@ -109,3 +109,35 @@ export async function deleteDiagram(token: string, id: string): Promise<void> {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to delete diagram');
 }
+
+/** Get API base without auth (for public endpoints like LLM generate) */
+function getApiBasePublic(): string {
+  if (typeof window === 'undefined') return '';
+  return (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE || '').replace(/\/$/, '');
+}
+
+export interface GenerateDiagramResult {
+  diagram: { nodes: any[]; edges: any[]; viewport?: { x: number; y: number; zoom: number } };
+  /** Present when the diagram still has WAM validation issues after retry. */
+  validationErrors?: string[];
+}
+
+/**
+ * Generate WAM diagram JSON from a natural-language prompt via the backend LLM.
+ * Does not require auth. Backend must have OPENAI_API_KEY configured.
+ */
+export async function generateDiagramFromPrompt(prompt: string): Promise<GenerateDiagramResult> {
+  const base = getApiBasePublic();
+  if (!base) throw new Error('API base URL not configured');
+  const res = await fetch(`${base}/api/llm/generate-diagram`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = (data as { error?: string }).error || `Request failed: ${res.status}`;
+    throw new Error(msg);
+  }
+  return data as GenerateDiagramResult;
+}

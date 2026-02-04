@@ -1,31 +1,95 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Sparkles } from "lucide-react";
+import { X, Send, Sparkles, Loader2 } from "lucide-react";
 import Image from "next/image";
 
-const PLACEHOLDER_MESSAGES = [
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+const PLACEHOLDER_MESSAGES: ChatMessage[] = [
   {
     id: "welcome",
-    role: "assistant" as const,
-    content: "Hi, I'm Mona Lisa — your AI assistant. Ask me anything about your diagram or workflow.",
+    role: "assistant",
+    content:
+      "Hi, I'm Mona Lisa — your AI assistant. Describe the WAM diagram you want (e.g. \"Two security realms that trust each other; one has an app that invokes a service\") and I'll generate it on the canvas.",
     timestamp: new Date(),
   },
 ];
 
-export default function MonaChatFab() {
+export interface MonaChatFabProps {
+  /** Generate diagram from prompt. Resolves with diagram JSON string and optional validation errors. */
+  onGenerateDiagram: (prompt: string) => Promise<{ diagramJson: string; validationErrors?: string[] }>;
+  /** Apply diagram by loading this JSON string into the editor. */
+  onApplyDiagram: (diagramJson: string) => void;
+}
+
+export default function MonaChatFab({
+  onGenerateDiagram,
+  onApplyDiagram,
+}: MonaChatFabProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>(PLACEHOLDER_MESSAGES);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [isOpen]);
+  }, [isOpen, messages]);
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
+  const handleSend = async () => {
+    const text = inputValue.trim();
+    if (!text || isLoading) return;
+
     setInputValue("");
-    // UI only: no real send logic yet
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: text,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
+
+    const assistantId = `assistant-${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: assistantId,
+        role: "assistant",
+        content: "Generating your diagram…",
+        timestamp: new Date(),
+      },
+    ]);
+
+    try {
+      const { diagramJson, validationErrors } = await onGenerateDiagram(text);
+      onApplyDiagram(diagramJson);
+      const successMsg =
+        validationErrors && validationErrors.length > 0
+          ? `I've created the diagram. Some WAM validation issues remain — run "Validate" in the toolbar to see them:\n${validationErrors.slice(0, 5).join("\n")}${validationErrors.length > 5 ? `\n... and ${validationErrors.length - 5} more` : ""}`
+          : "I've created the diagram on the canvas. You can move nodes, add edges, and run validation to check WAM rules.";
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId ? { ...m, content: successMsg } : m
+        )
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId ? { ...m, content: `Sorry, ${message}` } : m
+        )
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -68,12 +132,24 @@ export default function MonaChatFab() {
           </header>
 
           <div className="mona-chat-panel__messages custom-scrollbar">
-            {PLACEHOLDER_MESSAGES.map((msg) => (
+            {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={`mona-chat-bubble mona-chat-bubble--${msg.role}`}
               >
-                <div className="mona-chat-bubble__content">{msg.content}</div>
+                {msg.role === "assistant" && msg.content === "Generating your diagram…" && (
+                  <span className="mona-chat-bubble__loading">
+                    <Loader2
+                      size={18}
+                      className="mona-chat-bubble__spinner"
+                      aria-hidden
+                    />
+                    {msg.content}
+                  </span>
+                )}
+                {!(msg.role === "assistant" && msg.content === "Generating your diagram…") && (
+                  <div className="mona-chat-bubble__content">{msg.content}</div>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -84,19 +160,26 @@ export default function MonaChatFab() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              placeholder="Message Mona Lisa..."
+              onKeyDown={(e) =>
+                e.key === "Enter" && !e.shiftKey && handleSend()
+              }
+              placeholder="Describe the WAM diagram you want..."
               className="mona-chat-panel__input"
               aria-label="Message input"
+              disabled={isLoading}
             />
             <button
               type="button"
               onClick={handleSend}
               className="mona-chat-panel__send"
               aria-label="Send message"
-              disabled={!inputValue.trim()}
+              disabled={!inputValue.trim() || isLoading}
             >
-              <Send size={18} strokeWidth={2.5} />
+              {isLoading ? (
+                <Loader2 size={18} strokeWidth={2.5} className="mona-chat-bubble__spinner" />
+              ) : (
+                <Send size={18} strokeWidth={2.5} />
+              )}
             </button>
           </div>
         </div>

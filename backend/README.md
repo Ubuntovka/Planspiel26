@@ -22,6 +22,8 @@ An example file is provided at `backend/.env.example`. This file is only an exam
 - Optional variables:
   - `NODE_ENV` — defaults to `development`
   - `PORT` — recommended `4000` (defaults to `3000` if unset)
+  - `OPENAI_API_KEY` — required for AI diagram generation from the Mona chat (WAM diagram from prompt). If unset, `POST /api/llm/generate-diagram` returns 503.
+  - `OPENAI_MODEL` — optional; defaults to `gpt-4o` for diagram generation.
 
 Example `.env` (you can paste this into `backend/.env` and adjust):
 ```env

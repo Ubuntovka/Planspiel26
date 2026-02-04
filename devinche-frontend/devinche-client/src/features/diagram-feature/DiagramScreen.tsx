@@ -30,6 +30,7 @@ import { AiProcessNode } from './ui/nodes/AiProcessNode';
 import MonaChatFab from './ui/MonaChatFab';
 import AiApplicationNode from './ui/nodes/AiApplicationNode';
 import AiServiceNode from './ui/nodes/AiServiceNode';
+import { generateDiagramFromPrompt } from './api';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -333,7 +334,16 @@ const contextMenuProps = menu
         onClose={onPaneClick}
         isOpen={selectedNode !== null || selectedEdge !== null}
       />
-      <MonaChatFab />
+      <MonaChatFab
+        onGenerateDiagram={async (prompt) => {
+          const result = await generateDiagramFromPrompt(prompt);
+          return {
+            diagramJson: JSON.stringify(result.diagram),
+            validationErrors: result.validationErrors,
+          };
+        }}
+        onApplyDiagram={importFromJson}
+      />
     </div>
   );
 };

@@ -159,7 +159,7 @@ const checkInvocationRelationships = (sourceNode: DiagramNode, targetNode: Diagr
 const checkLegacyRelationships = (sourceNode: DiagramNode, targetNode: DiagramNode): string[] => {
     const errors: string[] = [];
     const validSourceTypes = ['applicationNode', 'serviceNode'];
-    const validTargetTypes = ['dataProviderNode', 'dataProcessorNode'];
+    const validTargetTypes = ['dataProviderNode', 'datasetNode', 'processUnitNode', 'aiProcessNode'];
     if (!validSourceTypes.includes(sourceNode.type) || !validTargetTypes.includes(targetNode.type)) {
         errors.push(`Invalide Legacy Connection from ${sourceNode?.id} to ${targetNode?.id}.`);
     }

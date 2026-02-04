@@ -8,6 +8,7 @@ import config from './config/config';
 import userRoutes from './api/routes/userRoutes';
 import validationRoutes from './api/routes/validationRoutes';
 import diagramRoutes from './api/routes/diagramRoutes';
+import llmRoutes from './api/routes/llmRoutes';
 import User from './models/User';
 import errorHandler from './middleware/error.middleware';
 
@@ -55,6 +56,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/users/', userRoutes);
 app.use('/api/validation/', validationRoutes);
 app.use('/api/diagrams/', diagramRoutes);
+app.use('/api/llm/', llmRoutes);
 
 // Errors
 app.use(errorHandler);

@@ -1,6 +1,4 @@
-// TODO: Add Handles for trust, invocation
-
-import { NodeResizer, Node, NodeProps } from "@xyflow/react";
+import { NodeResizer, Node, NodeProps, Position, Handle } from "@xyflow/react";
 import type { SecurityRealmData } from "@/types/diagram";
 
 type SecurityRealmDataNode = Node<SecurityRealmData>;
@@ -87,9 +85,11 @@ const SecurityRealmNode = ({
         </div>
       </div>
 
-
-      {/* <Handle type="source" position={Position.Left} id="left" />
-      <Handle type="source" position={Position.Right} id="right" /> */}
+      {/* Handles for trust edges (realm to realm): left and right so two realms can connect */}
+      <Handle type="source" position={Position.Right} id="trust-out" />
+      <Handle type="target" position={Position.Right} id="trust-in" />
+      <Handle type="source" position={Position.Left} id="trust-out-left" />
+      <Handle type="target" position={Position.Left} id="trust-in-left" />
     </div>
   );
 };
