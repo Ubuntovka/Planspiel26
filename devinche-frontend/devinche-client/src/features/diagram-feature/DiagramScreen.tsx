@@ -31,6 +31,7 @@ import MonaChatFab from './ui/MonaChatFab';
 import AiApplicationNode from './ui/nodes/AiApplicationNode';
 import AiServiceNode from './ui/nodes/AiServiceNode';
 import { generateDiagramFromPrompt } from './api';
+import ShareDialog from './ui/ShareDialog';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -102,19 +103,25 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     saveDiagram,
     saveDiagramAs,
     openProperties,
+    accessLevel,
   } = useDiagram({ diagramId: diagramId ?? undefined, getToken });
 
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-const contextMenuProps = menu
-  ? { 
-      ...menu, 
-      resetCanvas, 
-      selectAllNodes, 
-      closeMenu, 
-      onOpenProperties: (id: string) => openProperties(id, menu.type)
+  const isViewer = accessLevel === 'viewer';
+  const isOwner = accessLevel === 'owner';
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+  const contextMenuProps = menu
+  ? {
+      ...menu,
+      resetCanvas,
+      selectAllNodes,
+      closeMenu,
+      onOpenProperties: (id: string) => openProperties(id, menu.type),
     }
   : null;
+  const contextMenuForCanvas = isViewer ? null : contextMenuProps;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
   const [nameInput, setNameInput] = useState(diagramName ?? 'Untitled Diagram');
@@ -255,7 +262,12 @@ const contextMenuProps = menu
             </svg>
             Back
           </Link>
-          {onRenameDiagram && (
+          {isViewer && (
+            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--editor-surface-hover)', color: 'var(--editor-text-secondary)' }}>
+              View only
+            </span>
+          )}
+          {onRenameDiagram && !isViewer && (
             <input
               type="text"
               value={nameInput}
@@ -276,12 +288,14 @@ const contextMenuProps = menu
         </div>
       )}
       <Toolbar
-        onSave={handleSave}
-        onSaveAs={handleSaveAs}
+        onBack={diagramId ? () => router.push('/editor') : undefined}
+        backLabel="Diagrams"
+        onSave={isViewer ? undefined : handleSave}
+        onSaveAs={isViewer ? undefined : handleSaveAs}
         diagramName={diagramName ?? 'Untitled Diagram'}
         isLoggedIn={isAuthenticated}
-        onUndo={onUndo}
-        onRedo={onRedo}
+        onUndo={isViewer ? () => {} : onUndo}
+        onRedo={isViewer ? () => {} : onRedo}
         canUndo={canUndo}
         canRedo={canRedo}
         onZoomIn={handleZoomIn}
@@ -290,10 +304,13 @@ const contextMenuProps = menu
         exportToJson={exportToJson}
         exportToRdf={exportToRdf}
         exportToXml={exportToXml}
-        importFromJson={importFromJson}
-        handleValidation={handleValidation}
+        importFromJson={isViewer ? (_json: string) => {} : importFromJson}
+        handleValidation={isViewer ? undefined : handleValidation}
         flowWrapperRef={flowWrapperRef}
         allNodes={nodes}
+        canShare={isOwner}
+        diagramId={diagramId}
+        onShareClick={isOwner ? () => setShareDialogOpen(true) : undefined}
       />
       {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
 
@@ -311,7 +328,7 @@ const contextMenuProps = menu
         onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
         onCloseMenu={closeMenu}
-        menu={contextMenuProps}
+        menu={contextMenuForCanvas}
         onFlowInit={onFlowInit}
         setNodes={setNodes}
         selectedEdgeType={selectedEdgeType}
@@ -321,11 +338,14 @@ const contextMenuProps = menu
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
+        readOnly={isViewer}
       />
-      <PalettePanel 
-        selectedEdgeType={selectedEdgeType}
-        onEdgeTypeSelect={setSelectedEdgeType}
-      />
+      {!isViewer && (
+        <PalettePanel
+          selectedEdgeType={selectedEdgeType}
+          onEdgeTypeSelect={setSelectedEdgeType}
+        />
+      )}
       <PropertiesPanel
         selectedNode={selectedNode}
         selectedEdge={selectedEdge}
@@ -334,16 +354,25 @@ const contextMenuProps = menu
         onClose={onPaneClick}
         isOpen={selectedNode !== null || selectedEdge !== null}
       />
-      <MonaChatFab
-        onGenerateDiagram={async (prompt) => {
-          const result = await generateDiagramFromPrompt(prompt);
-          return {
-            diagramJson: JSON.stringify(result.diagram),
-            validationErrors: result.validationErrors,
-          };
-        }}
-        onApplyDiagram={importFromJson}
-      />
+      {!isViewer && (
+        <MonaChatFab
+          onGenerateDiagram={async (prompt) => {
+            const result = await generateDiagramFromPrompt(prompt);
+            return {
+              diagramJson: JSON.stringify(result.diagram),
+              validationErrors: result.validationErrors,
+            };
+          }}
+          onApplyDiagram={importFromJson}
+        />
+      )}
+      {shareDialogOpen && diagramId && getToken && (
+        <ShareDialog
+          diagramId={diagramId}
+          getToken={getToken}
+          onClose={() => setShareDialogOpen(false)}
+        />
+      )}
     </div>
   );
 };

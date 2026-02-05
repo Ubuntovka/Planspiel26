@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -24,6 +24,8 @@ function DiagramsDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const fetchDiagrams = async () => {
     const token = getToken();
@@ -43,6 +45,16 @@ function DiagramsDashboard() {
   useEffect(() => {
     fetchDiagrams();
   }, [getToken]);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    if (openMenuId) document.addEventListener('mousedown', onDocClick, true);
+    return () => document.removeEventListener('mousedown', onDocClick, true);
+  }, [openMenuId]);
 
   const handleCreate = async () => {
     const token = getToken();
@@ -104,6 +116,9 @@ function DiagramsDashboard() {
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
+  const ownedDiagrams = diagrams.filter((d) => (d.accessLevel || 'owner') === 'owner');
+  const sharedDiagrams = diagrams.filter((d) => (d.accessLevel || 'owner') !== 'owner');
+
   return (
     <div
       className="min-h-screen"
@@ -111,6 +126,8 @@ function DiagramsDashboard() {
       style={{
         background: 'var(--editor-bg)',
         backgroundImage: 'radial-gradient(ellipse 80% 50% at 50% -20%, var(--editor-accent) 0%, transparent 50%)',
+        height: '100vh',
+        overflowY: 'auto',
       }}
     >
       <header
@@ -235,10 +252,10 @@ function DiagramsDashboard() {
           <>
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--editor-text)' }}>
-                Recent diagrams
+                Your diagrams
               </h2>
               <p className="text-sm" style={{ color: 'var(--editor-text-muted)' }}>
-                Click a diagram to edit, or create a new one
+                Create, edit, or manage your own diagrams
               </p>
             </div>
 
@@ -266,7 +283,7 @@ function DiagramsDashboard() {
                 </span>
               </button>
 
-              {diagrams.map((d, i) => (
+              {ownedDiagrams.map((d, i) => (
                 <div
                   key={d._id}
                   role="button"
@@ -281,6 +298,60 @@ function DiagramsDashboard() {
                     animationDelay: `${i * 50}ms`,
                   }}
                 >
+                  <div className="absolute top-3 right-3 z-10" ref={openMenuId === d._id ? menuRef : undefined}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId((prev) => (prev === d._id ? null : d._id));
+                      }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{
+                        backgroundColor: 'var(--editor-surface)',
+                        color: 'var(--editor-text-secondary)',
+                        border: '1px solid var(--editor-border)',
+                      }}
+                      aria-label="Diagram actions"
+                    >
+                      <span className="text-lg leading-none">⋮</span>
+                    </button>
+                    {openMenuId === d._id && (
+                      <div
+                        className="absolute right-0 mt-2 w-36 rounded-lg border shadow-lg z-20"
+                        style={{
+                          backgroundColor: 'var(--editor-panel-bg)',
+                          borderColor: 'var(--editor-border)',
+                          boxShadow: '0 8px 16px var(--editor-shadow-lg)',
+                        }}
+                      >
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpen(d._id); setOpenMenuId(null); }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-surface-hover)]"
+                          style={{ color: 'var(--editor-text)' }}
+                        >
+                          Open
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingId(d._id);
+                            setEditName(d.name || 'Untitled Diagram');
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-surface-hover)]"
+                          style={{ color: 'var(--editor-text)' }}
+                        >
+                          Rename
+                        </button>
+                        <button
+                          onClick={(e) => { handleDelete(e, d._id); setOpenMenuId(null); }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-error)]/10"
+                          style={{ color: 'var(--editor-error)' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div
                     className="aspect-[4/3] w-full flex items-center justify-center overflow-hidden relative"
                     style={{ backgroundColor: 'var(--editor-surface-hover)', color: 'var(--editor-accent)' }}
@@ -328,22 +399,116 @@ function DiagramsDashboard() {
                     <p className="text-sm truncate" style={{ color: 'var(--editor-text-muted)' }}>
                       Edited {formatDate(d.updatedAt)}
                     </p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
+                        Owner
+                      </span>
+                    </div>
                   </div>
-                  <button
-                    onClick={(e) => handleDelete(e, d._id)}
-                    className="absolute top-3 right-3 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-[var(--editor-error)]/20"
-                    style={{ color: 'var(--editor-text-muted)' }}
-                    aria-label="Delete diagram"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="hover:stroke-[var(--editor-error)]">
-                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      <line x1="10" y1="11" x2="10" y2="17" />
-                      <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                  </button>
                 </div>
               ))}
             </div>
+
+            {sharedDiagrams.length > 0 && (
+              <div className="mt-12">
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--editor-text)' }}>
+                    Shared with me
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--editor-text-muted)' }}>
+                    Diagrams shared with you by other people
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {sharedDiagrams.map((d, i) => (
+                    <div
+                      key={d._id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleOpen(d._id)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleOpen(d._id)}
+                      className="group relative flex flex-col rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+                      style={{
+                        backgroundColor: 'var(--editor-surface)',
+                        border: '1px solid var(--editor-border)',
+                        boxShadow: '0 4px 20px var(--editor-shadow)',
+                        animationDelay: `${i * 50}ms`,
+                      }}
+                    >
+                      <div className="absolute top-3 right-3 z-10" ref={openMenuId === d._id ? menuRef : undefined}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId((prev) => (prev === d._id ? null : d._id));
+                          }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{
+                            backgroundColor: 'var(--editor-surface)',
+                            color: 'var(--editor-text-secondary)',
+                            border: '1px solid var(--editor-border)',
+                          }}
+                          aria-label="Diagram actions"
+                        >
+                          <span className="text-lg leading-none">⋮</span>
+                        </button>
+                        {openMenuId === d._id && (
+                          <div
+                            className="absolute right-0 mt-2 w-32 rounded-lg border shadow-lg z-20"
+                            style={{
+                              backgroundColor: 'var(--editor-panel-bg)',
+                              borderColor: 'var(--editor-border)',
+                              boxShadow: '0 8px 16px var(--editor-shadow-lg)',
+                            }}
+                          >
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleOpen(d._id); setOpenMenuId(null); }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-surface-hover)]"
+                              style={{ color: 'var(--editor-text)' }}
+                            >
+                              Open
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div
+                        className="aspect-[4/3] w-full flex items-center justify-center overflow-hidden relative"
+                        style={{ backgroundColor: 'var(--editor-surface-hover)', color: 'var(--editor-accent)' }}
+                      >
+                        {d.nodes?.length || d.edges?.length ? (
+                          <DiagramPreviewFlow nodes={d.nodes} edges={d.edges} className="w-full h-full" />
+                        ) : (
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}>
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <path d="M3 9h18" />
+                            <path d="M9 21V9" />
+                            <path d="M14 9v12" />
+                          </svg>
+                        )}
+                        <span
+                          className="absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium"
+                          style={{ backgroundColor: 'var(--editor-bg)', color: 'var(--editor-text-secondary)', border: '1px solid var(--editor-border)' }}
+                        >
+                          {d.accessLevel === 'editor' ? 'Editor' : d.accessLevel === 'owner' ? 'Owner' : 'Viewer'}
+                        </span>
+                      </div>
+                      <div className="p-4 flex-1 flex flex-col min-w-0">
+                        <p className="font-semibold truncate text-base mb-1" style={{ color: 'var(--editor-text)' }}>
+                          {d.name || 'Untitled Diagram'}
+                        </p>
+                        <p className="text-sm truncate" style={{ color: 'var(--editor-text-muted)' }}>
+                          Edited {formatDate(d.updatedAt)}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
+                            {d.accessLevel === 'editor' ? 'Editor' : d.accessLevel === 'owner' ? 'Owner' : 'Viewer'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>

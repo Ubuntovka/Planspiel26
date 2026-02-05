@@ -81,6 +81,8 @@ export interface UseDiagramReturn {
   onRenameDiagram?: (name: string) => Promise<void>;
   saveDiagram?: () => Promise<boolean>;
   saveDiagramAs?: (name: string) => Promise<string | null>;
+  /** 'owner' | 'editor' | 'viewer' when loaded from backend; undefined when not loaded or local. */
+  accessLevel?: 'owner' | 'editor' | 'viewer';
 }
 
 // Node component props

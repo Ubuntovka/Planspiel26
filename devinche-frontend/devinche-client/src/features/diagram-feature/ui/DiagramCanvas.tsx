@@ -40,6 +40,8 @@ interface DiagramCanvasProps {
   onNodeDrag: (event: React.MouseEvent, node: Node) => void;
   onNodeDragStop: (event: React.MouseEvent, node: Node) => void;
   onNodeClick?: (event: React.MouseEvent, node: Node) => void;
+  /** When true, diagram is read-only (viewer mode): no drag, no connect, no drop. */
+  readOnly?: boolean;
 }
 
 
@@ -67,8 +69,8 @@ const DiagramCanvas = ({
   onNodeDrag,
   onNodeDragStop,
   onNodeClick,
+  readOnly = false,
 }: DiagramCanvasProps) => {
-    
   return (
     <div style={{ width: '100vw', height: '100vh', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
       <ReactFlow
@@ -79,21 +81,22 @@ const DiagramCanvas = ({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeContextMenu={onNodeContextMenu}
-        onEdgeContextMenu={onEdgeContextMenu}
-        onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={readOnly ? undefined : onNodeContextMenu}
+        onEdgeContextMenu={readOnly ? undefined : onEdgeContextMenu}
+        onPaneContextMenu={readOnly ? undefined : onPaneContextMenu}
         onPaneClick={onPaneClick}
         onNodeClick={onNodeClick}
         connectionMode={ConnectionMode.Loose}
         fitView
         onInit={onFlowInit}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
+        onDrop={readOnly ? undefined : onDrop}
+        onDragOver={readOnly ? undefined : onDragOver}
         onMoveEnd={onMoveEnd}
-        // node drag handlers for intersection detection
-        onNodeDrag={onNodeDrag}
-        onNodeDragStop={onNodeDragStop}
-        
+        onNodeDrag={readOnly ? undefined : onNodeDrag}
+        onNodeDragStop={readOnly ? undefined : onNodeDragStop}
+        nodesDraggable={!readOnly}
+        nodesConnectable={!readOnly}
+        elementsSelectable={!readOnly}
         defaultEdgeOptions={{
           style: { stroke: 'var(--editor-border)', strokeWidth: 2 },
           type: selectedEdgeType,

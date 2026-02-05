@@ -8,6 +8,8 @@ const getApiBase = (): string => {
   return (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE || '').replace(/\/$/, '');
 };
 
+export type DiagramAccessLevel = 'owner' | 'editor' | 'viewer';
+
 export interface DiagramListItem {
   _id: string;
   name: string;
@@ -16,6 +18,13 @@ export interface DiagramListItem {
   nodes?: any[];
   edges?: any[];
   viewport?: { x: number; y: number; zoom: number };
+  accessLevel?: DiagramAccessLevel;
+}
+
+export interface SharedWithEntry {
+  userId: string;
+  email: string;
+  role: 'viewer' | 'editor' | 'owner';
 }
 
 export interface DiagramData {
@@ -61,7 +70,10 @@ export async function createDiagram(
   return data;
 }
 
-export async function getDiagram(token: string, id: string): Promise<{ diagram: DiagramData }> {
+export async function getDiagram(
+  token: string,
+  id: string
+): Promise<{ diagram: DiagramData; accessLevel?: DiagramAccessLevel }> {
   const base = getApiBase();
   const res = await fetch(`${base}/api/diagrams/${id}`, {
     method: 'GET',
@@ -108,6 +120,90 @@ export async function deleteDiagram(token: string, id: string): Promise<void> {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to delete diagram');
+}
+
+/** List users with access to a diagram (owner only). */
+export async function listSharedWith(
+  token: string,
+  diagramId: string
+): Promise<{ sharedWith: SharedWithEntry[] }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/shared`, {
+    method: 'GET',
+    headers: headers(token),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to load sharing');
+  return data;
+}
+
+/** Share diagram with a user by email (owner only). */
+export async function shareDiagram(
+  token: string,
+  diagramId: string,
+  email: string,
+  role: 'viewer' | 'editor' | 'owner'
+): Promise<{ sharedWith: SharedWithEntry[] }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/share`, {
+    method: 'POST',
+    headers: headers(token),
+    body: JSON.stringify({ email: email.trim(), role }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to share');
+  return data;
+}
+
+/** Remove a user's access (owner only). */
+export async function unshareDiagram(
+  token: string,
+  diagramId: string,
+  targetUserId: string
+): Promise<{ sharedWith: SharedWithEntry[] }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/share/${targetUserId}`, {
+    method: 'DELETE',
+    headers: headers(token),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to remove access');
+  return data;
+}
+
+/** Update a user's access role (owner only). */
+export async function updateSharedRole(
+  token: string,
+  diagramId: string,
+  targetUserId: string,
+  role: 'viewer' | 'editor' | 'owner'
+): Promise<{ sharedWith: SharedWithEntry[] }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/share/${targetUserId}`, {
+    method: 'PATCH',
+    headers: headers(token),
+    body: JSON.stringify({ role }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to update access');
+  return data;
+}
+
+/** Transfer ownership to another user (owner only). */
+export async function transferOwnership(
+  token: string,
+  diagramId: string,
+  targetUserId: string
+): Promise<{ ownerId: string; sharedWith: SharedWithEntry[] }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/transfer-owner`, {
+    method: 'POST',
+    headers: headers(token),
+    body: JSON.stringify({ targetUserId }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to transfer ownership');
+  return data;
 }
 
 /** Get API base without auth (for public endpoints like LLM generate) */
