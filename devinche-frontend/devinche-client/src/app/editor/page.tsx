@@ -14,7 +14,6 @@ import {
   type DiagramListItem,
 } from '@/features/diagram-feature/api';
 import { DiagramPreviewFlow } from '@/features/diagram-feature/ui/DiagramPreviewFlow';
-import Link from "next/link";
 
 function DiagramsDashboard() {
   const { getToken, logout } = useAuth();
@@ -122,65 +121,46 @@ function DiagramsDashboard() {
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen bg-[#e8eaed] relative overflow-hidden"
       data-page="editor-dashboard"
-      style={{
-        background: 'var(--editor-bg)',
-        backgroundImage: 'radial-gradient(ellipse 80% 50% at 50% -20%, var(--editor-accent) 0%, transparent 50%)',
-        height: '100vh',
-        overflowY: 'auto',
-      }}
     >
-      <header
-        className="sticky top-0 z-20 backdrop-blur-xl border-b transition-colors"
+      <div
+        className="absolute inset-0 pointer-events-none"
         style={{
-          borderColor: 'var(--editor-border)',
-          backgroundColor: 'color-mix(in srgb, var(--editor-surface) 85%, transparent)',
+          backgroundImage: `linear-gradient(to right, #d1d5db 1px, transparent 1px), linear-gradient(to bottom, #d1d5db 1px, transparent 1px)`,
+          backgroundSize: '4cm 4cm',
         }}
-      >
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <Image src="/devince_log.svg" alt="Devinche" width={40} height={40} className="drop-shadow-sm" />
-              <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--editor-text)' }}>
-                My Diagrams
-              </h1>
-            </div>
-          </div>
+      />
+
+      <header className="bg-[#4a5568] py-5 px-8 flex justify-between items-center relative z-20">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <ThemeToggleButton />
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="group flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white disabled:opacity-60 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
-              style={{
-                background: 'linear-gradient(135deg, var(--editor-accent) 0%, var(--editor-accent-hover) 100%)',
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              {creating ? 'Creating...' : 'New diagram'}
-            </button>
-            <Link href="/">
-            <button
-              onClick={() => logout()}
-              className="px-4 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02]"
-              style={{
-                backgroundColor: 'var(--editor-surface)',
-                color: 'var(--editor-text-secondary)',
-                border: '1px solid var(--editor-border)',
-              }}
-            >
-              Log out
-            </button>
-            </Link>
+            <Image src="/devince_log.svg" alt="Devinche" width={48} height={48} className="w-12 h-12" />
+            <h1 className="text-xl font-bold tracking-tight text-white">
+              My Diagrams
+            </h1>
           </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <ThemeToggleButton />
+          <button
+            onClick={handleCreate}
+            disabled={creating}
+            className="bg-white text-gray-800 px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm disabled:opacity-60"
+          >
+            {creating ? 'Creating...' : 'New diagram'}
+          </button>
+          <button
+            onClick={() => logout()}
+            className="bg-white text-gray-800 px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
+            aria-label="Log out"
+          >
+            Log out
+          </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
+      <main className="relative z-10 max-w-6xl mx-auto px-6 py-12">
         {error && (
           <div
             className="mb-6 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg"
@@ -515,6 +495,24 @@ function DiagramsDashboard() {
           </>
         )}
       </main>
+      <style jsx>{`
+        :global([data-theme="dark"]) [data-page="editor-dashboard"] {
+          background: var(--editor-bg);
+          color: var(--editor-text);
+        }
+        :global([data-theme="dark"]) [data-page="editor-dashboard"] header {
+          background: var(--editor-surface);
+          border-bottom: 1px solid var(--editor-border);
+        }
+        :global([data-theme="dark"]) [data-page="editor-dashboard"] h1 {
+          color: var(--editor-text);
+        }
+        :global([data-theme="dark"]) [data-page="editor-dashboard"] .pointer-events-none {
+          background-image:
+            linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+        }
+      `}</style>
     </div>
   );
 }
