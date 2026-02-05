@@ -19,7 +19,7 @@ import type { DiagramNode, DiagramEdge, ContextMenuState, UseDiagramReturn } fro
 import { exportDiagramToRdfTurtle } from "./ui/exports/exportToRdf";
 import { NODE_DEFAULT_SIZE } from "./data/nodeSizes";
 import { exportDiagramToXML } from "./ui/exports/exportToXML";
-import { listDiagrams, getDiagram, createDiagram, updateDiagram, renameDiagram as apiRenameDiagram } from "./api";
+import { listDiagrams, getDiagram, createDiagram, updateDiagram, renameDiagram as apiRenameDiagram, type DiagramAccessLevel } from "./api";
 
 const STORAGE_KEY = 'diagram.flow';
 const STORAGE_PTR_KEY = 'diagram.flow.ptr';
@@ -41,6 +41,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     const [selectedNode, setSelectedNode] = useState<DiagramNode | null>(null);
     const [selectedEdge, setSelectedEdge] = useState<DiagramEdge | null>(null);
     const [diagramName, setDiagramName] = useState<string | null>(null);
+    const [accessLevel, setAccessLevel] = useState<DiagramAccessLevel | undefined>(undefined);
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
     const { screenToFlowPosition, getIntersectingNodes, getNodes, getEdges, getNode } = useReactFlow();
 
@@ -283,10 +284,11 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
             let cancelled = false;
 
             const loadById = (id: string) =>
-                getDiagram(token, id).then(({ diagram }) => {
+                getDiagram(token, id).then(({ diagram, accessLevel: level }) => {
                     if (cancelled) return;
                     currentDiagramIdRef.current = id;
                     setDiagramName(diagram.name || 'Untitled Diagram');
+                    setAccessLevel(level ?? 'owner');
                     const vp = diagram.viewport || { x: 0, y: 0, zoom: 1 };
                     pendingViewportRef.current = vp;
                     const snap: Snapshot = {
@@ -320,9 +322,11 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
                         if (cancelled) return;
                         const mostRecent = list?.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
                         if (mostRecent) {
+                            setAccessLevel((mostRecent as { accessLevel?: DiagramAccessLevel }).accessLevel ?? 'owner');
                             return loadById(mostRecent._id);
                         }
                         // No diagrams - start empty
+                        setAccessLevel(undefined);
                         const snap = { nodes: initialNodes, edges: initialEdges, viewport: { x: 0, y: 0, zoom: 1 } } as Snapshot;
                         backendHistoryRef.current = [snap];
                         backendPtrRef.current = 0;
@@ -344,6 +348,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         }
 
         setDiagramName(null);
+        setAccessLevel(undefined);
         const saved = loadSaved();
         if (saved) {
             if (Array.isArray(saved)) {
@@ -579,7 +584,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
 
     // Canvas context menu handler
    const onPaneContextMenu = useCallback((event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
-        event.preventDefault(); 
+        event.preventDefault();
 
         if (!flowWrapperRef.current) return;
         const pane = flowWrapperRef.current.getBoundingClientRect();
@@ -589,7 +594,16 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         const right = event.clientX >= pane.width - 200 ? pane.width - event.clientX : undefined;
         const bottom = event.clientY >= pane.height - 200 ? pane.height - event.clientY : undefined;
 
-        setMenu({ id: 'pane-menu', type: 'canvas', top, left, right, bottom }); 
+        setMenu({
+          id: 'pane-menu',
+          type: 'canvas',
+          top,
+          left,
+          right,
+          bottom,
+          clientX: event.clientX,
+          clientY: event.clientY,
+        });
     }, []);
 
     // Canvas reset handler
@@ -1030,6 +1044,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         onRenameDiagram,
         saveDiagram,
         saveDiagramAs,
+        accessLevel,
     };
 };
 

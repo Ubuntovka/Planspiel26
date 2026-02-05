@@ -30,6 +30,11 @@ import { AiProcessNode } from './ui/nodes/AiProcessNode';
 import MonaChatFab from './ui/MonaChatFab';
 import AiApplicationNode from './ui/nodes/AiApplicationNode';
 import AiServiceNode from './ui/nodes/AiServiceNode';
+import { generateDiagramFromPrompt } from './api';
+import ShareDialog from './ui/ShareDialog';
+import CommentsPanel from './ui/comments/CommentsPanel';
+import NotificationBell from './ui/notifications/NotificationBell';
+import { listComments, type CommentItem, type CommentAnchor } from './api';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -56,7 +61,10 @@ interface DiagramScreenContentProps {
 }
 
 const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
-  const { getToken, isAuthenticated } = useAuth();
+  const { getToken, isAuthenticated, user } = useAuth();
+  const userDisplayName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'Anonymous'
+    : 'Anonymous';
   const router = useRouter();
   const {
     nodes,
@@ -101,19 +109,44 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     saveDiagram,
     saveDiagramAs,
     openProperties,
+    accessLevel,
   } = useDiagram({ diagramId: diagramId ?? undefined, getToken });
 
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-const contextMenuProps = menu
-  ? { 
-      ...menu, 
-      resetCanvas, 
-      selectAllNodes, 
-      closeMenu, 
-      onOpenProperties: (id: string) => openProperties(id, menu.type)
+  const isViewer = accessLevel === 'viewer';
+  const isOwner = accessLevel === 'owner';
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [commentAnchor, setCommentAnchor] = useState<CommentAnchor | null>(null);
+
+  const loadComments = useCallback(async () => {
+    if (!diagramId || !getToken?.()) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      const { comments: list } = await listComments(token, diagramId);
+      setComments(list);
+    } catch {
+      setComments([]);
+    }
+  }, [diagramId, getToken]);
+
+  useEffect(() => {
+    if (diagramId && getToken?.()) loadComments();
+  }, [diagramId, loadComments]);
+
+  const contextMenuProps = menu
+  ? {
+      ...menu,
+      resetCanvas,
+      selectAllNodes,
+      closeMenu,
+      onOpenProperties: (id: string) => openProperties(id, menu.type),
     }
   : null;
+  const contextMenuForCanvas = isViewer ? null : contextMenuProps;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
   const [nameInput, setNameInput] = useState(diagramName ?? 'Untitled Diagram');
@@ -254,7 +287,12 @@ const contextMenuProps = menu
             </svg>
             Back
           </Link>
-          {onRenameDiagram && (
+          {isViewer && (
+            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--editor-surface-hover)', color: 'var(--editor-text-secondary)' }}>
+              View only
+            </span>
+          )}
+          {onRenameDiagram && !isViewer && (
             <input
               type="text"
               value={nameInput}
@@ -272,15 +310,42 @@ const contextMenuProps = menu
               style={{ color: 'var(--editor-text)', maxWidth: 300 }}
             />
           )}
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell getToken={getToken!} onNavigate={() => setCommentsPanelOpen(false)} />
+            {!isViewer && (
+              <button
+                type="button"
+                onClick={() => setCommentsPanelOpen(true)}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-[var(--editor-surface-hover)] transition-colors text-sm"
+                style={{ color: 'var(--editor-text-secondary)' }}
+                title="Comments"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                Comments
+                {comments.filter((c) => !c.resolved).length > 0 && (
+                  <span
+                    className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-medium text-white"
+                    style={{ backgroundColor: 'var(--editor-accent)' }}
+                  >
+                    {comments.filter((c) => !c.resolved).length}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       )}
       <Toolbar
-        onSave={handleSave}
-        onSaveAs={handleSaveAs}
+        onBack={diagramId ? () => router.push('/editor') : undefined}
+        backLabel="Diagrams"
+        onSave={isViewer ? undefined : handleSave}
+        onSaveAs={isViewer ? undefined : handleSaveAs}
         diagramName={diagramName ?? 'Untitled Diagram'}
         isLoggedIn={isAuthenticated}
-        onUndo={onUndo}
-        onRedo={onRedo}
+        onUndo={isViewer ? () => {} : onUndo}
+        onRedo={isViewer ? () => {} : onRedo}
         canUndo={canUndo}
         canRedo={canRedo}
         onZoomIn={handleZoomIn}
@@ -289,10 +354,15 @@ const contextMenuProps = menu
         exportToJson={exportToJson}
         exportToRdf={exportToRdf}
         exportToXml={exportToXml}
-        importFromJson={importFromJson}
-        handleValidation={handleValidation}
+        importFromJson={isViewer ? (_json: string) => {} : importFromJson}
+        handleValidation={isViewer ? undefined : handleValidation}
         flowWrapperRef={flowWrapperRef}
         allNodes={nodes}
+        canShare={isOwner}
+        diagramId={diagramId}
+        onShareClick={isOwner ? () => setShareDialogOpen(true) : undefined}
+        onCommentsClick={!isViewer && diagramId ? () => setCommentsPanelOpen(true) : undefined}
+        commentsUnresolvedCount={comments.filter((c) => !c.resolved).length}
       />
       {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
 
@@ -310,7 +380,7 @@ const contextMenuProps = menu
         onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
         onCloseMenu={closeMenu}
-        menu={contextMenuProps}
+        menu={contextMenuForCanvas}
         onFlowInit={onFlowInit}
         setNodes={setNodes}
         selectedEdgeType={selectedEdgeType}
@@ -320,11 +390,27 @@ const contextMenuProps = menu
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
+        readOnly={isViewer}
+        diagramId={diagramId}
+        getToken={getToken}
+        userDisplayName={userDisplayName}
+        comments={comments}
+        onCommentClick={() => setCommentsPanelOpen(true)}
+        onAddCommentAtPoint={
+          !isViewer
+            ? (anchor) => {
+                setCommentAnchor(anchor);
+                setCommentsPanelOpen(true);
+              }
+            : undefined
+        }
       />
-      <PalettePanel 
-        selectedEdgeType={selectedEdgeType}
-        onEdgeTypeSelect={setSelectedEdgeType}
-      />
+      {!isViewer && (
+        <PalettePanel
+          selectedEdgeType={selectedEdgeType}
+          onEdgeTypeSelect={setSelectedEdgeType}
+        />
+      )}
       <PropertiesPanel
         selectedNode={selectedNode}
         selectedEdge={selectedEdge}
@@ -333,7 +419,37 @@ const contextMenuProps = menu
         onClose={onPaneClick}
         isOpen={selectedNode !== null || selectedEdge !== null}
       />
-      <MonaChatFab />
+      {!isViewer && (
+        <MonaChatFab
+          onGenerateDiagram={async (prompt) => {
+            const result = await generateDiagramFromPrompt(prompt);
+            return {
+              diagramJson: JSON.stringify(result.diagram),
+              validationErrors: result.validationErrors,
+            };
+          }}
+          onApplyDiagram={importFromJson}
+        />
+      )}
+      {shareDialogOpen && diagramId && getToken && (
+        <ShareDialog
+          diagramId={diagramId}
+          getToken={getToken}
+          onClose={() => setShareDialogOpen(false)}
+        />
+      )}
+      {commentsPanelOpen && diagramId && getToken && user?._id && (
+        <CommentsPanel
+          diagramId={diagramId}
+          getToken={getToken}
+          currentUserId={user._id}
+          onClose={() => setCommentsPanelOpen(false)}
+          anchorToAttach={commentAnchor}
+          onClearAnchor={() => setCommentAnchor(null)}
+          comments={comments}
+          setComments={setComments}
+        />
+      )}
     </div>
   );
 };

@@ -35,6 +35,7 @@ export default function ValidationError({ errors, handleClose }: { errors: strin
                         <X className="hover:cursor-pointer" />
                     </button>
                 </div>
+                <p className="text-sm mt-1">All WAM rules are satisfied, including trust between realms, invocation, legacy, and realm containment.</p>
             </div>
         );
     }

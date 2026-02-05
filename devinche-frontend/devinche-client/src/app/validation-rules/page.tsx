@@ -62,6 +62,16 @@ export default function ValidationRulesPage() {
                         <li className="text-left mb-2">4. Security realms must contain another node</li>
                         <li className="text-left mb-2">5. Identity providors cannot have any relationships</li>
                     </ol>
+                    <div className="text-left mt-10 p-4 bg-white/80 rounded-lg border border-gray-200 shadow-sm">
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">How to check the connection between two realms</h2>
+                        <p className="text-gray-700 mb-2">To verify that a trust connection between two security realms is valid:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-gray-700">
+                            <li>In the editor, use the edge palette to select <strong>Trust</strong>.</li>
+                            <li>Draw an edge from one <strong>Security Realm</strong> node to another (drag from the first realm to the second).</li>
+                            <li>Click <strong>Validate</strong> in the toolbar. If the connection is correct (realm → realm), you will see <strong>No Validation Errors</strong>. If the edge is invalid (e.g. realm to app), the edge will turn red and an error will list the invalid trust.</li>
+                        </ol>
+                        <p className="text-gray-600 mt-2 text-sm">So: trust is only valid between two security realms; the Validate button is how you check that the connection works.</p>
+                    </div>
                 </div>
             </main>
         </div>
