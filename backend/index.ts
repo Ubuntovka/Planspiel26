@@ -1,14 +1,17 @@
+import http from 'http';
 import express, { Application } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import config from './config/config';
+import { attachCollaborationSocket } from './collaboration/socket';
 
 import userRoutes from './api/routes/userRoutes';
 import validationRoutes from './api/routes/validationRoutes';
 import diagramRoutes from './api/routes/diagramRoutes';
 import llmRoutes from './api/routes/llmRoutes';
+import notificationRoutes from './api/routes/notificationRoutes';
 import User from './models/User';
 import errorHandler from './middleware/error.middleware';
 
@@ -57,6 +60,7 @@ app.use('/api/users/', userRoutes);
 app.use('/api/validation/', validationRoutes);
 app.use('/api/diagrams/', diagramRoutes);
 app.use('/api/llm/', llmRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Errors
 app.use(errorHandler);
@@ -80,9 +84,13 @@ async function start() {
       console.warn('Failed to synchronize User indexes:', idxErr);
     }
 
-    app.listen(port, () => {
+    const httpServer = http.createServer(app);
+    attachCollaborationSocket(httpServer);
+
+    httpServer.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
       console.log(`Swagger UI available at http://localhost:${port}/api-docs`);
+      console.log('Collaboration socket attached at /socket.io');
     });
   } catch (err) {
     console.error('Failed to connect to MongoDB:', err);

@@ -34,6 +34,9 @@ export interface ContextMenuState {
   left?: number;
   right?: number;
   bottom?: number;
+  /** Pane right-click position (for "Add comment here") */
+  clientX?: number;
+  clientY?: number;
   resetCanvas?: () => void;
 }
 

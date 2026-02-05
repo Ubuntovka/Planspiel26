@@ -14,7 +14,10 @@ import {
   Edge,
 } from '@xyflow/react';
 import ContextMenu from './controls/ContextMenu';
+import CollaborationCursors from './CollaborationCursors';
+import CommentMarkers from './comments/CommentMarkers';
 import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram';
+import type { CommentItem } from '../api';
 
 interface DiagramCanvasProps {
   flowWrapperRef: React.RefObject<HTMLDivElement>;
@@ -42,6 +45,15 @@ interface DiagramCanvasProps {
   onNodeClick?: (event: React.MouseEvent, node: Node) => void;
   /** When true, diagram is read-only (viewer mode): no drag, no connect, no drop. */
   readOnly?: boolean;
+  /** For real-time collaboration: show other users' cursors. */
+  diagramId?: string | null;
+  getToken?: () => string | null;
+  userDisplayName?: string;
+  /** Comments with anchors to show as pins on the diagram. */
+  comments?: CommentItem[];
+  onCommentClick?: (commentId: string) => void;
+  /** For canvas context menu: "Add comment here" */
+  onAddCommentAtPoint?: (anchor: { type: 'point'; x: number; y: number }) => void;
 }
 
 
@@ -70,6 +82,12 @@ const DiagramCanvas = ({
   onNodeDragStop,
   onNodeClick,
   readOnly = false,
+  diagramId,
+  getToken,
+  userDisplayName = 'Anonymous',
+  comments = [],
+  onCommentClick,
+  onAddCommentAtPoint,
 }: DiagramCanvasProps) => {
   return (
     <div style={{ width: '100vw', height: '100vh', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
@@ -139,7 +157,24 @@ const DiagramCanvas = ({
           position="bottom-right"
           showInteractive={false}
         />
-        {menu && <ContextMenu onClick={onCloseMenu ?? onPaneClick} {...menu} />}
+        {menu && (
+          <ContextMenu
+            onClick={onCloseMenu ?? onPaneClick}
+            {...menu}
+            flowWrapperRef={flowWrapperRef}
+            onAddCommentAtPoint={onAddCommentAtPoint}
+          />
+        )}
+        <CollaborationCursors
+          diagramId={diagramId}
+          getToken={getToken ?? (() => null)}
+          userDisplayName={userDisplayName}
+          flowWrapperRef={flowWrapperRef}
+          enabled={!!(diagramId && getToken)}
+        />
+        {comments.length > 0 && (
+          <CommentMarkers comments={comments} onCommentClick={onCommentClick} />
+        )}
       </ReactFlow>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   updateSharedRole,
   transferOwnership,
 } from '../controllers/diagramController';
+import commentRoutes from './commentRoutes';
 
 const router = express.Router();
 
@@ -119,7 +120,7 @@ router.get('/:id', async (req: CustomRequest, res: Response) => {
   return res.status(200).json(result);
 });
 
-/** PATCH /api/diagrams/:id/rename - Rename diagram (must be before /:id) */
+/** PATCH /api/diagrams/:id/rename - Rename diagram */
 router.patch('/:id/rename', async (req: CustomRequest, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
   const { name } = req.body || {};
@@ -161,5 +162,8 @@ router.delete('/:id', async (req: CustomRequest, res: Response) => {
   }
   return res.status(200).json(result);
 });
+
+/** Mount comment & collaborators under /:id (e.g. /:id/comments, /:id/collaborators) */
+router.use('/:id', commentRoutes);
 
 export default router;

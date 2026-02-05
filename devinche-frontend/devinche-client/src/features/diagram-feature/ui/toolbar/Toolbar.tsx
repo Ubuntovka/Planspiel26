@@ -1,4 +1,4 @@
-import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon, Calculator, ChevronUp, ChevronDown, Share2, Download, Upload, ArrowLeft } from 'lucide-react';
+import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon, Calculator, ChevronUp, ChevronDown, Share2, MessageSquare, Download, Upload, ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { exportDiagramToPng } from '../exports/exportToPng';
 import { DiagramNode } from '@/types/diagram';
@@ -31,6 +31,10 @@ interface ToolbarProps {
   canShare?: boolean;
   diagramId?: string | null;
   onShareClick?: () => void;
+  /** Open comments panel (when diagram is open and user can comment). */
+  onCommentsClick?: () => void;
+  /** Unresolved comment count for badge. */
+  commentsUnresolvedCount?: number;
 }
 
 const Toolbar = ({
@@ -57,6 +61,8 @@ const Toolbar = ({
   canShare = false,
   diagramId,
   onShareClick,
+  onCommentsClick,
+  commentsUnresolvedCount = 0,
 }: ToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
   const [showCostDetails, setShowCostDetails] = useState(false);
@@ -374,6 +380,29 @@ const Toolbar = ({
           >
             <Share2 size={16} />
             <span className="text-sm">Share</span>
+          </button>
+        </div>
+      )}
+      {onCommentsClick && diagramId && (
+        <div className={group} style={groupStyle}>
+          <button
+            onClick={onCommentsClick}
+            className={`${btnText} flex items-center gap-1.5 relative`}
+            style={{ ...btnStyle, border: '1px solid var(--editor-border)' }}
+            onMouseEnter={(e) => btnHover(e, true)}
+            onMouseLeave={(e) => btnHover(e, false)}
+            title="Comments"
+          >
+            <MessageSquare size={16} />
+            <span className="text-sm">Comments</span>
+            {commentsUnresolvedCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-medium text-white"
+                style={{ backgroundColor: 'var(--editor-accent)' }}
+              >
+                {commentsUnresolvedCount > 99 ? '99+' : commentsUnresolvedCount}
+              </span>
+            )}
           </button>
         </div>
       )}

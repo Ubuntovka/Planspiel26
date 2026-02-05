@@ -15,6 +15,7 @@ import {
   ContentCopy,
   DeleteOutline,
   Settings,
+  ChatBubbleOutline,
 } from "@mui/icons-material";
 
 interface ContextMenuProps extends ContextMenuState {
@@ -23,6 +24,8 @@ interface ContextMenuProps extends ContextMenuState {
   selectAllNodes?: () => void;
   onOpenProperties?: (nodeId: string) => void;
   closeMenu?: () => void;
+  flowWrapperRef?: React.RefObject<HTMLDivElement | null>;
+  onAddCommentAtPoint?: (anchor: { type: 'point'; x: number; y: number }) => void;
 }
 
 const IconNode = () => <SquareRounded fontSize="small" />;
@@ -44,14 +47,18 @@ export default function ContextMenu({
   left,
   right,
   bottom,
+  clientX,
+  clientY,
   onClick,
   resetCanvas,
   selectAllNodes,
   onOpenProperties,
   closeMenu,
+  flowWrapperRef,
+  onAddCommentAtPoint,
   ...props
 }: ContextMenuProps) {
-  const { getNode, getEdges, deleteElements, setNodes } = useReactFlow();
+  const { getNode, getEdges, deleteElements, setNodes, screenToFlowPosition } = useReactFlow();
 
   const elementType = type;
   const isCanvasMenu = elementType === "canvas";
@@ -168,6 +175,25 @@ export default function ContextMenu({
           <div className="context-menu__actions">
           {isCanvasMenu && (
             <>
+              {onAddCommentAtPoint && flowWrapperRef?.current != null && clientX != null && clientY != null && (
+                <button
+                  type="button"
+                  className="context-menu-item"
+                  onClick={() => {
+                    const rect = flowWrapperRef.current!.getBoundingClientRect();
+                    const rel = { x: clientX - rect.left, y: clientY - rect.top };
+                    const flowPos = screenToFlowPosition(rel);
+                    onAddCommentAtPoint({ type: 'point', x: flowPos.x, y: flowPos.y });
+                    closeMenu?.();
+                    onClick?.();
+                  }}
+                >
+                  <span className="context-menu-item__icon">
+                    <ChatBubbleOutline />
+                  </span>
+                  <span>Add comment here</span>
+                </button>
+              )}
               <button
                 type="button"
                 className="context-menu-item"

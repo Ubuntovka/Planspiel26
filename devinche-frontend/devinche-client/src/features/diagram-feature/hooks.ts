@@ -584,7 +584,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
 
     // Canvas context menu handler
    const onPaneContextMenu = useCallback((event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
-        event.preventDefault(); 
+        event.preventDefault();
 
         if (!flowWrapperRef.current) return;
         const pane = flowWrapperRef.current.getBoundingClientRect();
@@ -594,7 +594,16 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         const right = event.clientX >= pane.width - 200 ? pane.width - event.clientX : undefined;
         const bottom = event.clientY >= pane.height - 200 ? pane.height - event.clientY : undefined;
 
-        setMenu({ id: 'pane-menu', type: 'canvas', top, left, right, bottom }); 
+        setMenu({
+          id: 'pane-menu',
+          type: 'canvas',
+          top,
+          left,
+          right,
+          bottom,
+          clientX: event.clientX,
+          clientY: event.clientY,
+        });
     }, []);
 
     // Canvas reset handler

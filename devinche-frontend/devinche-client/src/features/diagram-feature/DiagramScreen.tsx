@@ -32,6 +32,9 @@ import AiApplicationNode from './ui/nodes/AiApplicationNode';
 import AiServiceNode from './ui/nodes/AiServiceNode';
 import { generateDiagramFromPrompt } from './api';
 import ShareDialog from './ui/ShareDialog';
+import CommentsPanel from './ui/comments/CommentsPanel';
+import NotificationBell from './ui/notifications/NotificationBell';
+import { listComments, type CommentItem, type CommentAnchor } from './api';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -58,7 +61,10 @@ interface DiagramScreenContentProps {
 }
 
 const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
-  const { getToken, isAuthenticated } = useAuth();
+  const { getToken, isAuthenticated, user } = useAuth();
+  const userDisplayName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'Anonymous'
+    : 'Anonymous';
   const router = useRouter();
   const {
     nodes,
@@ -111,6 +117,25 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   const isViewer = accessLevel === 'viewer';
   const isOwner = accessLevel === 'owner';
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [commentAnchor, setCommentAnchor] = useState<CommentAnchor | null>(null);
+
+  const loadComments = useCallback(async () => {
+    if (!diagramId || !getToken?.()) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      const { comments: list } = await listComments(token, diagramId);
+      setComments(list);
+    } catch {
+      setComments([]);
+    }
+  }, [diagramId, getToken]);
+
+  useEffect(() => {
+    if (diagramId && getToken?.()) loadComments();
+  }, [diagramId, loadComments]);
 
   const contextMenuProps = menu
   ? {
@@ -285,6 +310,31 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
               style={{ color: 'var(--editor-text)', maxWidth: 300 }}
             />
           )}
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell getToken={getToken!} onNavigate={() => setCommentsPanelOpen(false)} />
+            {!isViewer && (
+              <button
+                type="button"
+                onClick={() => setCommentsPanelOpen(true)}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-[var(--editor-surface-hover)] transition-colors text-sm"
+                style={{ color: 'var(--editor-text-secondary)' }}
+                title="Comments"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                Comments
+                {comments.filter((c) => !c.resolved).length > 0 && (
+                  <span
+                    className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-medium text-white"
+                    style={{ backgroundColor: 'var(--editor-accent)' }}
+                  >
+                    {comments.filter((c) => !c.resolved).length}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       )}
       <Toolbar
@@ -311,6 +361,8 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         canShare={isOwner}
         diagramId={diagramId}
         onShareClick={isOwner ? () => setShareDialogOpen(true) : undefined}
+        onCommentsClick={!isViewer && diagramId ? () => setCommentsPanelOpen(true) : undefined}
+        commentsUnresolvedCount={comments.filter((c) => !c.resolved).length}
       />
       {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
 
@@ -339,6 +391,19 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         readOnly={isViewer}
+        diagramId={diagramId}
+        getToken={getToken}
+        userDisplayName={userDisplayName}
+        comments={comments}
+        onCommentClick={() => setCommentsPanelOpen(true)}
+        onAddCommentAtPoint={
+          !isViewer
+            ? (anchor) => {
+                setCommentAnchor(anchor);
+                setCommentsPanelOpen(true);
+              }
+            : undefined
+        }
       />
       {!isViewer && (
         <PalettePanel
@@ -371,6 +436,18 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
           diagramId={diagramId}
           getToken={getToken}
           onClose={() => setShareDialogOpen(false)}
+        />
+      )}
+      {commentsPanelOpen && diagramId && getToken && user?._id && (
+        <CommentsPanel
+          diagramId={diagramId}
+          getToken={getToken}
+          currentUserId={user._id}
+          onClose={() => setCommentsPanelOpen(false)}
+          anchorToAttach={commentAnchor}
+          onClearAnchor={() => setCommentAnchor(null)}
+          comments={comments}
+          setComments={setComments}
         />
       )}
     </div>

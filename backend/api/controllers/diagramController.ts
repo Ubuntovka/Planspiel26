@@ -120,6 +120,12 @@ export async function getDiagram(
   return { diagram, accessLevel };
 }
 
+/** Returns true if the user has any access to the diagram (for collaboration join). */
+export async function hasDiagramAccess(diagramId: string, userId: string): Promise<boolean> {
+  const result = await getDiagram(diagramId, userId);
+  return !('error' in result);
+}
+
 export async function updateDiagram(
   diagramId: string,
   userId: string,
