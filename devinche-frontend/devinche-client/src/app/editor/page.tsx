@@ -14,6 +14,7 @@ import {
   type DiagramListItem,
 } from '@/features/diagram-feature/api';
 import { DiagramPreviewFlow } from '@/features/diagram-feature/ui/DiagramPreviewFlow';
+import Link from "next/link";
 
 function DiagramsDashboard() {
   const { getToken, logout } = useAuth();
@@ -162,6 +163,7 @@ function DiagramsDashboard() {
               </svg>
               {creating ? 'Creating...' : 'New diagram'}
             </button>
+            <Link href="/">
             <button
               onClick={() => logout()}
               className="px-4 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02]"
@@ -173,6 +175,7 @@ function DiagramsDashboard() {
             >
               Log out
             </button>
+            </Link>
           </div>
         </div>
       </header>
