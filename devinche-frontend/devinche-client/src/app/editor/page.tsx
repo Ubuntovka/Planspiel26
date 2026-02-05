@@ -26,6 +26,8 @@ function DiagramsDashboard() {
   const [editName, setEditName] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const headerMenuRef = useRef<HTMLDivElement | null>(null);
 
   const fetchDiagrams = async () => {
     const token = getToken();
@@ -51,9 +53,22 @@ function DiagramsDashboard() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenuId(null);
       }
+      if (headerMenuRef.current && !headerMenuRef.current.contains(e.target as Node)) {
+        setHeaderMenuOpen(false);
+      }
     };
-    if (openMenuId) document.addEventListener('mousedown', onDocClick, true);
-    return () => document.removeEventListener('mousedown', onDocClick, true);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpenMenuId(null);
+        setHeaderMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick, true);
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick, true);
+      document.removeEventListener('keydown', onKey, true);
+    };
   }, [openMenuId]);
 
   const handleCreate = async () => {
@@ -121,7 +136,7 @@ function DiagramsDashboard() {
 
   return (
     <div
-      className="min-h-screen bg-[#e8eaed] relative overflow-hidden"
+      className="h-[100dvh] bg-[#e8eaed] relative overflow-auto custom-scrollbar"
       data-page="editor-dashboard"
     >
       <div
@@ -142,21 +157,71 @@ function DiagramsDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <ThemeToggleButton />
-          <button
-            onClick={handleCreate}
-            disabled={creating}
-            className="bg-white text-gray-800 px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm disabled:opacity-60"
-          >
-            {creating ? 'Creating...' : 'New diagram'}
-          </button>
-          <button
-            onClick={() => logout()}
-            className="bg-white text-gray-800 px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
-            aria-label="Log out"
-          >
-            Log out
-          </button>
+          {/* Desktop actions */}
+          <div className="hidden md:flex items-center gap-3">
+            <ThemeToggleButton />
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              className="bg-white text-gray-800 px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm disabled:opacity-60"
+            >
+              {creating ? 'Creating...' : 'New diagram'}
+            </button>
+            <button
+              onClick={() => logout()}
+              className="bg-white text-gray-800 px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
+              aria-label="Log out"
+            >
+              Log out
+            </button>
+          </div>
+
+          {/* Mobile actions: Theme + Dropdown */}
+          <div className="flex md:hidden items-center gap-2" ref={headerMenuRef}>
+            <ThemeToggleButton />
+            <button
+              onClick={() => setHeaderMenuOpen((v) => !v)}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-800 hover:bg-gray-100 transition-colors"
+              aria-haspopup="menu"
+              aria-expanded={headerMenuOpen}
+              aria-label="Open menu"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="18" x2="20" y2="18" />
+              </svg>
+            </button>
+            {headerMenuOpen && (
+              <div
+                className="absolute right-4 top-[64px] w-44 rounded-xl border shadow-lg z-30 overflow-hidden"
+                style={{
+                  backgroundColor: 'var(--editor-panel-bg)',
+                  borderColor: 'var(--editor-border)',
+                  boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+                }}
+                role="menu"
+              >
+                <button
+                  onClick={() => { setHeaderMenuOpen(false); handleCreate(); }}
+                  disabled={creating}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-[var(--editor-surface-hover)] disabled:opacity-60"
+                  style={{ color: 'var(--editor-text)' }}
+                  role="menuitem"
+                >
+                  {creating ? 'Creating…' : 'New diagram'}
+                </button>
+                <button
+                  onClick={() => { setHeaderMenuOpen(false); logout(); }}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-[var(--editor-surface-hover)]"
+                  style={{ color: 'var(--editor-text)' }}
+                  role="menuitem"
+                >
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
