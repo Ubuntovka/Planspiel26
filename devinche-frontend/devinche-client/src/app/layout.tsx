@@ -18,6 +18,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Diagram Editor",
   description: "Professional diagram editor",
+  icons: {
+    icon: [
+      { url: "/devince_log.svg", type: "image/svg+xml", sizes: "any" },
+    ],
+    shortcut: [
+      { url: "/devince_log.svg", type: "image/svg+xml", sizes: "any" },
+    ],
+  },
 };
 
 export default function RootLayout({
