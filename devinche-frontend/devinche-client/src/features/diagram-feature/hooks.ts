@@ -45,6 +45,11 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     const flowWrapperRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
     const { screenToFlowPosition, getIntersectingNodes, getNodes, getEdges, getNode } = useReactFlow();
 
+    // Autosave/dirty tracking
+    const [isDirty, setIsDirty] = useState(false);
+    const lastChangeAtRef = useRef<number>(Date.now());
+    const savingRef = useRef(false);
+
     // In-memory history for backend mode (undo/redo)
     type Snapshot = ReactFlowJsonObject<DiagramNode, DiagramEdge>;
     const backendHistoryRef = useRef<Snapshot[]>([]);
@@ -198,21 +203,26 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     const saveToStorage = useCallback((overrideNodes?: DiagramNode[], overrideEdges?: DiagramEdge[]) => {
         if (restoringRef.current) return;
         pushSnapshot(overrideNodes, overrideEdges);
+        // mark dirty for autosave and unload guards
+        setIsDirty(true);
+        lastChangeAtRef.current = Date.now();
     }, [pushSnapshot]);
 
     // Explicit save: persist to backend or localStorage (called only when user clicks Save)
     const saveDiagram = useCallback(async (): Promise<boolean> => {
         if (restoringRef.current) return false;
+        if (savingRef.current) return false;
+        savingRef.current = true;
         const snap = takeSnapshot();
         const nodes = Array.isArray(snap.nodes) ? snap.nodes : [];
         const edges = Array.isArray(snap.edges) ? snap.edges : [];
         const viewport = snap.viewport as Viewport | undefined;
         const viewportPayload = viewport ? { x: viewport.x ?? 0, y: viewport.y ?? 0, zoom: viewport.zoom ?? 1 } : undefined;
-
-        if (useBackend && getToken) {
-            const token = getToken();
-            if (!token) return false;
-            try {
+        let ok = false;
+        try {
+            if (useBackend && getToken) {
+                const token = getToken();
+                if (!token) return false;
                 const id = currentDiagramIdRef.current;
                 if (id) {
                     await updateDiagram(token, id, { nodes, edges, viewport: viewportPayload });
@@ -226,25 +236,26 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
                     currentDiagramIdRef.current = diagram._id;
                     setDiagramName(diagram.name || 'Untitled Diagram');
                 }
-                return true;
-            } catch (e) {
-                console.warn('Failed to save diagram to backend', e);
-                return false;
+                ok = true;
+            } else {
+                // Not logged in: persist to localStorage
+                if (typeof window === 'undefined') return false;
+                const hist = readHistory();
+                const ptr = readPtr();
+                const snapToSave = hist[ptr] ?? snap;
+                window.localStorage.setItem(STORAGE_KEY, JSON.stringify([snapToSave]));
+                window.localStorage.setItem(STORAGE_PTR_KEY, String(0));
+                ok = true;
             }
-        }
-
-        // Not logged in: persist to localStorage
-        if (typeof window === 'undefined') return false;
-        try {
-            const hist = readHistory();
-            const ptr = readPtr();
-            const snapToSave = hist[ptr] ?? snap;
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify([snapToSave]));
-            window.localStorage.setItem(STORAGE_PTR_KEY, String(0));
-            return true;
+            return ok;
         } catch (e) {
-            console.warn('Failed to save diagram to localStorage', e);
+            console.warn('Failed to save diagram', e);
             return false;
+        } finally {
+            if (ok) {
+                setIsDirty(false);
+            }
+            savingRef.current = false;
         }
     }, [useBackend, getToken, takeSnapshot, diagramName, readHistory, readPtr]);
 
@@ -1001,6 +1012,82 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         setDiagramName(trimmed);
     }, [useBackend, getToken]);
 
+    // Autosave effect: every 60s if dirty and not saving; debounce 5s after last change
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        let intervalId: number | null = null;
+        const run = async () => {
+            if (!isDirty) return;
+            if (savingRef.current) return;
+            const since = Date.now() - lastChangeAtRef.current;
+            if (since < 5000) return; // debounce window
+            await saveDiagram();
+        };
+        const onVisibility = () => {
+            if (document.visibilityState === 'hidden') {
+                // try to save soon when tab goes hidden
+                run();
+            }
+        };
+        document.addEventListener('visibilitychange', onVisibility);
+        intervalId = window.setInterval(run, 60000);
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibility);
+            if (intervalId) window.clearInterval(intervalId);
+        };
+    }, [isDirty, saveDiagram]);
+
+    // Warn on unload if there are unsaved changes and attempt a last-chance save
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const beforeUnload = (e: BeforeUnloadEvent) => {
+            if (!isDirty) return;
+            e.preventDefault();
+            e.returnValue = '';
+        };
+        const pageHide = () => {
+            if (!isDirty) return;
+            try {
+                const snap = takeSnapshot();
+                const nodes = Array.isArray(snap.nodes) ? snap.nodes : [];
+                const edges = Array.isArray(snap.edges) ? snap.edges : [];
+                const viewport = snap.viewport as Viewport | undefined;
+                const viewportPayload = viewport ? { x: viewport.x ?? 0, y: viewport.y ?? 0, zoom: viewport.zoom ?? 1 } : undefined;
+
+                // Always update localStorage immediately as a safety net
+                try {
+                    if (typeof window !== 'undefined') {
+                        window.localStorage.setItem(STORAGE_KEY, JSON.stringify([snap]));
+                        window.localStorage.setItem(STORAGE_PTR_KEY, String(0));
+                    }
+                } catch { /* ignore */ }
+
+                // Try backend save with keepalive if possible
+                if (useBackend && getToken) {
+                    const token = getToken();
+                    const id = currentDiagramIdRef.current;
+                    if (token && id) {
+                        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE || '').replace(/\/$/, '');
+                        fetch(`${base}/api/diagrams/${id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ nodes, edges, viewport: viewportPayload }),
+                            keepalive: true,
+                        }).catch(() => {});
+                    }
+                }
+            } catch {
+                // ignore
+            }
+        };
+        window.addEventListener('beforeunload', beforeUnload);
+        window.addEventListener('pagehide', pageHide);
+        return () => {
+            window.removeEventListener('beforeunload', beforeUnload);
+            window.removeEventListener('pagehide', pageHide);
+        };
+    }, [isDirty, useBackend, getToken, takeSnapshot]);
+
     return {
         nodes,
         edges,
@@ -1044,6 +1131,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         onRenameDiagram,
         saveDiagram,
         saveDiagramAs,
+        isDirty,
         accessLevel,
     };
 };
