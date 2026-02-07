@@ -54,18 +54,27 @@ export const updateUser = async (userId: string, oldPassword: string | undefined
     const allowedUpdates = ['username', 'email', 'password', 'firstName', 'lastName', 'pictureUrl', 'preferredLanguage']
     const updateFields = Object.keys(updates)
 
-    if (!oldPassword || oldPassword.trim() === '') {
-        return {error: 'Please provide password.'}
-    }
-
     const user = await User.findById(userId)
     if (!user) {
         return {error: 'User not found.'}
     }
 
-    const isValid = await User.findByCredentials(user.email, oldPassword)
-    if (!isValid) {
-        return {error: 'Wrong password'}
+    // Determine if the request is trying to change the password
+    const wantsPasswordChange = updateFields.includes('password') && typeof (updates as any).password === 'string' && (updates as any).password !== ''
+
+    // Only require current password verification when changing the password
+    if (wantsPasswordChange) {
+        if (!oldPassword || oldPassword.trim() === '') {
+            return { error: 'Please provide current password to change your password.' }
+        }
+        const isValid = await User.findByCredentials(user.email, oldPassword)
+        if (!isValid) {
+            return { error: 'Wrong password' }
+        }
+        const newPassword = (updates as any).password as string
+        if (newPassword.length < 8) {
+            return { error: 'Password must be at least 8 characters long' }
+        }
     }
 
     let updated = false
