@@ -58,7 +58,6 @@ export default function AccountPage() {
             if (password && password.length >= 8) {
                 payload.password = password;
             }
-            // If avatar changed from user.pictureUrl, include it (assuming server accepts URL/base64)
             if (avatar && avatar !== (user?.pictureUrl || '/devince_log.svg')) {
                 payload.pictureUrl = avatar;
             }
@@ -124,7 +123,7 @@ export default function AccountPage() {
                 </Link>
                 <div className="flex items-center gap-3">
                     <ThemeToggleButton />
-                    <Link href="/editor" className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm">
+                    <Link href="/editor" className="editor-btn bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm">
                         Editor
                     </Link>
                 </div>
@@ -132,8 +131,8 @@ export default function AccountPage() {
 
             <main className="relative z-10 flex justify-center items-start pt-12 pb-20 px-4">
                 <div className="w-full max-w-[580px]">
-                    <div className="relative rounded-3xl shadow-xl p-8 md:p-12 border border-white border-opacity-40 overflow-hidden">
-                        <div className="absolute inset-0 bg-[#FFC31D] opacity-15 backdrop-blur-xl" style={{
+                    <div className="card relative rounded-3xl shadow-xl p-8 md:p-12 border border-white border-opacity-40 overflow-hidden">
+                        <div className="card-overlay absolute inset-0 bg-[#FFC31D] opacity-15 backdrop-blur-xl" style={{
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',
                         }}></div>
@@ -222,7 +221,7 @@ export default function AccountPage() {
                                     {isLoading ? 'Updating...' : 'Save Changes'}
                                 </button>
 
-                                <hr className="border-white border-opacity-30 my-6" />
+                                <hr className="divider border-white border-opacity-30 my-6" />
 
                                 <div className="pt-1">
                                     <h3 className="text-base font-bold text-red-600 mb-2">Danger Zone</h3>
@@ -249,15 +248,38 @@ export default function AccountPage() {
                     background: var(--editor-surface);
                     border-bottom: 1px solid var(--editor-border);
                 }
+                :global([data-theme="dark"]) [data-page="account"]{
+                    background: var(--editor-surface) !important;
+                    color: var(--editor-text) !important;
+                    border: 1px solid var(--editor-border);
+                }
+                :global([data-theme="dark"]) [data-page="account"]  {
+                    background: rgba(255,255,255,0.04) !important;
+                }
+                :global([data-theme="dark"]) [data-page="account"]  {
+                    background: var(--editor-surface);
+                    border-color: var(--editor-border);
+                }
+                :global([data-theme="dark"]) [data-page="account"]  {
+                    display: none; 
+                }
                 :global([data-theme="dark"]) [data-page="account"] input {
                     color: var(--editor-text);
                     border-color: var(--editor-border-light) !important;
                 }
+                :global([data-theme="dark"]) [data-page="account"] input::placeholder {
+                    color: var(--editor-text-secondary);
+                }
                 :global([data-theme="dark"]) [data-page="account"] h1 {
                     color: var(--editor-text);
                 }
-                :global([data-theme="dark"]) [data-page="account"]  {
+                :global([data-theme="dark"]) [data-page="account"] label,
+                :global([data-theme="dark"]) [data-page="account"] p {
                     color: var(--editor-text-secondary);
+                }
+                :global([data-theme="dark"]) [data-page="account"] {
+                    border-color: var(--editor-border);
+                    opacity: 1;
                 }
             `}</style>
         </div>
