@@ -1,31 +1,95 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateUser, deleteAccount, type UpdateUserPayload } from '@/features/auth-feature/api';
 
 const inriaSerif = Inria_Serif({
     weight: ['300', '400', '700'],
     subsets: ['latin']
 });
 
-//WIP
 export default function AccountPage() {
-    const [firstName, setFirstName] = useState('John');
-    const [lastName, setLastName] = useState('Doe');
-    const [email, setEmail] = useState('john.doe@example.com');
+    const router = useRouter();
+    const { user, token, loading, refreshUser, logout } = useAuth();
+
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [avatar, setAvatar] = useState('/devince_log.svg');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    useEffect(() => {
+        if (!loading && !user) {
+            router.replace('/login');
+        }
+    }, [loading, user, router]);
+
+    useEffect(() => {
+        if (user) {
+            setFirstName(user.firstName || '');
+            setLastName(user.lastName || '');
+            setEmail(user.email || '');
+            setAvatar(user.pictureUrl || '/devince_log.svg');
+        }
+    }, [user]);
+
     const handleUpdateProfile = async () => {
+        if (!token) return;
         setIsLoading(true);
-        // WIP
-        setTimeout(() => setIsLoading(false), 800);
+        setError(null);
+        setSuccess(null);
+        try {
+            const payload: UpdateUserPayload = {
+                firstName: firstName?.trim(),
+                lastName: lastName?.trim(),
+                email: email?.trim(),
+            };
+            if (password && password.length >= 8) {
+                payload.password = password;
+            }
+            // If avatar changed from user.pictureUrl, include it (assuming server accepts URL/base64)
+            if (avatar && avatar !== (user?.pictureUrl || '/devince_log.svg')) {
+                payload.pictureUrl = avatar;
+            }
+            await updateUser(token, payload);
+            await refreshUser();
+            setPassword('');
+            setSuccess('Profile updated');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to update profile';
+            setError(message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!token) return;
+        const confirmed = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+        if (!confirmed) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            await deleteAccount(token);
+            await logout();
+            router.replace('/');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to delete account';
+            setError(message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleAvatarClick = () => {
@@ -66,7 +130,7 @@ export default function AccountPage() {
                 </div>
             </header>
 
-            <main className="relative z-10 flex justify-center items-start pt-12 pb-12 px-4">
+            <main className="relative z-10 flex justify-center items-start pt-12 pb-20 px-4">
                 <div className="w-full max-w-[580px]">
                     <div className="relative rounded-3xl shadow-xl p-8 md:p-12 border border-white border-opacity-40 overflow-hidden">
                         <div className="absolute inset-0 bg-[#FFC31D] opacity-15 backdrop-blur-xl" style={{
@@ -75,11 +139,17 @@ export default function AccountPage() {
                         }}></div>
 
                         <div className="relative z-10">
-                            <h1 className="text-3xl font-bold text-center mb-8 text-gray-900">Account Settings</h1>
+                            <h1 className="text-3xl font-bold text-center mb-4 text-gray-900">Account Settings</h1>
+                            {error && (
+                                <div className="mb-4 text-red-600 text-sm text-center">{error}</div>
+                            )}
+                            {success && (
+                                <div className="mb-4 text-green-600 text-sm text-center">{success}</div>
+                            )}
 
-                            <div className="flex flex-col items-center mb-10">
+                            <div className="flex flex-col items-center mb-6">
                                 <div
-                                    className="relative w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden cursor-pointer group"
+                                    className="relative w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden cursor-pointer group"
                                     onClick={handleAvatarClick}
                                 >
                                     <Image
@@ -101,8 +171,8 @@ export default function AccountPage() {
                                 />
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">First Name</label>
                                         <input
@@ -123,7 +193,7 @@ export default function AccountPage() {
                                     </div>
                                 </div>
 
-                                <div>
+                                <div className="mt-2">
                                     <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">Email Address</label>
                                     <input
                                         type="email"
@@ -147,10 +217,23 @@ export default function AccountPage() {
                                 <button
                                     onClick={handleUpdateProfile}
                                     disabled={isLoading}
-                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50"
+                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-4 disabled:opacity-50"
                                 >
                                     {isLoading ? 'Updating...' : 'Save Changes'}
                                 </button>
+
+                                <hr className="border-white border-opacity-30 my-6" />
+
+                                <div className="pt-1">
+                                    <h3 className="text-base font-bold text-red-600 mb-2">Danger Zone</h3>
+                                    <p className="text-xs text-gray-600 mb-3">Once you delete your account, there is no going back. Please be certain.</p>
+                                    <button
+                                        onClick={handleDeleteAccount}
+                                        className="w-full text-red-600 border-2 border-red-600 px-5 py-2 rounded-full text-sm font-bold hover:bg-red-600 hover:text-white transition-all"
+                                    >
+                                        Delete Account
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -173,7 +256,7 @@ export default function AccountPage() {
                 :global([data-theme="dark"]) [data-page="account"] h1 {
                     color: var(--editor-text);
                 }
-                :global([data-theme="dark"]) [data-page="account"] {
+                :global([data-theme="dark"]) [data-page="account"]  {
                     color: var(--editor-text-secondary);
                 }
             `}</style>

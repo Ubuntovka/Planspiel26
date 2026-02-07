@@ -93,3 +93,50 @@ export async function logout(token: string): Promise<void> {
 }
 
 export { getApiBase };
+
+// Update current user's profile
+export type UpdateUserPayload = Partial<{
+  email: string;
+  password: string;
+  oldPassword: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  pictureUrl: string | null;
+  preferredLanguage: string;
+}>;
+
+export async function updateUser(
+  token: string,
+  payload: UpdateUserPayload
+): Promise<{ user: ApiUser }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/users/update`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as ErrorResponse).error || 'Update failed');
+  }
+  return data as { user: ApiUser };
+}
+
+// Delete current user's account
+export async function deleteAccount(token: string): Promise<void> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/users/delete`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error((data as ErrorResponse).error || 'Delete failed');
+  }
+}
