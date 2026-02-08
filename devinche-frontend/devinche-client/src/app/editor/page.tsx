@@ -5,6 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import UserAvatarMenu from '@/components/UserAvatarMenu';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/contexts/LanguageContext';
 import DiagramScreen from '@/features/diagram-feature/DiagramScreen';
 import {
   listDiagrams,
@@ -14,10 +17,9 @@ import {
   type DiagramListItem,
 } from '@/features/diagram-feature/api';
 import { DiagramPreviewFlow } from '@/features/diagram-feature/ui/DiagramPreviewFlow';
-import Link from "next/link";
-
 function DiagramsDashboard() {
-  const { getToken, logout } = useAuth();
+  const { getToken } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [diagrams, setDiagrams] = useState<DiagramListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,8 +29,6 @@ function DiagramsDashboard() {
   const [editName, setEditName] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
-  const headerMenuRef = useRef<HTMLDivElement | null>(null);
 
   const fetchDiagrams = async () => {
     const token = getToken();
@@ -54,15 +54,9 @@ function DiagramsDashboard() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenuId(null);
       }
-      if (headerMenuRef.current && !headerMenuRef.current.contains(e.target as Node)) {
-        setHeaderMenuOpen(false);
-      }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setOpenMenuId(null);
-        setHeaderMenuOpen(false);
-      }
+      if (e.key === 'Escape') setOpenMenuId(null);
     };
     document.addEventListener('mousedown', onDocClick, true);
     document.addEventListener('keydown', onKey, true);
@@ -95,7 +89,7 @@ function DiagramsDashboard() {
     e.stopPropagation();
     const token = getToken();
     if (!token) return;
-    if (!confirm('Delete this diagram?')) return;
+    if (!confirm(t('editor.deleteConfirm'))) return;
     try {
       await deleteDiagram(token, id);
       setDiagrams((prev) => prev.filter((d) => d._id !== id));
@@ -153,82 +147,25 @@ function DiagramsDashboard() {
           <div className="flex items-center gap-3">
             <Image src="/devince_log.svg" alt="Devinche" width={48} height={48} className="w-12 h-12" />
             <h1 className="text-xl font-bold tracking-tight text-white">
-              My Diagrams
+              {t('editor.myDiagrams')}
             </h1>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* Desktop actions */}
-          <div className="hidden md:flex items-center gap-3">
-            <ThemeToggleButton />
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="bg-white text-gray-800 px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm disabled:opacity-60"
-            >
-              {creating ? 'Creating...' : 'New diagram'}
-            </button>
-            <Link href="/">
-            <button
-              onClick={() => logout()}
-              className="bg-white text-gray-800 px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
-              aria-label="Log out"
-            >
-              Log out
-            </button>
-            </Link>
-          </div>
-
-          {/* Mobile actions: Theme + Dropdown */}
-          <div className="flex md:hidden items-center gap-2" ref={headerMenuRef}>
-            <ThemeToggleButton />
-            <button
-              onClick={() => setHeaderMenuOpen((v) => !v)}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-800 hover:bg-gray-100 transition-colors"
-              aria-haspopup="menu"
-              aria-expanded={headerMenuOpen}
-              aria-label="Open menu"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="4" y1="6" x2="20" y2="6" />
-                <line x1="4" y1="12" x2="20" y2="12" />
-                <line x1="4" y1="18" x2="20" y2="18" />
-              </svg>
-            </button>
-            {headerMenuOpen && (
-              <div
-                className="absolute right-4 top-[64px] w-44 rounded-xl border shadow-lg z-30 overflow-hidden"
-                style={{
-                  backgroundColor: 'var(--editor-panel-bg)',
-                  borderColor: 'var(--editor-border)',
-                  boxShadow: '0 8px 16px var(--editor-shadow-lg)'
-                }}
-                role="menu"
-              >
-                <button
-                  onClick={() => { setHeaderMenuOpen(false); handleCreate(); }}
-                  disabled={creating}
-                  className="w-full text-left px-4 py-3 text-sm hover:bg-[var(--editor-surface-hover)] disabled:opacity-60"
-                  style={{ color: 'var(--editor-text)' }}
-                  role="menuitem"
-                >
-                  {creating ? 'Creating…' : 'New diagram'}
-                </button>
-                <button
-                  onClick={() => { setHeaderMenuOpen(false); logout(); }}
-                  className="w-full text-left px-4 py-3 text-sm hover:bg-[var(--editor-surface-hover)]"
-                  style={{ color: 'var(--editor-text)' }}
-                  role="menuitem"
-                >
-                  Log out
-                </button>
-              </div>
-            )}
-          </div>
+          <LanguageSwitcher variant="darkHeader" />
+          <ThemeToggleButton />
+          <button
+            onClick={handleCreate}
+            disabled={creating}
+            className="bg-white text-gray-800 px-4 sm:px-6 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm disabled:opacity-60"
+          >
+            {creating ? t('editor.creating') : t('editor.newDiagram')}
+          </button>
+          <UserAvatarMenu />
         </div>
       </header>
 
-      <main className="relative z-10 max-w-6xl mx-auto px-6 py-12">
+      <main className="relative z-10 max-w-6xl mx-auto px-6 py-12 animate-content-in">
         {error && (
           <div
             className="mb-6 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg"
@@ -279,10 +216,10 @@ function DiagramsDashboard() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--editor-text)' }}>
-              No diagrams yet
+              {t('editor.noDiagrams')}
             </h2>
             <p className="text-base mb-8 max-w-md" style={{ color: 'var(--editor-text-muted)' }}>
-              Create your first diagram to visualize workflows, architectures, and more.
+              {t('editor.createFirst')}
             </p>
             <button
               onClick={handleCreate}
@@ -296,17 +233,17 @@ function DiagramsDashboard() {
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              {creating ? 'Creating...' : 'Create your first diagram'}
+              {creating ? t('editor.creating') : t('editor.createFirst')}
             </button>
           </div>
         ) : (
           <>
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--editor-text)' }}>
-                Your diagrams
+                {t('editor.yourDiagrams')}
               </h2>
               <p className="text-sm" style={{ color: 'var(--editor-text-muted)' }}>
-                Create, edit, or manage your own diagrams
+                {t('editor.yourDiagramsSubtitle')}
               </p>
             </div>
 
@@ -330,7 +267,7 @@ function DiagramsDashboard() {
                   </svg>
                 </div>
                 <span className="font-semibold" style={{ color: 'var(--editor-text-secondary)' }}>
-                  {creating ? 'Creating...' : 'New diagram'}
+                  {creating ? t('editor.creating') : t('editor.newDiagram')}
                 </span>
               </button>
 
@@ -361,7 +298,7 @@ function DiagramsDashboard() {
                         color: 'var(--editor-text-secondary)',
                         border: '1px solid var(--editor-border)',
                       }}
-                      aria-label="Diagram actions"
+                      aria-label={t('editor.diagramActions')}
                     >
                       <span className="text-lg leading-none">⋮</span>
                     </button>
@@ -379,26 +316,26 @@ function DiagramsDashboard() {
                           className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-surface-hover)]"
                           style={{ color: 'var(--editor-text)' }}
                         >
-                          Open
+                          {t('editor.open')}
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingId(d._id);
-                            setEditName(d.name || 'Untitled Diagram');
+                            setEditName(d.name || t('toolbar.untitledDiagram'));
                             setOpenMenuId(null);
                           }}
                           className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-surface-hover)]"
                           style={{ color: 'var(--editor-text)' }}
                         >
-                          Rename
+                          {t('editor.rename')}
                         </button>
                         <button
                           onClick={(e) => { handleDelete(e, d._id); setOpenMenuId(null); }}
                           className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-error)]/10"
                           style={{ color: 'var(--editor-error)' }}
                         >
-                          Delete
+                          {t('editor.delete')}
                         </button>
                       </div>
                     )}
@@ -441,18 +378,18 @@ function DiagramsDashboard() {
                         onDoubleClick={(e) => {
                           e.stopPropagation();
                           setEditingId(d._id);
-                          setEditName(d.name || 'Untitled Diagram');
+                          setEditName(d.name || t('toolbar.untitledDiagram'));
                         }}
                       >
-                        {d.name || 'Untitled Diagram'}
+                        {d.name || t('toolbar.untitledDiagram')}
                       </p>
                     )}
                     <p className="text-sm truncate" style={{ color: 'var(--editor-text-muted)' }}>
-                      Edited {formatDate(d.updatedAt)}
+                      {t('editor.edited')} {formatDate(d.updatedAt)}
                     </p>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
-                        Owner
+                        {t('editor.owner')}
                       </span>
                     </div>
                   </div>
@@ -464,10 +401,10 @@ function DiagramsDashboard() {
               <div className="mt-12">
                 <div className="mb-6">
                   <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--editor-text)' }}>
-                    Shared with me
+                    {t('editor.sharedWithMe')}
                   </h2>
                   <p className="text-sm" style={{ color: 'var(--editor-text-muted)' }}>
-                    Diagrams shared with you by other people
+                    {t('editor.sharedWithMeSubtitle')}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -498,7 +435,7 @@ function DiagramsDashboard() {
                             color: 'var(--editor-text-secondary)',
                             border: '1px solid var(--editor-border)',
                           }}
-                          aria-label="Diagram actions"
+                          aria-label={t('editor.diagramActions')}
                         >
                           <span className="text-lg leading-none">⋮</span>
                         </button>
@@ -516,7 +453,7 @@ function DiagramsDashboard() {
                               className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-surface-hover)]"
                               style={{ color: 'var(--editor-text)' }}
                             >
-                              Open
+                              {t('editor.open')}
                             </button>
                           </div>
                         )}
@@ -539,19 +476,19 @@ function DiagramsDashboard() {
                           className="absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium"
                           style={{ backgroundColor: 'var(--editor-bg)', color: 'var(--editor-text-secondary)', border: '1px solid var(--editor-border)' }}
                         >
-                          {d.accessLevel === 'editor' ? 'Editor' : d.accessLevel === 'owner' ? 'Owner' : 'Viewer'}
+                          {d.accessLevel === 'editor' ? t('editor.editor') : d.accessLevel === 'owner' ? t('editor.owner') : t('editor.viewer')}
                         </span>
                       </div>
                       <div className="p-4 flex-1 flex flex-col min-w-0">
                         <p className="font-semibold truncate text-base mb-1" style={{ color: 'var(--editor-text)' }}>
-                          {d.name || 'Untitled Diagram'}
+                          {d.name || t('toolbar.untitledDiagram')}
                         </p>
                         <p className="text-sm truncate" style={{ color: 'var(--editor-text-muted)' }}>
-                          Edited {formatDate(d.updatedAt)}
+                          {t('editor.edited')} {formatDate(d.updatedAt)}
                         </p>
                         <div className="mt-2 flex items-center justify-between">
                           <span className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
-                            {d.accessLevel === 'editor' ? 'Editor' : d.accessLevel === 'owner' ? 'Owner' : 'Viewer'}
+                            {d.accessLevel === 'editor' ? t('editor.editor') : d.accessLevel === 'owner' ? t('editor.owner') : t('editor.viewer')}
                           </span>
                         </div>
                       </div>

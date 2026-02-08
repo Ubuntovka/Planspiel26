@@ -1,8 +1,20 @@
-import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon, Calculator, ChevronUp, ChevronDown, Share2, MessageSquare, Download, Upload, ArrowLeft } from 'lucide-react';
+import { Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon, Calculator, ChevronUp, ChevronDown, Share2, MessageSquare, Download, Upload, ArrowLeft, FilePlus, Image, FileCode, CheckCircle } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import UserAvatarMenu from '@/components/UserAvatarMenu';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import NotificationBell from '../notifications/NotificationBell';
 import { exportDiagramToPng } from '../exports/exportToPng';
 import { DiagramNode } from '@/types/diagram';
 import { useEffect, useMemo, useRef, useState } from 'react';
+
+const ToolbarDivider = () => (
+  <div
+    className="w-px h-6 flex-shrink-0"
+    style={{ backgroundColor: 'var(--editor-bar-border)' }}
+    aria-hidden
+  />
+);
 
 
 
@@ -35,11 +47,27 @@ interface ToolbarProps {
   onCommentsClick?: () => void;
   /** Unresolved comment count for badge. */
   commentsUnresolvedCount?: number;
+  /** Rename diagram (when set, title in bar 1 is editable). */
+  onRenameDiagram?: (name: string) => Promise<void>;
+  /** View-only mode: show "View only" badge and disable editing. */
+  isViewer?: boolean;
+  /** For NotificationBell in bar 1 (when diagram is open). */
+  getToken?: () => string | null;
+  /** Called when user follows a notification (e.g. close comments panel). */
+  onNotificationNavigate?: () => void;
+  /** Real-time: other users currently viewing this diagram (for "Active viewers" in bar). */
+  activeUsers?: { id: string; displayName: string; color: string }[];
+  /** Current user's collaboration color (shown as "You" in active viewers). */
+  myColor?: string;
+  /** Current user's display name for "You" label. */
+  myDisplayName?: string;
+  /** Whether collaboration socket is connected. */
+  collaborationConnected?: boolean;
 }
 
 const Toolbar = ({
   onBack,
-  backLabel = 'Diagrams',
+  backLabel,
   onSave,
   onSaveAs,
   diagramName,
@@ -63,8 +91,17 @@ const Toolbar = ({
   onShareClick,
   onCommentsClick,
   commentsUnresolvedCount = 0,
+  onRenameDiagram,
+  isViewer = false,
+  getToken,
+  onNotificationNavigate,
+  activeUsers = [],
+  myColor,
+  myDisplayName,
+  collaborationConnected = false,
 }: ToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const [showCostDetails, setShowCostDetails] = useState(false);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showSaveAsModal, setShowSaveAsModal] = useState(false);
@@ -72,9 +109,16 @@ const Toolbar = ({
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<'idle' | 'saved' | 'error'>('idle');
   const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | 'diagram' | 'share' | null>(null);
+  const [renameInput, setRenameInput] = useState(diagramName ?? 'Untitled Diagram');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const saveDropdownRef = useRef<HTMLDivElement>(null);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
+  const menuBarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setRenameInput(diagramName ?? 'Untitled Diagram');
+  }, [diagramName]);
 
 
   const costSummary = useMemo(() => {
@@ -101,13 +145,14 @@ const Toolbar = ({
       if (dropdownRef.current && !dropdownRef.current.contains(target)) setShowCostDetails(false);
       if (saveDropdownRef.current && !saveDropdownRef.current.contains(target)) setShowSaveDropdown(false);
       if (exportDropdownRef.current && !exportDropdownRef.current.contains(target)) setShowExportDropdown(false);
+      if (menuBarRef.current && !menuBarRef.current.contains(target)) setOpenMenu(null);
     };
 
-    if (showCostDetails || showSaveDropdown || showExportDropdown) {
+    if (showCostDetails || showSaveDropdown || showExportDropdown || openMenu) {
       document.addEventListener('mousedown', handleClickOutside, true);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showCostDetails, showSaveDropdown, showExportDropdown]);
+  }, [showCostDetails, showSaveDropdown, showExportDropdown, openMenu]);
 
 
   const handleDownloadJson = () => {
@@ -192,7 +237,7 @@ const Toolbar = ({
       if (ok) setTimeout(() => setSaveMessage('idle'), 2000);
     } catch {
       setSaveMessage('error');
-      setTimeout(() => setSaveMessage('idle'), 2000);
+      setTimeout(() => setSaveMessage('idle'), 3000);
     } finally {
       setSaving(false);
       setShowSaveDropdown(false);
@@ -211,404 +256,177 @@ const Toolbar = ({
       setShowSaveDropdown(false);
     } catch {
       setSaveMessage('error');
+      setTimeout(() => setSaveMessage('idle'), 3000);
     } finally {
       setSaving(false);
     }
   };
 
   const btn =
-    'h-8 px-2 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+    'h-8 px-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
   const btnText =
-    'h-8 px-3 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+    'h-8 px-3.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
   const btnPrimary =
-    'h-8 px-3 rounded-md text-white font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+    'h-8 px-4 rounded-lg text-white font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm';
   const btnStyle = { color: 'var(--editor-text-secondary)' };
-  const btnPrimaryStyle = { backgroundColor: 'var(--editor-accent)' };
+  const btnPrimaryStyle = { backgroundColor: 'var(--editor-accent)', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' };
   const btnHover = (e: React.MouseEvent<HTMLElement>, over: boolean) => {
     const t = e.currentTarget as HTMLElement;
     if (t.hasAttribute('disabled')) return;
     t.style.backgroundColor = over ? 'var(--editor-surface-hover)' : 'transparent';
     t.style.color = over ? 'var(--editor-text)' : 'var(--editor-text-secondary)';
   };
-  const group = 'flex items-center gap-1 px-1 py-1 rounded-lg';
-  const groupStyle = { backgroundColor: 'var(--editor-bg)', border: '1px solid var(--editor-border)' };
+  const group = 'flex items-center gap-1 px-1.5 py-1 rounded-xl';
+  const groupStyle = {
+    backgroundColor: 'var(--editor-bg)',
+    border: '1px solid var(--editor-bar-border)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+  };
+
+  const barBase = 'flex items-center gap-2 px-4';
+  const bar1Style = {
+    backgroundColor: 'var(--editor-bar-bg)',
+    borderBottom: '1px solid var(--editor-bar-border)',
+    boxShadow: 'var(--editor-bar-shadow)',
+  };
+  const bar2Style = {
+    backgroundColor: 'var(--editor-bg)',
+    borderBottom: '1px solid var(--editor-bar-border)',
+    boxShadow: 'var(--editor-bar-shadow)',
+  };
 
   return (
-    <div
-      className="absolute top-0 left-0 right-0 h-12 z-20 flex items-center px-4 gap-2"
-      style={{
-        backgroundColor: 'var(--editor-surface)',
-        borderBottom: '1px solid var(--editor-border)',
-      }}
-    >
-      {onBack && (
-        <button
-          onClick={onBack}
-          className={`${btnText} flex items-center gap-1.5`}
-          style={{ ...btnStyle, border: '1px solid var(--editor-border)' }}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-          title="Back to diagrams"
-        >
-          <ArrowLeft size={16} />
-          <span className="text-sm font-medium">{backLabel}</span>
-        </button>
-      )}
-
-      {/* 1. Document: Save, name, Undo, Redo */}
-      <div ref={saveDropdownRef} className={`${group} relative`} style={groupStyle}>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`${btnPrimary} flex items-center gap-1.5`}
-          style={btnPrimaryStyle}
-          onMouseEnter={(e) => {
-            const t = e.currentTarget as HTMLElement;
-            if (t.hasAttribute('disabled')) return;
-            t.style.backgroundColor = 'var(--editor-accent-hover)';
-          }}
-          onMouseLeave={(e) => {
-            const t = e.currentTarget as HTMLElement;
-            if (t.hasAttribute('disabled')) return;
-            t.style.backgroundColor = 'var(--editor-accent)';
-          }}
-          title="Save (Ctrl+S)"
-        >
-          <Save size={16} />
-          <span className="text-sm">Save</span>
-        </button>
-        <div className="relative">
-          <button
-            onClick={() => setShowSaveDropdown(!showSaveDropdown)}
-            className={`${btn} px-1`}
-            style={btnStyle}
-            onMouseEnter={(e) => btnHover(e, true)}
-            onMouseLeave={(e) => btnHover(e, false)}
-            title="More save options"
-          >
-            <span className="text-[10px]">▼</span>
-          </button>
-          {showSaveDropdown && (
-            <div
-              className="absolute left-0 top-full mt-1 py-1 rounded-lg shadow-lg z-50 min-w-[140px]"
-              style={{
-                backgroundColor: 'var(--editor-panel-bg)',
-                border: '1px solid var(--editor-border)',
-                boxShadow: '0 8px 16px var(--editor-shadow-lg)',
-              }}
+    <div className="absolute top-0 left-0 right-0 z-20 flex flex-col">
+      {/* Bar 1: Title bar (draw.io style – document name left, actions right) */}
+      <div
+        className={barBase + ' h-12'}
+        style={bar1Style}
+      >
+        {onBack && (
+          <>
+            <button
+              onClick={onBack}
+              className={`${btnText} flex items-center gap-1.5`}
+              style={{ ...btnStyle, border: '1px solid var(--editor-bar-border)' }}
+              onMouseEnter={(e) => btnHover(e, true)}
+              onMouseLeave={(e) => btnHover(e, false)}
+              title="Back to diagrams"
             >
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--editor-surface-hover)] disabled:opacity-50"
-                style={{ color: 'var(--editor-text)' }}
-              >
-                Save
-              </button>
-              {isLoggedIn && onSaveAs && (
-                <button
-                  onClick={() => {
-                    setSaveAsName(diagramName || 'Untitled Diagram');
-                    setShowSaveAsModal(true);
-                  }}
-                  disabled={saving}
-                  className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--editor-surface-hover)] disabled:opacity-50"
-                  style={{ color: 'var(--editor-text)' }}
-                >
-                  Save As…
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-        {diagramName && (
-          <span
-            className="text-sm ml-2 px-2 py-1 rounded-md truncate max-w-[160px]"
-            style={{
-              color: 'var(--editor-text-muted)',
-              backgroundColor: 'var(--editor-surface-hover)',
-            }}
-            title={diagramName}
-          >
-            {diagramName}
-          </span>
+              <ArrowLeft size={16} />
+              <span className="text-sm font-medium">{backLabel ?? t('toolbar.diagrams')}</span>
+            </button>
+            <ToolbarDivider />
+          </>
         )}
-        {saveMessage === 'saved' && (
-          <span className="text-xs ml-1" style={{ color: 'var(--editor-success)' }}>
-            Saved
-          </span>
+        {/* Diagram name – prominent like draw.io; editable when onRenameDiagram */}
+        {isViewer && (
+          <>
+            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--editor-surface-hover)', color: 'var(--editor-text-secondary)' }}>
+              {t('toolbar.viewOnly')}
+            </span>
+            <ToolbarDivider />
+          </>
         )}
-        {saveMessage === 'error' && (
-          <span className="text-xs ml-1" style={{ color: 'var(--editor-error)' }}>
-            Failed
-          </span>
-        )}
-        <button
-          onClick={onUndo}
-          disabled={!canUndo}
-          className={btn}
-          style={btnStyle}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-          title="Undo (Ctrl+Z)"
-        >
-          <Undo size={16} />
-        </button>
-        <button
-          onClick={onRedo}
-          disabled={!canRedo}
-          className={btn}
-          style={btnStyle}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-          title="Redo (Ctrl+Shift+Z)"
-        >
-          <Redo size={16} />
-        </button>
-      </div>
-
-      {/* 2. Share (when owner) */}
-      {canShare && diagramId && onShareClick && (
-        <div className={group} style={groupStyle}>
-          <button
-            onClick={onShareClick}
-            className={`${btnText} flex items-center gap-1.5`}
-            style={{ ...btnStyle, border: '1px solid var(--editor-border)' }}
-            onMouseEnter={(e) => btnHover(e, true)}
-            onMouseLeave={(e) => btnHover(e, false)}
-            title="Share diagram"
-          >
-            <Share2 size={16} />
-            <span className="text-sm">Share</span>
-          </button>
-        </div>
-      )}
-      {onCommentsClick && diagramId && (
-        <div className={group} style={groupStyle}>
-          <button
-            onClick={onCommentsClick}
-            className={`${btnText} flex items-center gap-1.5 relative`}
-            style={{ ...btnStyle, border: '1px solid var(--editor-border)' }}
-            onMouseEnter={(e) => btnHover(e, true)}
-            onMouseLeave={(e) => btnHover(e, false)}
-            title="Comments"
-          >
-            <MessageSquare size={16} />
-            <span className="text-sm">Comments</span>
-            {commentsUnresolvedCount > 0 && (
-              <span
-                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-medium text-white"
-                style={{ backgroundColor: 'var(--editor-accent)' }}
-              >
-                {commentsUnresolvedCount > 99 ? '99+' : commentsUnresolvedCount}
-              </span>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* 3. View: Zoom & Fit */}
-      <div className={group} style={groupStyle}>
-        <button
-          onClick={onZoomIn}
-          className={btn}
-          style={btnStyle}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-          title="Zoom in"
-        >
-          <ZoomIn size={16} />
-        </button>
-        <button
-          onClick={onZoomOut}
-          className={btn}
-          style={btnStyle}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-          title="Zoom out"
-        >
-          <ZoomOut size={16} />
-        </button>
-        <button
-          onClick={onFitView}
-          className={btn}
-          style={btnStyle}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-          title="Fit view"
-        >
-          <Maximize2 size={16} />
-        </button>
-      </div>
-
-      {/* 4. File: Import & Export (always visible with labels) */}
-      <div className={group} style={groupStyle}>
-        <label
-          className={`${btnText} flex items-center gap-1.5 cursor-pointer`}
-          style={{ ...btnStyle, border: '1px solid var(--editor-border)' }}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-        >
-          <Upload size={16} />
-          <span className="text-sm font-medium">Import</span>
+        {onRenameDiagram ? (
           <input
-            type="file"
-            accept="application/json"
-            onChange={handleImportJson}
-            className="hidden"
-          />
-        </label>
-        <div className="relative" ref={exportDropdownRef}>
-          <button
-            type="button"
-            onClick={() => setShowExportDropdown((v) => !v)}
-            className={`${btnText} flex items-center gap-1.5`}
-            style={{
-              ...btnStyle,
-              border: '1px solid var(--editor-border)',
-              backgroundColor: showExportDropdown ? 'var(--editor-surface-hover)' : undefined,
+            type="text"
+            value={renameInput}
+            onChange={(e) => setRenameInput(e.target.value)}
+            onBlur={async () => {
+              const val = renameInput.trim() || t('toolbar.untitledDiagram');
+              if (val !== (diagramName ?? 'Untitled Diagram')) await onRenameDiagram(val);
             }}
-            onMouseEnter={(e) => !showExportDropdown && btnHover(e, true)}
-            onMouseLeave={(e) => !showExportDropdown && btnHover(e, false)}
-            title="Export diagram"
+            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+            className="flex-1 min-w-0 max-w-[280px] px-2 py-1 rounded border-0 bg-transparent text-base font-semibold focus:outline-none focus:ring-1"
+            style={{ color: 'var(--editor-text)' }}
+          />
+        ) : (
+          <span
+            className="text-base font-semibold truncate max-w-[240px] min-w-0"
+            style={{ color: 'var(--editor-text)' }}
+            title={diagramName || t('toolbar.untitledDiagram')}
           >
-            <Download size={16} />
-            <span className="text-sm font-medium">Export</span>
-            <ChevronDown size={14} className={showExportDropdown ? 'rotate-180' : ''} />
-          </button>
-          {showExportDropdown && (
-            <div
-              className="absolute left-0 top-full mt-0.5 w-44 rounded-lg border py-1 z-50 font-medium text-sm"
-              style={{
-                backgroundColor: 'var(--editor-panel-bg)',
-                borderColor: 'var(--editor-border)',
-                boxShadow: '0 8px 16px var(--editor-shadow-lg)',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => { handleDownloadJson(); setShowExportDropdown(false); }}
-                className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
-                style={{ color: 'var(--editor-text)' }}
+            {diagramName || t('toolbar.untitledDiagram')}
+          </span>
+        )}
+
+        <div className="flex-1 min-w-4" />
+
+        {/* Save status (when using File → Save) + Document actions */}
+        <div className="flex items-center gap-2">
+          {onSave && (saving || saveMessage !== 'idle') && (
+            <>
+              <span
+                className="flex items-center gap-1.5 text-sm font-medium min-w-[72px]"
+                style={{
+                  color: saving
+                    ? 'var(--editor-text-secondary)'
+                    : saveMessage === 'saved'
+                      ? 'var(--editor-success)'
+                      : 'var(--editor-error)',
+                }}
+                aria-live="polite"
               >
-                JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => { handleDownloadPng(); setShowExportDropdown(false); }}
-                className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
-                style={{ color: 'var(--editor-text)' }}
-              >
-                PNG
-              </button>
-              <button
-                type="button"
-                onClick={() => { handleDownloadRdf(); setShowExportDropdown(false); }}
-                className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
-                style={{ color: 'var(--editor-text)' }}
-              >
-                RDF
-              </button>
-              <button
-                type="button"
-                onClick={() => { handleDownloadXml(); setShowExportDropdown(false); }}
-                className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
-                style={{ color: 'var(--editor-text)' }}
-              >
-                XML
-              </button>
-            </div>
+                {saving ? (
+                  <>
+                    <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" aria-hidden />
+                    {t('toolbar.saving')}
+                  </>
+                ) : saveMessage === 'saved' ? (
+                  t('toolbar.saved')
+                ) : (
+                  t('toolbar.saveFailed')
+                )}
+              </span>
+              <ToolbarDivider />
+            </>
           )}
         </div>
-      </div>
 
-      {/* 5. Diagram: Validate */}
-      <div className={group} style={groupStyle}>
-        <button
-          onClick={handleValidation}
-          className={`${btnText} text-sm font-medium`}
-          style={{ ...btnStyle, border: '1px solid var(--editor-border)' }}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-          title="Validate diagram"
-        >
-          Validate
-        </button>
-      </div>
-
-      {/* 6. Cost */}
-      <div ref={dropdownRef} className={`${group} relative`} style={groupStyle}>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowCostDetails(!showCostDetails);
-          }}
-          className={`${btnText} flex items-center gap-1.5`}
-          style={{
-            ...btnStyle,
-            border: '1px solid var(--editor-border)',
-            backgroundColor: showCostDetails ? 'var(--editor-surface-hover)' : undefined,
-          }}
-          onMouseEnter={(e) => !showCostDetails && btnHover(e, true)}
-          onMouseLeave={(e) => !showCostDetails && btnHover(e, false)}
-          title="Cost breakdown"
-        >
-          <Calculator size={16} />
-          <span className="text-sm font-mono font-bold">{costSummary.total.toLocaleString()}€</span>
-          {showCostDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
-        {showCostDetails && (
-          <div
-            className="absolute top-10 left-0 w-64 rounded-lg shadow-xl z-50 p-3 flex flex-col gap-2"
-            style={{
-              backgroundColor: 'var(--editor-panel-bg)',
-              border: '1px solid var(--editor-border)',
-              boxShadow: '0 8px 16px var(--editor-shadow-lg)',
-            }}
-          >
-            <h4
-              className="text-[10px] font-bold uppercase border-b pb-1"
-              style={{ color: 'var(--editor-text-secondary)', borderColor: 'var(--editor-border)' }}
+        {/* Notifications, Viewing, Theme, User (same right block as actions above) */}
+        {diagramId && getToken && !isViewer && (
+          <>
+            <ToolbarDivider />
+            <NotificationBell getToken={getToken} onNavigate={onNotificationNavigate} />
+          </>
+        )}
+        {collaborationConnected && (activeUsers.length > 0 || myColor) && (
+          <>
+            <ToolbarDivider />
+            <div
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+              style={{ backgroundColor: 'var(--editor-bg)', border: '1px solid var(--editor-bar-border)' }}
+              title="People viewing this diagram"
             >
-              Cost breakdown
-            </h4>
-            <div className="max-h-48 overflow-y-auto custom-scrollbar">
-              {costSummary.nodesWithCost.length > 0 ? (
-                <ul className="space-y-1.5">
-                  {costSummary.nodesWithCost.map((item) => (
-                    <li key={item.id} className="flex justify-between items-center text-[11px]">
-                      <span
-                        style={{ color: 'var(--editor-text-secondary)' }}
-                        className="truncate pr-2"
-                      >
-                        {item.name}
-                      </span>
-                      <span
-                        className="font-mono font-semibold"
-                        style={{ color: 'var(--editor-text)' }}
-                      >
-                        {item.cost.toLocaleString()}€
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
+              <span className="text-[11px] font-medium uppercase tracking-wide mr-0.5" style={{ color: 'var(--editor-text-muted)' }}>
+                {t('toolbar.viewing')}
+              </span>
+              {myColor && (
                 <div
-                  className="text-[11px] text-center py-2 italic"
-                  style={{ color: 'var(--editor-text-secondary)' }}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-full min-w-0 max-w-[100px]"
+                  style={{ backgroundColor: `${myColor}22`, border: `1.5px solid ${myColor}` }}
+                  title={`${t('toolbar.you')} (${myDisplayName ?? t('toolbar.you')})`}
                 >
-                  No costs assigned
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: myColor }} />
+                  <span className="text-[11px] font-semibold truncate" style={{ color: 'var(--editor-text)' }}>{t('toolbar.you')}</span>
                 </div>
               )}
+              {activeUsers.map((u) => (
+                <div
+                  key={u.id}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-full min-w-0 max-w-[110px]"
+                  style={{ backgroundColor: `${u.color}22`, border: `1.5px solid ${u.color}` }}
+                  title={u.displayName}
+                >
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: u.color }} />
+                  <span className="text-[11px] font-medium truncate" style={{ color: 'var(--editor-text)' }}>{u.displayName}</span>
+                </div>
+              ))}
             </div>
-          </div>
+          </>
         )}
-      </div>
-
-      <div className="flex-1 min-w-2" />
-
-      {/* 7. App: Theme & label */}
-      <div className="flex items-center gap-1">
+        <ToolbarDivider />
+        <LanguageSwitcher />
         <button
           onClick={toggleTheme}
           className={btn}
@@ -617,14 +435,195 @@ const Toolbar = ({
           onMouseLeave={(e) => btnHover(e, false)}
           title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
         >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
-        <span
-          className="text-xs font-mono ml-2 hidden sm:inline"
-          style={{ color: 'var(--editor-text-muted)' }}
-        >
-          Devinche
-        </span>
+        <UserAvatarMenu />
+      </div>
+
+      {/* Bar 2: Menu bar (draw.io style – File | Edit | View | Diagram) */}
+      <div
+        ref={menuBarRef}
+        className={barBase + ' h-10'}
+        style={bar2Style}
+      >
+        {/* File */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpenMenu(openMenu === 'file' ? null : 'file')}
+            className="px-3 py-1.5 rounded text-sm font-medium transition-colors"
+            style={{
+              color: 'var(--editor-text)',
+              backgroundColor: openMenu === 'file' ? 'var(--editor-surface-hover)' : 'transparent',
+            }}
+            onMouseEnter={(e) => { if (openMenu !== 'file') e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)'; }}
+            onMouseLeave={(e) => { if (openMenu !== 'file') e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            {t('toolbar.file')} <ChevronDown size={12} className="inline ml-0.5 opacity-70" />
+          </button>
+          {openMenu === 'file' && (
+            <div
+              className="absolute left-0 top-full mt-0.5 w-52 rounded-lg border py-1 z-50 text-sm"
+              style={{
+                backgroundColor: 'var(--editor-panel-bg)',
+                borderColor: 'var(--editor-border)',
+                boxShadow: '0 8px 16px var(--editor-shadow-lg)',
+              }}
+            >
+              <button type="button" onClick={() => { handleSave(); setOpenMenu(null); }} disabled={saving} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] disabled:opacity-50 flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Save size={14} /> {t('toolbar.saveMenuItem')}</button>
+              {isLoggedIn && onSaveAs && (
+                <button type="button" onClick={() => { setSaveAsName(diagramName || t('toolbar.untitledDiagram')); setShowSaveAsModal(true); setOpenMenu(null); }} disabled={saving} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] disabled:opacity-50 flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><FilePlus size={14} /> {t('toolbar.saveAs')}</button>
+              )}
+              <div className="my-1 border-t" style={{ borderColor: 'var(--editor-border)' }} />
+              <label className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] cursor-pointer" style={{ color: 'var(--editor-text)' }}>
+                <Upload size={14} />
+                {t('toolbar.importJson')}
+                <input type="file" accept="application/json" onChange={(e) => { handleImportJson(e); setOpenMenu(null); }} className="hidden" />
+              </label>
+              <div className="my-1 border-t" style={{ borderColor: 'var(--editor-border)' }} />
+              <button type="button" onClick={() => { handleDownloadJson(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Download size={14} /> {t('toolbar.exportJson')}</button>
+              <button type="button" onClick={() => { handleDownloadPng(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Image size={14} /> {t('toolbar.exportPng')}</button>
+              <button type="button" onClick={() => { handleDownloadRdf(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><FileCode size={14} /> {t('toolbar.exportRdf')}</button>
+              <button type="button" onClick={() => { handleDownloadXml(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><FileCode size={14} /> {t('toolbar.exportXml')}</button>
+            </div>
+          )}
+        </div>
+
+        {/* Edit */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpenMenu(openMenu === 'edit' ? null : 'edit')}
+            className="px-3 py-1.5 rounded text-sm font-medium transition-colors"
+            style={{ color: 'var(--editor-text)', backgroundColor: openMenu === 'edit' ? 'var(--editor-surface-hover)' : 'transparent' }}
+            onMouseEnter={(e) => { if (openMenu !== 'edit') e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)'; }}
+            onMouseLeave={(e) => { if (openMenu !== 'edit') e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            {t('toolbar.edit')} <ChevronDown size={12} className="inline ml-0.5 opacity-70" />
+          </button>
+          {openMenu === 'edit' && (
+            <div className="absolute left-0 top-full mt-0.5 w-40 rounded-lg border py-1 z-50 text-sm" style={{ backgroundColor: 'var(--editor-panel-bg)', borderColor: 'var(--editor-border)', boxShadow: '0 8px 16px var(--editor-shadow-lg)' }}>
+              <button type="button" onClick={() => { onUndo?.(); setOpenMenu(null); }} disabled={!canUndo} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] disabled:opacity-50 flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Undo size={14} /> {t('toolbar.undo')}</button>
+              <button type="button" onClick={() => { onRedo?.(); setOpenMenu(null); }} disabled={!canRedo} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] disabled:opacity-50 flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Redo size={14} /> {t('toolbar.redo')}</button>
+            </div>
+          )}
+        </div>
+
+        {/* View */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpenMenu(openMenu === 'view' ? null : 'view')}
+            className="px-3 py-1.5 rounded text-sm font-medium transition-colors"
+            style={{ color: 'var(--editor-text)', backgroundColor: openMenu === 'view' ? 'var(--editor-surface-hover)' : 'transparent' }}
+            onMouseEnter={(e) => { if (openMenu !== 'view') e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)'; }}
+            onMouseLeave={(e) => { if (openMenu !== 'view') e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            {t('toolbar.view')} <ChevronDown size={12} className="inline ml-0.5 opacity-70" />
+          </button>
+          {openMenu === 'view' && (
+            <div className="absolute left-0 top-full mt-0.5 w-40 rounded-lg border py-1 z-50 text-sm" style={{ backgroundColor: 'var(--editor-panel-bg)', borderColor: 'var(--editor-border)', boxShadow: '0 8px 16px var(--editor-shadow-lg)' }}>
+              <button type="button" onClick={() => { onZoomIn?.(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><ZoomIn size={14} /> {t('toolbar.zoomIn')}</button>
+              <button type="button" onClick={() => { onZoomOut?.(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><ZoomOut size={14} /> {t('toolbar.zoomOut')}</button>
+              <button type="button" onClick={() => { onFitView?.(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Maximize2 size={14} /> {t('toolbar.fitView')}</button>
+            </div>
+          )}
+        </div>
+
+        {/* Diagram */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpenMenu(openMenu === 'diagram' ? null : 'diagram')}
+            className="px-3 py-1.5 rounded text-sm font-medium transition-colors"
+            style={{ color: 'var(--editor-text)', backgroundColor: openMenu === 'diagram' ? 'var(--editor-surface-hover)' : 'transparent' }}
+            onMouseEnter={(e) => { if (openMenu !== 'diagram') e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)'; }}
+            onMouseLeave={(e) => { if (openMenu !== 'diagram') e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            {t('toolbar.diagram')} <ChevronDown size={12} className="inline ml-0.5 opacity-70" />
+          </button>
+          {openMenu === 'diagram' && (
+            <div className="absolute left-0 top-full mt-0.5 w-44 rounded-lg border py-1 z-50 text-sm" style={{ backgroundColor: 'var(--editor-panel-bg)', borderColor: 'var(--editor-border)', boxShadow: '0 8px 16px var(--editor-shadow-lg)' }}>
+              <button type="button" onClick={() => { handleValidation?.(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><CheckCircle size={14} /> {t('toolbar.validate')}</button>
+            </div>
+          )}
+        </div>
+
+        {/* Share (Share diagram + Comments) – only when diagram is open */}
+        {(canShare && diagramId && onShareClick) || (onCommentsClick && diagramId) ? (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenMenu(openMenu === 'share' ? null : 'share')}
+              className="px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5 transition-colors"
+              style={{ color: 'var(--editor-text)', backgroundColor: openMenu === 'share' ? 'var(--editor-surface-hover)' : 'transparent' }}
+              onMouseEnter={(e) => { if (openMenu !== 'share') e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)'; }}
+              onMouseLeave={(e) => { if (openMenu !== 'share') e.currentTarget.style.backgroundColor = 'transparent'; }}
+              title={t('toolbar.shareAndComments')}
+            >
+              <Share2 size={14} />
+              {t('toolbar.share')} <ChevronDown size={12} className="opacity-70" />
+            </button>
+            {openMenu === 'share' && (
+              <div
+                className="absolute left-0 top-full mt-0.5 w-44 rounded-lg border py-1 z-50 text-sm"
+                style={{ backgroundColor: 'var(--editor-panel-bg)', borderColor: 'var(--editor-border)', boxShadow: '0 8px 16px var(--editor-shadow-lg)' }}
+              >
+                {canShare && diagramId && onShareClick && (
+                  <button type="button" onClick={() => { onShareClick(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Share2 size={14} /> Share diagram</button>
+                )}
+                {onCommentsClick && diagramId && (
+                  <button type="button" onClick={() => { onCommentsClick(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2 relative" style={{ color: 'var(--editor-text)' }}>
+                    <MessageSquare size={14} />
+                    {t('toolbar.comments')}
+                    {commentsUnresolvedCount > 0 && (
+                      <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-medium text-white" style={{ backgroundColor: 'var(--editor-accent)' }}>
+                        {commentsUnresolvedCount > 99 ? '99+' : commentsUnresolvedCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <ToolbarDivider />
+
+        {/* Cost */}
+        <div ref={dropdownRef} className="relative">
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowCostDetails(!showCostDetails); setOpenMenu(null); }}
+            className="px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5 transition-colors"
+            style={{ color: 'var(--editor-text)', backgroundColor: showCostDetails ? 'var(--editor-surface-hover)' : 'transparent' }}
+            onMouseEnter={(e) => { if (!showCostDetails) e.currentTarget.style.backgroundColor = 'var(--editor-surface-hover)'; }}
+            onMouseLeave={(e) => { if (!showCostDetails) e.currentTarget.style.backgroundColor = 'transparent'; }}
+            title={t('toolbar.costBreakdown')}
+          >
+            <Calculator size={14} />
+            {costSummary.total.toLocaleString()}€
+            {showCostDetails ? <ChevronUp size={12} className="opacity-70" /> : <ChevronDown size={12} className="opacity-70" />}
+          </button>
+          {showCostDetails && (
+            <div className="absolute left-0 top-full mt-0.5 w-64 rounded-lg border py-3 px-3 z-50" style={{ backgroundColor: 'var(--editor-panel-bg)', borderColor: 'var(--editor-border)', boxShadow: '0 8px 16px var(--editor-shadow-lg)' }}>
+              <h4 className="text-[10px] font-bold uppercase border-b pb-1 mb-2" style={{ color: 'var(--editor-text-secondary)', borderColor: 'var(--editor-border)' }}>{t('toolbar.costBreakdown')}</h4>
+              <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                {costSummary.nodesWithCost.length > 0 ? (
+                  <ul className="space-y-1.5">
+                    {costSummary.nodesWithCost.map((item) => (
+                      <li key={item.id} className="flex justify-between items-center text-[11px]">
+                        <span style={{ color: 'var(--editor-text-secondary)' }} className="truncate pr-2">{item.name}</span>
+                        <span className="font-mono font-semibold" style={{ color: 'var(--editor-text)' }}>{item.cost.toLocaleString()}€</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-[11px] text-center py-2 italic" style={{ color: 'var(--editor-text-secondary)' }}>No costs assigned</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {showSaveAsModal && (
@@ -642,10 +641,10 @@ const Toolbar = ({
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--editor-text)' }}>
-              Save As
+              {t('toolbar.saveAs')}
             </h3>
             <p className="text-sm mb-2" style={{ color: 'var(--editor-text-secondary)' }}>
-              New diagram name:
+              {t('toolbar.newDiagramName')}:
             </p>
             <input
               type="text"
@@ -655,7 +654,7 @@ const Toolbar = ({
                 if (e.key === 'Enter') handleSaveAs();
                 if (e.key === 'Escape') setShowSaveAsModal(false);
               }}
-              placeholder="Untitled Diagram"
+              placeholder={t('toolbar.untitledDiagram')}
               className="w-full px-3 py-2 rounded-lg border mb-4 focus:outline-none focus:ring-2"
               style={{
                 backgroundColor: 'var(--editor-bg)',
@@ -674,7 +673,7 @@ const Toolbar = ({
                   borderColor: 'var(--editor-border)',
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSaveAs}
@@ -682,7 +681,7 @@ const Toolbar = ({
                 className="px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 style={{ backgroundColor: 'var(--editor-accent)', color: 'white' }}
               >
-                {saving ? 'Saving…' : 'Save'}
+                {saving ? t('toolbar.saving') : t('common.save')}
               </button>
             </div>
           </div>
