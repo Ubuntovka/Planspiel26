@@ -182,7 +182,7 @@ export default function AccountPage() {
                     >
                         {t('settings.myDiagrams')}
                     </Link>
-                    <LanguageSwitcher variant="darkHeader" />
+                    {/* <LanguageSwitcher variant="darkHeader" /> */}
                     <ThemeToggleButton />
                     <UserAvatarMenu />
                 </nav>

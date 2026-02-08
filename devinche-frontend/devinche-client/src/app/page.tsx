@@ -49,7 +49,7 @@ export default function Home() {
                     />
                 </div>
                 <div className="flex items-center gap-3">
-                    <LanguageSwitcher variant="darkHeader" />
+                    {/* <LanguageSwitcher variant="darkHeader" /> */}
                     <ThemeToggleButton />
                     {isAuthenticated ? (
                         <UserAvatarMenu />

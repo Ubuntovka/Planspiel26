@@ -152,7 +152,7 @@ function DiagramsDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <LanguageSwitcher variant="darkHeader" />
+          {/* <LanguageSwitcher variant="darkHeader" /> */}
           <ThemeToggleButton />
           <button
             onClick={handleCreate}
