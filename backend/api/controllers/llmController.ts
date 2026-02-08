@@ -89,6 +89,21 @@ ${EXAMPLE_JSON}
 
 Output ONLY the JSON object for the user's requested diagram.`;
 
+const WAM_EXPLAIN_SYSTEM_PROMPT = `You are a senior systems analyst. Given a WAM diagram (nodes, edges, viewport) you produce a clear, well-structured, human-readable explanation.
+
+Requirements:
+- Output should be Markdown, no code blocks unless quoting a tiny snippet. Keep it readable.
+- Cover these sections in order with headings:
+  1. Overview
+  2. Elements
+  3. Connections
+  4. Validation
+  5. Cost breakdown
+  6. Notes & recommendations
+- Be concise but specific. Use bullet lists and short paragraphs. Include IDs and labels where helpful.
+- Respect the provided validation results if present. Do not invent nodes/edges not in the input.
+`;
+
 function parseAndNormalize(raw: string): {
   nodes: any[];
   edges: any[];
@@ -298,5 +313,118 @@ export async function generateDiagramFromPrompt(
     res.status(500).json({
       error: err?.message ?? 'Failed to generate diagram from prompt.',
     });
+  }
+}
+
+export async function explainDiagram(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const diagram = req.body?.diagram;
+  if (!diagram || typeof diagram !== 'object') {
+    res.status(400).json({ error: 'Missing or invalid "diagram" in request body.' });
+    return;
+  }
+
+  const nodes: any[] = Array.isArray(diagram.nodes) ? diagram.nodes : [];
+  const edges: any[] = Array.isArray(diagram.edges) ? diagram.edges : [];
+  const viewport = diagram.viewport && typeof diagram.viewport === 'object' ? diagram.viewport : { x: 0, y: 0, zoom: 1 };
+
+  if (!process.env.OPENAI_API_KEY) {
+    res.status(503).json({ error: 'Explanation is not configured. Set OPENAI_API_KEY on the server.' });
+    return;
+  }
+
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const temperature = 0.2;
+
+  // Build a compact factual summary for the LLM
+  const elementLines = nodes.map((n) => `- ${n.id} (${n.type}) — label: ${n?.data?.label ?? '—'}${n.parentId ? `, parent: ${n.parentId}` : ''}`);
+  const connectionLines = edges.map((e) => `- ${e.id}: ${e.source} → ${e.target} [${e.type}]`);
+
+  // Simple transparent cost model (can be adjusted later)
+  const cost = {
+    nodes: nodes.length,
+    edges: edges.length,
+    realms: nodes.filter((n) => n.type === 'securityRealmNode').length,
+    aiProcesses: nodes.filter((n) => n.type === 'aiProcessNode').length,
+    estimatedMonthlyUsd: (() => {
+      const base = 5; // base platform cost
+      const perService = 2 * nodes.filter((n) => n.type === 'serviceNode').length;
+      const perApp = 1.5 * nodes.filter((n) => n.type === 'applicationNode').length;
+      const dataStores = 1 * nodes.filter((n) => n.type === 'datasetNode' || n.type === 'dataProviderNode').length;
+      const interServiceHops = 0.2 * edges.filter((e) => e.type === 'invocation').length;
+      const legacyIntegrations = 0.5 * edges.filter((e) => e.type === 'legacy').length;
+      const realmOverhead = 1 * nodes.filter((n) => n.type === 'securityRealmNode').length;
+      return Number((base + perService + perApp + dataStores + interServiceHops + legacyIntegrations + realmOverhead).toFixed(2));
+    })(),
+  };
+
+  const facts = [
+    'DIAGRAM FACTS',
+    'Elements:',
+    ...elementLines,
+    'Connections:',
+    ...connectionLines,
+    'Viewport:',
+    `- x: ${viewport.x ?? 0}, y: ${viewport.y ?? 0}, zoom: ${viewport.zoom ?? 1}`,
+    'COST INPUTS (transparent):',
+    `- nodes: ${cost.nodes}, edges: ${cost.edges}, realms: ${cost.realms}, aiProcesses: ${cost.aiProcesses}, estimatedMonthlyUsd: ${cost.estimatedMonthlyUsd}`,
+  ].join('\n');
+
+  // Validate the diagram server-side and pass findings to the LLM
+  const diagramJson = JSON.stringify({ nodes, edges, viewport });
+  let validation: { valid: boolean; errors: string[] } = { valid: true, errors: [] } as any;
+  try {
+    const result = await validate(diagramJson);
+    validation = { valid: result.errors.length === 0, errors: result.errors };
+  } catch (e) {
+    // If validator fails, continue with best-effort explanation
+  }
+
+  const userMessage = [
+    'Explain the following WAM diagram to a non-expert but technical audience.',
+    '',
+    facts,
+    '',
+    'VALIDATION RESULTS:',
+    validation.valid ? '- valid: true' : `- valid: false\n- errors:\n${validation.errors.map((x) => `  - ${x}`).join('\n')}`,
+  ].join('\n');
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: WAM_EXPLAIN_SYSTEM_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
+      temperature,
+      max_tokens: 1200,
+    });
+
+    const explanation = completion.choices[0]?.message?.content ?? '';
+
+    res.status(200).json({
+      explanation,
+      validation,
+      cost,
+      summary: {
+        nodeCount: nodes.length,
+        edgeCount: edges.length,
+        realmCount: cost.realms,
+        estimatedMonthlyUsd: cost.estimatedMonthlyUsd,
+      },
+    });
+  } catch (err: any) {
+    if (err?.status === 401) {
+      res.status(401).json({ error: 'Invalid or missing OpenAI API key.' });
+      return;
+    }
+    if (err?.code === 'ENOTFOUND' || err?.message?.includes('fetch')) {
+      res.status(502).json({ error: 'Could not reach the AI service.' });
+      return;
+    }
+    console.error('LLM explain diagram error:', err);
+    res.status(500).json({ error: err?.message ?? 'Failed to explain diagram.' });
   }
 }
