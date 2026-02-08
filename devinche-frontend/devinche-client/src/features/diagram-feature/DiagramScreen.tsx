@@ -429,6 +429,16 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
             };
           }}
           onApplyDiagram={importFromJson}
+          getCurrentDiagram={() => {
+            try {
+              const json = exportToJson();
+              if (!json) return null;
+              const obj = JSON.parse(json) as { nodes?: any[]; edges?: any[]; viewport?: { x: number; y: number; zoom: number } };
+              return { nodes: obj.nodes ?? [], edges: obj.edges ?? [], viewport: obj.viewport ?? { x: 0, y: 0, zoom: 1 } };
+            } catch {
+              return null;
+            }
+          }}
         />
       )}
       {shareDialogOpen && diagramId && getToken && (
