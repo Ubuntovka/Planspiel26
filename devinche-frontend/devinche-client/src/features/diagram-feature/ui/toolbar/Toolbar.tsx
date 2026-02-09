@@ -7,6 +7,7 @@ import NotificationBell from '../notifications/NotificationBell';
 import { exportDiagramToPng } from '../exports/exportToPng';
 import { DiagramNode } from '@/types/diagram';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import handleDownloadJson from '../exports/exportToJson';
 
 const ToolbarDivider = () => (
   <div
@@ -32,7 +33,7 @@ interface ToolbarProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onFitView?: () => void;
-  exportToJson: () => string | null;
+  exportToJson?: () => string | null;
   exportToRdf: () => string;
   exportToXml: () => string;
   importFromJson: (json: string) => void;
@@ -154,24 +155,14 @@ const Toolbar = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showCostDetails, showSaveDropdown, showExportDropdown, openMenu]);
 
-
-  const handleDownloadJson = () => {
-          try {
-              const json = exportToJson();
-              if (!json) return;
   
-              const blob = new Blob([json], { type: "application/json" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "diagram.json";
-              a.click();
-              URL.revokeObjectURL(url);
-          } catch (e) {
-              console.error("Problem exporting diagram JSON: ", e)
-          }
-          
-      };
+  const onExportJson = () => {
+      if (exportToJson) { 
+          const json = exportToJson();
+          handleDownloadJson(json);
+      }
+    };
+
   
       const handleDownloadPng = async () => {
           if (!flowWrapperRef.current) return;
@@ -481,7 +472,7 @@ const Toolbar = ({
                 <input type="file" accept="application/json" onChange={(e) => { handleImportJson(e); setOpenMenu(null); }} className="hidden" />
               </label>
               <div className="my-1 border-t" style={{ borderColor: 'var(--editor-border)' }} />
-              <button type="button" onClick={() => { handleDownloadJson(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Download size={14} /> {t('toolbar.exportJson')}</button>
+              <button type="button" onClick={() => { onExportJson(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Download size={14} /> {t('toolbar.exportJson')}</button>
               <button type="button" onClick={() => { handleDownloadPng(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><Image size={14} /> {t('toolbar.exportPng')}</button>
               <button type="button" onClick={() => { handleDownloadRdf(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><FileCode size={14} /> {t('toolbar.exportRdf')}</button>
               <button type="button" onClick={() => { handleDownloadXml(); setOpenMenu(null); }} className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2" style={{ color: 'var(--editor-text)' }}><FileCode size={14} /> {t('toolbar.exportXml')}</button>
