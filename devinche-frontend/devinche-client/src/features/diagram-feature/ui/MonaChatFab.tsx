@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Send, Sparkles, Loader2 } from "lucide-react";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import { explainDiagram as apiExplainDiagram } from "../api";
 
 export interface ChatMessage {
   id: string;
@@ -16,7 +18,7 @@ const PLACEHOLDER_MESSAGES: ChatMessage[] = [
     id: "welcome",
     role: "assistant",
     content:
-      "Hi, I'm Mona Lisa — your AI assistant. Describe the WAM diagram you want (e.g. \"Two security realms that trust each other; one has an app that invokes a service\") and I'll generate it on the canvas.",
+      "Hi, I'm Mona Lisa — your AI assistant. Describe the WAM diagram you want (e.g. \"Two security realms that trust each other; one has an app that invokes a service\") and I'll generate it on the canvas. You can also type \"explain the diagram\" to analyze the current canvas with validation and a cost breakdown.",
     timestamp: new Date(),
   },
 ];
@@ -26,25 +28,94 @@ export interface MonaChatFabProps {
   onGenerateDiagram: (prompt: string) => Promise<{ diagramJson: string; validationErrors?: string[] }>;
   /** Apply diagram by loading this JSON string into the editor. */
   onApplyDiagram: (diagramJson: string) => void;
+  /** Returns the current diagram object from canvas, or null if unavailable. */
+  getCurrentDiagram: () => { nodes: any[]; edges: any[]; viewport?: { x: number; y: number; zoom: number } } | null;
 }
 
 export default function MonaChatFab({
   onGenerateDiagram,
   onApplyDiagram,
+  getCurrentDiagram,
 }: MonaChatFabProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(PLACEHOLDER_MESSAGES);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExplaining, setIsExplaining] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [isOpen, messages]);
 
+  const isExplainIntent = (text: string): boolean => {
+    const t = text.toLowerCase();
+    // cover common phrasings
+    const hasExplainVerb = /(explain|analy[sz]e|summari[sz]e|describe|break ?down|review|assess)/.test(t);
+    const mentionsDiagram = /(diagram|architecture|canvas|this|current)/.test(t);
+    // direct short forms: "explain", "explain it", "explain this"
+    if (/^\s*(explain|analy[sz]e|summari[sz]e)\b/.test(t) && !/how to|how do/.test(t)) return true;
+    return hasExplainVerb && mentionsDiagram;
+  };
+
+  const handleExplain = async () => {
+    if (isExplaining) return;
+    const diagram = getCurrentDiagram?.();
+    if (!diagram) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: "I couldn't read the current diagram. Make sure the canvas is loaded.",
+          timestamp: new Date(),
+        },
+      ]);
+      return;
+    }
+
+    setIsExplaining(true);
+    const assistantId = `assistant-${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: assistantId,
+        role: "assistant",
+        content: "Explaining the current diagram…",
+        timestamp: new Date(),
+      },
+    ]);
+
+    try {
+      const resp = await apiExplainDiagram({
+        nodes: diagram.nodes ?? [],
+        edges: diagram.edges ?? [],
+        viewport: diagram.viewport ?? { x: 0, y: 0, zoom: 1 },
+      });
+
+      const summaryLine = `\n\n— Validation: ${resp.validation.valid ? "valid ✅" : `invalid ❌ (${resp.validation.errors.length} issues)`} • Estimated monthly cost: $${resp.summary.estimatedMonthlyUsd}`;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: `${resp.explanation}${summaryLine}` }
+            : m
+        )
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId ? { ...m, content: `Sorry, ${message}` } : m
+        )
+      );
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
   const handleSend = async () => {
     const text = inputValue.trim();
-    if (!text || isLoading) return;
+    if (!text || isLoading || isExplaining) return;
 
     setInputValue("");
     const userMsg: ChatMessage = {
@@ -54,6 +125,14 @@ export default function MonaChatFab({
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
+
+    // If the user asked to explain/analyze, route to explanation mode
+    if (isExplainIntent(text)) {
+      // Do not set isLoading or show generation bubble; handleExplain adds its own status message
+      handleExplain();
+      return;
+    }
+
     setIsLoading(true);
 
     const assistantId = `assistant-${Date.now()}`;
@@ -121,14 +200,6 @@ export default function MonaChatFab({
                 AI Assistant
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="mona-chat-panel__close"
-              aria-label="Close chat"
-            >
-              <X size={20} strokeWidth={2} />
-            </button>
           </header>
 
           <div className="mona-chat-panel__messages custom-scrollbar">
@@ -137,7 +208,7 @@ export default function MonaChatFab({
                 key={msg.id}
                 className={`mona-chat-bubble mona-chat-bubble--${msg.role}`}
               >
-                {msg.role === "assistant" && msg.content === "Generating your diagram…" && (
+                {msg.role === "assistant" && (msg.content === "Generating your diagram…" || msg.content === "Explaining the current diagram…") && (
                   <span className="mona-chat-bubble__loading">
                     <Loader2
                       size={18}
@@ -147,8 +218,14 @@ export default function MonaChatFab({
                     {msg.content}
                   </span>
                 )}
-                {!(msg.role === "assistant" && msg.content === "Generating your diagram…") && (
-                  <div className="mona-chat-bubble__content">{msg.content}</div>
+                {!(msg.role === "assistant" && (msg.content === "Generating your diagram…" || msg.content === "Explaining the current diagram…")) && (
+                  <div className="mona-chat-bubble__content">
+                    {msg.role === "assistant" ? (
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -163,17 +240,17 @@ export default function MonaChatFab({
               onKeyDown={(e) =>
                 e.key === "Enter" && !e.shiftKey && handleSend()
               }
-              placeholder="Describe the WAM diagram you want..."
+              placeholder="Type a prompt (e.g., “two realms with an app and a service”) or say “explain the diagram”"
               className="mona-chat-panel__input"
               aria-label="Message input"
-              disabled={isLoading}
+              disabled={isLoading || isExplaining}
             />
             <button
               type="button"
               onClick={handleSend}
               className="mona-chat-panel__send"
               aria-label="Send message"
-              disabled={!inputValue.trim() || isLoading}
+              disabled={!inputValue.trim() || isLoading || isExplaining}
             >
               {isLoading ? (
                 <Loader2 size={18} strokeWidth={2.5} className="mona-chat-bubble__spinner" />

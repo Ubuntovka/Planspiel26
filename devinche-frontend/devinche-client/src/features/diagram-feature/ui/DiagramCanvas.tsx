@@ -45,7 +45,8 @@ interface DiagramCanvasProps {
   onNodeClick?: (event: React.MouseEvent, node: Node) => void;
   /** When true, diagram is read-only (viewer mode): no drag, no connect, no drop. */
   readOnly?: boolean;
-  /** For real-time collaboration: show other users' cursors. */
+  /** For real-time collaboration: cursors and sendCursor from useCollaboration (if provided, CollaborationCursors uses these instead of its own hook). */
+  collaboration?: { cursors: { id: string; displayName: string; color: string; x: number; y: number }[]; sendCursor: (x: number, y: number) => void };
   diagramId?: string | null;
   getToken?: () => string | null;
   userDisplayName?: string;
@@ -82,6 +83,7 @@ const DiagramCanvas = ({
   onNodeDragStop,
   onNodeClick,
   readOnly = false,
+  collaboration,
   diagramId,
   getToken,
   userDisplayName = 'Anonymous',
@@ -166,11 +168,10 @@ const DiagramCanvas = ({
           />
         )}
         <CollaborationCursors
-          diagramId={diagramId}
-          getToken={getToken ?? (() => null)}
-          userDisplayName={userDisplayName}
           flowWrapperRef={flowWrapperRef}
-          enabled={!!(diagramId && getToken)}
+          cursors={collaboration?.cursors ?? []}
+          sendCursor={collaboration?.sendCursor}
+          enabled={!!(diagramId && collaboration)}
         />
         {comments.length > 0 && (
           <CommentMarkers comments={comments} onCommentClick={onCommentClick} />
