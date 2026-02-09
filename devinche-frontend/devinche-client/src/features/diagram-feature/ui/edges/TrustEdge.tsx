@@ -1,8 +1,10 @@
 import { BaseEdge, getEdgeCenter, getStraightPath } from '@xyflow/react'
 import type { EdgeProps } from '@/types/diagram'
 import React from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const TrustEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data }: EdgeProps) => {
+    const { t } = useLanguage();
     const errorColor = "#FF4D4F";
     const hasError = data?.hasError
 
@@ -75,7 +77,7 @@ const TrustEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, tar
                     fontFamily: 'sans-serif'
                 }}
             >
-                Trust
+                {t('diagram.trust')}
             </text>
             {/* Black label below the arrow */}
             {/* <text

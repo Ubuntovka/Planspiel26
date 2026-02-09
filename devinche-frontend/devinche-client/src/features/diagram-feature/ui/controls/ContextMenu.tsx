@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { v4 as uuidv4 } from "uuid";
 import type { ContextMenuState } from "@/types/diagram";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import {
   SquareRounded,
@@ -58,6 +59,7 @@ export default function ContextMenu({
   onAddCommentAtPoint,
   ...props
 }: ContextMenuProps) {
+  const { t } = useLanguage();
   const { getNode, getEdges, deleteElements, setNodes, screenToFlowPosition } = useReactFlow();
 
   const elementType = type;
@@ -70,7 +72,7 @@ export default function ContextMenu({
       if (node) {
         data.push({
           icon: <IconDimensions />,
-          label: "Size",
+          label: t("contextMenu.size"),
           value: `${node.measured?.width ?? "N/A"}x${node.measured?.height ?? "N/A"}`,
           unit: "px",
         });
@@ -78,12 +80,12 @@ export default function ContextMenu({
     } else if (elementType === "edge") {
       const edge = getEdges().find((e) => e.id === id);
       if (edge) {
-        data.push({ icon: <IconSource />, label: "Source", value: edge.source });
-        data.push({ icon: <IconTarget />, label: "Target", value: edge.target });
+        data.push({ icon: <IconSource />, label: t("contextMenu.source"), value: edge.source });
+        data.push({ icon: <IconTarget />, label: t("contextMenu.target"), value: edge.target });
       }
     }
     return data;
-  }, [id, elementType, getNode, getEdges]);
+  }, [id, elementType, getNode, getEdges, t]);
 
   // duplicate node (HEAD logic)
   const duplicateNode = useCallback(() => {
@@ -122,8 +124,8 @@ export default function ContextMenu({
     selectAllNodes?.();
   }, [selectAllNodes]);
 
-  const headerTitle = isCanvasMenu ? "Canvas" : elementType === "node" ? "Node" : "Edge";
-  const headerSubtitle = isCanvasMenu ? "Diagram" : "Element";
+  const headerTitle = isCanvasMenu ? t("contextMenu.canvas") : elementType === "node" ? t("contextMenu.node") : t("contextMenu.edge");
+  const headerSubtitle = isCanvasMenu ? t("contextMenu.diagram") : t("contextMenu.element");
 
   return (
     <div
@@ -146,10 +148,10 @@ export default function ContextMenu({
         {/* Details: ID + Size / Source+Target */}
         {!isCanvasMenu && (
           <div className="context-menu__section">
-            <div className="context-menu__section-label">Details</div>
+            <div className="context-menu__section-label">{t("contextMenu.details")}</div>
             <div className="context-menu__details">
               <div className="context-menu__id-block">
-                <div className="context-menu__id-label">ID</div>
+                <div className="context-menu__id-label">{t("contextMenu.id")}</div>
                 <div className="context-menu__id-value">{id}</div>
               </div>
               {elementData.length > 0 &&
@@ -171,7 +173,7 @@ export default function ContextMenu({
 
         {/* Actions */}
         <div className="context-menu__section">
-          <div className="context-menu__section-label">Actions</div>
+          <div className="context-menu__section-label">{t("contextMenu.actions")}</div>
           <div className="context-menu__actions">
           {isCanvasMenu && (
             <>
@@ -191,7 +193,7 @@ export default function ContextMenu({
                   <span className="context-menu-item__icon">
                     <ChatBubbleOutline />
                   </span>
-                  <span>Add comment here</span>
+                  <span>{t("contextMenu.addCommentHere")}</span>
                 </button>
               )}
               <button
@@ -205,7 +207,7 @@ export default function ContextMenu({
                 <span className="context-menu-item__icon">
                   <IconPane />
                 </span>
-                <span>Reset canvas</span>
+                <span>{t("contextMenu.resetCanvas")}</span>
               </button>
               <button
                 type="button"
@@ -218,7 +220,7 @@ export default function ContextMenu({
                 <span className="context-menu-item__icon">
                   <IconSelectAll />
                 </span>
-                <span>Select all</span>
+                <span>{t("contextMenu.selectAll")}</span>
               </button>
             </>
           )}
@@ -236,8 +238,8 @@ export default function ContextMenu({
                 <span className="context-menu-item__icon">
                   <IconProperties />
                 </span>
-                <span>Properties</span>
-              </button>
+<span>{t("contextMenu.properties")}</span>
+                </button>
               <button
                 type="button"
                 className="context-menu-item"
@@ -249,7 +251,7 @@ export default function ContextMenu({
                 <span className="context-menu-item__icon">
                   <IconDuplicate />
                 </span>
-                <span>Duplicate node</span>
+                <span>{t("contextMenu.duplicateNode")}</span>
               </button>
             </>
           )}
@@ -266,8 +268,8 @@ export default function ContextMenu({
                 <span className="context-menu-item__icon">
                   <IconProperties />
                 </span>
-                <span>Properties</span>
-              </button>
+<span>{t("contextMenu.properties")}</span>
+                </button>
             </>
           )}
           {!isCanvasMenu && (
@@ -283,7 +285,7 @@ export default function ContextMenu({
               <span className="context-menu-item__icon">
                 <IconDelete />
               </span>
-              <span>Delete {elementType === "node" ? "node" : "edge"}</span>
+              <span>{elementType === "node" ? t("contextMenu.deleteNode") : t("contextMenu.deleteEdge")}</span>
             </button>
           )}
         </div>

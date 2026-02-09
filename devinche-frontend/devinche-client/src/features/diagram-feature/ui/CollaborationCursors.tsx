@@ -2,25 +2,29 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { useCollaboration } from '../collaboration/useCollaboration';
+
+export interface RemoteCursor {
+  id: string;
+  displayName: string;
+  color: string;
+  x: number;
+  y: number;
+}
 
 interface CollaborationCursorsProps {
-  diagramId: string | null | undefined;
-  getToken: () => string | null;
-  userDisplayName: string;
   flowWrapperRef: React.RefObject<HTMLDivElement | null>;
-  enabled?: boolean;
+  cursors: RemoteCursor[];
+  sendCursor: ((x: number, y: number) => void) | undefined;
+  enabled: boolean;
 }
 
 export default function CollaborationCursors({
-  diagramId,
-  getToken,
-  userDisplayName,
   flowWrapperRef,
-  enabled = true,
+  cursors,
+  sendCursor,
+  enabled,
 }: CollaborationCursorsProps) {
   const { screenToFlowPosition, flowToScreenPosition } = useReactFlow();
-  const { cursors, sendCursor } = useCollaboration(enabled ? diagramId : null, getToken, userDisplayName);
   const rafRef = useRef<number>(0);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -37,7 +41,7 @@ export default function CollaborationCursors({
   );
 
   useEffect(() => {
-    if (!enabled || !diagramId) return;
+    if (!enabled || !sendCursor) return;
     const el = flowWrapperRef.current;
     if (!el) return;
 
@@ -55,7 +59,7 @@ export default function CollaborationCursors({
       el.removeEventListener('mousemove', handleMouseMove);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [enabled, diagramId, flowWrapperRef, handleMouseMove, sendCursor]);
+  }, [enabled, sendCursor, flowWrapperRef, handleMouseMove]);
 
   if (!enabled || cursors.length === 0) return null;
 
@@ -78,29 +82,41 @@ export default function CollaborationCursors({
               position: 'absolute',
               left: screen.x,
               top: screen.y,
-              transform: 'translate(-2px, -2px)',
-              width: 16,
-              height: 16,
-              border: `2px solid ${c.color}`,
-              borderRadius: '50%',
-              backgroundColor: `${c.color}40`,
+              transform: 'translate(-50%, -50%)',
               pointerEvents: 'none',
-              transition: 'left 0.05s linear, top 0.05s linear',
+              transition: 'left 0.08s ease-out, top 0.08s ease-out',
             }}
           >
+            {/* Cursor dot with subtle ring (Docs-style) */}
+            <div
+              data-cursor-dot
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                border: `2px solid ${c.color}`,
+                backgroundColor: `${c.color}50`,
+                boxShadow: `0 0 0 1px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.12)`,
+              }}
+            />
+            {/* Name pill */}
             <span
               style={{
                 position: 'absolute',
-                left: 20,
-                top: -2,
-                padding: '2px 6px',
-                borderRadius: 4,
+                left: 18,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                padding: '3px 8px',
+                borderRadius: 12,
                 fontSize: 11,
                 fontWeight: 600,
                 whiteSpace: 'nowrap',
                 backgroundColor: c.color,
                 color: '#fff',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                maxWidth: 120,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {c.displayName}

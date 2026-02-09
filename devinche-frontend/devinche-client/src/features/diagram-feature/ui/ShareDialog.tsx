@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, UserPlus, Trash2, Eye, Pencil, Mail } from 'lucide-react';
 import type { SharedWithEntry } from '../api';
 import { listSharedWith, shareDiagram, unshareDiagram, updateSharedRole, transferOwnership } from '../api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ShareDialogProps {
   diagramId: string;
@@ -22,6 +23,7 @@ const toolbarStyle = {
 };
 
 export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialogProps) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('viewer');
   const [sharedWith, setSharedWith] = useState<SharedWithEntry[]>([]);
@@ -38,7 +40,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
       const { sharedWith: list } = await listSharedWith(token, diagramId);
       setSharedWith(list);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load');
+      setError(e instanceof Error ? e.message : t('shareDialog.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
       setSharedWith(list);
       setEmail('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to share');
+      setError(e instanceof Error ? e.message : t('shareDialog.failedToShare'));
     } finally {
       setSharing(false);
     }
@@ -73,7 +75,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
       const { sharedWith: list } = await unshareDiagram(token, diagramId, targetUserId);
       setSharedWith(list);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to remove access');
+      setError(e instanceof Error ? e.message : t('shareDialog.failedToRemoveAccess'));
     }
   };
 
@@ -85,12 +87,12 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
       const { sharedWith: list } = await updateSharedRole(token, diagramId, targetUserId, nextRole);
       setSharedWith(list);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to update access');
+      setError(e instanceof Error ? e.message : t('shareDialog.failedToUpdateAccess'));
     }
   };
 
   const handleTransferOwnership = async (targetUserId: string, emailLabel: string) => {
-    const ok = window.confirm(`Make ${emailLabel} the new owner? You will become an editor.`);
+    const ok = window.confirm(t('shareDialog.transferConfirm', { email: emailLabel }));
     if (!ok) return;
     const token = getToken();
     if (!token) return;
@@ -99,7 +101,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
       await transferOwnership(token, diagramId, targetUserId);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to transfer ownership');
+      setError(e instanceof Error ? e.message : t('shareDialog.failedToTransferOwnership'));
     }
   };
 
@@ -133,10 +135,10 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
             </div>
             <div>
               <h2 id="share-dialog-title" className="text-lg font-semibold leading-tight" style={{ color: 'var(--editor-text)' }}>
-                Share diagram
+                {t('shareDialog.title')}
               </h2>
               <p className="text-xs mt-0.5" style={{ color: 'var(--editor-text-muted)' }}>
-                Invite people by email to view or edit
+                {t('shareDialog.subtitle')}
               </p>
             </div>
           </div>
@@ -145,7 +147,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
             onClick={onClose}
             className={`${toolbarBtn} ${toolbarBtnHover} rounded-full`}
             style={{ ...toolbarStyle, border: '1px solid var(--editor-border)' }}
-            aria-label="Close"
+            aria-label={t('shareDialog.closeAria')}
           >
             <X size={18} />
           </button>
@@ -154,7 +156,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <section>
             <label className="block text-sm font-medium mb-2" style={{ color: 'var(--editor-text)' }}>
-              Add people
+              {t('shareDialog.addPeople')}
             </label>
             <form onSubmit={handleShare} className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row gap-3">
@@ -168,7 +170,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@example.com"
+                    placeholder={t('shareDialog.emailPlaceholder')}
                     className="w-full pl-10 pr-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--editor-accent)]"
                     style={{
                       backgroundColor: 'var(--editor-bg)',
@@ -191,7 +193,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                     }}
                   >
                     <Eye size={14} />
-                    Can view
+                    {t('shareDialog.canView')}
                   </button>
                   <button
                     type="button"
@@ -203,7 +205,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                     }}
                   >
                     <Pencil size={14} />
-                    Can edit
+                    {t('shareDialog.canEdit')}
                   </button>
                   <button
                     type="button"
@@ -215,13 +217,13 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                     }}
                   >
                     <UserPlus size={14} />
-                    Owner
+                    {t('shareDialog.owner')}
                   </button>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <p className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
-                  They need an account. Access is by email.
+                  {t('shareDialog.theyNeedAccount')}
                 </p>
                 <button
                   type="submit"
@@ -230,7 +232,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                   style={{ backgroundColor: 'var(--editor-accent)', color: 'white' }}
                 >
                   <UserPlus size={16} />
-                  {sharing ? 'Adding…' : 'Add'}
+                  {sharing ? t('shareDialog.adding') : t('shareDialog.add')}
                 </button>
               </div>
             </form>
@@ -248,17 +250,17 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
           <section>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium" style={{ color: 'var(--editor-text)' }}>
-                People with access
+                {t('shareDialog.peopleWithAccess')}
               </h3>
               {!loading && (
                 <span className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
-                  {sharedWith.length} total
+                  {t('shareDialog.total', { count: sharedWith.length })}
                 </span>
               )}
             </div>
             {loading ? (
               <div className="py-6 text-center text-sm" style={{ color: 'var(--editor-text-muted)' }}>
-                Loading…
+                {t('shareDialog.loading')}
               </div>
             ) : sharedWith.length === 0 ? (
               <div
@@ -269,8 +271,8 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                   color: 'var(--editor-text-muted)',
                 }}
               >
-                <p className="text-sm">No one else has access yet.</p>
-                <p className="text-xs mt-1">Add people above to share this diagram.</p>
+                <p className="text-sm">{t('shareDialog.noOneElse')}</p>
+                <p className="text-xs mt-1">{t('shareDialog.addPeopleAbove')}</p>
               </div>
             ) : (
               <ul className="space-y-2">
@@ -304,9 +306,9 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                             color: 'var(--editor-text)',
                           }}
                         >
-                          <option value="viewer">Can view</option>
-                          <option value="editor">Can edit</option>
-                          <option value="owner">Owner</option>
+                          <option value="viewer">{t('shareDialog.canView')}</option>
+                          <option value="editor">{t('shareDialog.canEdit')}</option>
+                          <option value="owner">{t('shareDialog.owner')}</option>
                         </select>
                         <button
                           type="button"
@@ -318,7 +320,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                             backgroundColor: 'var(--editor-bg)',
                           }}
                         >
-                          Transfer owner
+                          {t('shareDialog.transferOwner')}
                         </button>
                       </div>
                     </div>
@@ -327,7 +329,7 @@ export default function ShareDialog({ diagramId, getToken, onClose }: ShareDialo
                       onClick={() => handleUnshare(entry.userId)}
                       className={`${toolbarBtn} ${toolbarBtnHover} shrink-0`}
                       style={{ ...toolbarStyle, border: '1px solid var(--editor-border)' }}
-                      title="Remove access"
+                      title={t('shareDialog.removeAccess')}
                     >
                       <Trash2 size={16} />
                     </button>
