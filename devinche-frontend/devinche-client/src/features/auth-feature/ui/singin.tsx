@@ -367,7 +367,7 @@ export default function LoginPage() {
               :global([data-theme="dark"]) [data-page="login"] h1 {
                 color: var(--editor-text);
               }
-              :global([data-theme="dark"]) [data-page="login"] .pointer-events-none {
+              :global([data-theme="dark"]) [data-page="login"]  {
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
@@ -379,10 +379,10 @@ export default function LoginPage() {
                 color: var(--editor-text);
                 border-color: var(--editor-border-light) !important;
               }
-              :global([data-theme="dark"]) [data-page="login"] button.w-full {
+              :global([data-theme="dark"]) [data-page="login"] {
                 background: var(--editor-accent) !important;
               }
-              :global([data-theme="dark"]) [data-page="login"] button.w-full:hover {
+              :global([data-theme="dark"]) [data-page="login"]  {
                 background: var(--editor-accent-hover) !important;
               }
             `}</style>
