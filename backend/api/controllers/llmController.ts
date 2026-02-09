@@ -249,7 +249,7 @@ export async function generateDiagramFromPrompt(
     let raw = await callLlm(prompt);
     let diagram = parseAndNormalize(raw);
     diagram.edges = ensureTrustBetweenRealmsWhenRequested(prompt, diagram.nodes, diagram.edges);
-    let diagramJson = JSON.stringify({ nodes: diagram.nodes, edges: diagram.edges, viewport: diagram.viewport });
+    let diagramJson = { nodes: diagram.nodes, edges: diagram.edges, };
     let validation = await validate(diagramJson);
 
     if (validation.errors.length > 0) {
@@ -259,11 +259,10 @@ export async function generateDiagramFromPrompt(
         raw = await callLlm(retryUser);
         diagram = parseAndNormalize(raw);
         diagram.edges = ensureTrustBetweenRealmsWhenRequested(prompt, diagram.nodes, diagram.edges);
-        diagramJson = JSON.stringify({
+        diagramJson = {
           nodes: diagram.nodes,
           edges: diagram.edges,
-          viewport: diagram.viewport,
-        });
+        };
         validation = await validate(diagramJson);
       } catch (_) {
         // If retry fails, send first result anyway; client can still show it
