@@ -9,6 +9,7 @@ import { attachCollaborationSocket } from './collaboration/socket';
 
 import userRoutes from './api/routes/userRoutes';
 import validationRoutes from './api/routes/validationRoutes';
+import exportRoutes from './api/routes/exportRoutes'
 import diagramRoutes from './api/routes/diagramRoutes';
 import llmRoutes from './api/routes/llmRoutes';
 import notificationRoutes from './api/routes/notificationRoutes';
@@ -58,6 +59,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Routes
 app.use('/api/users/', userRoutes);
 app.use('/api/validation/', validationRoutes);
+// app.use('api/import/', importRoutes)
+app.use('/api/export/', exportRoutes)
 app.use('/api/diagrams/', diagramRoutes);
 app.use('/api/llm/', llmRoutes);
 app.use('/api/notifications', notificationRoutes);
