@@ -20,6 +20,7 @@ import { exportDiagramToRdfTurtle } from "./ui/exports/exportToRdf";
 import { NODE_DEFAULT_SIZE } from "./data/nodeSizes";
 import { exportDiagramToXML } from "./ui/exports/exportToXML";
 import { listDiagrams, getDiagram, createDiagram, updateDiagram, renameDiagram as apiRenameDiagram, type DiagramAccessLevel } from "./api";
+import { DEFAULT_NODE_COSTS } from "./data/nodeCosts";
 
 const STORAGE_KEY = 'diagram.flow';
 const STORAGE_PTR_KEY = 'diagram.flow.ptr';
@@ -785,7 +786,12 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
                         y: position.y - securityRealmParent.position.y,
                     }
                     : position,
-            data: { label: data.label },
+            data: { 
+                    label: data.label,
+                    // name: data.label || `New ${data.nodeType}`, 
+                    cost: DEFAULT_NODE_COSTS[data.nodeType] || 0,
+                    extra: {} 
+                },
             width: size.width,
             height: size.height,
                 ...(securityRealmParent && !isSecurityRealm 
