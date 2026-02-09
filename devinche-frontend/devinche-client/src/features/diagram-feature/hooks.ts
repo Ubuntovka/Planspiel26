@@ -16,9 +16,7 @@ import {
 } from "@xyflow/react";
 import { initialNodes, initialEdges } from "./data/initialElements";
 import type { DiagramNode, DiagramEdge, ContextMenuState, UseDiagramReturn } from "@/types/diagram";
-import { exportDiagramToRdfTurtle } from "./ui/exports/exportToRdf";
 import { NODE_DEFAULT_SIZE } from "./data/nodeSizes";
-import { exportDiagramToXML } from "./ui/exports/exportToXML";
 import { listDiagrams, getDiagram, createDiagram, updateDiagram, renameDiagram as apiRenameDiagram, type DiagramAccessLevel } from "./api";
 
 const STORAGE_KEY = 'diagram.flow';
@@ -412,16 +410,6 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         const flow: ReactFlowJsonObject<DiagramNode, DiagramEdge> = rfInstance.toObject();
         return JSON.stringify(flow, null, 2);
     }, [rfInstance]);
-
-    // RDF export handler
-    const exportToRdf = useCallback((): string => {
-        return exportDiagramToRdfTurtle(nodes, edges);
-    }, [nodes, edges]);
-
-    // XML export handler
-    const exportToXml = useCallback((): string => {
-        return exportDiagramToXML(nodes, edges);
-    }, [nodes, edges]);
 
     // import JSON handler
     const importFromJson = useCallback(
@@ -1106,8 +1094,6 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
         openProperties,
         onFlowInit,
         exportToJson,
-        exportToRdf, 
-        exportToXml,
         importFromJson,
         setNodes,
         setEdges,
