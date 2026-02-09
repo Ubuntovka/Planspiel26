@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {Pointer, ChevronLeft, ChevronRight, Layers, ArrowUpIcon} from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PaletteItem {
     id: string;
@@ -279,6 +280,7 @@ interface PalettePanelProps {
 }
 
 const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: PalettePanelProps) => {
+    const { t } = useLanguage();
     const [collapsed, setCollapsed] = useState(false);
 
     const handleDragStart = (event: React.DragEvent, item: PaletteItem) => {
@@ -295,13 +297,13 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
 
     return (
         <div
-            className={`absolute top-16 left-4 backdrop-blur-sm rounded-lg shadow-2xl z-10 overflow-hidden transition-all duration-300 ease-in-out ${
+            className={`absolute top-[88px] left-4 rounded-xl z-10 overflow-hidden transition-all duration-300 ease-in-out ${
                 collapsed ? 'w-14' : 'w-64'
             }`}
             style={{ 
-                backgroundColor: 'var(--editor-panel-bg)',
-                border: '1px solid var(--editor-border)',
-                boxShadow: '0 8px 16px var(--editor-shadow-lg)'
+                backgroundColor: 'var(--editor-panel-chrome)',
+                border: '1px solid var(--editor-panel-border)',
+                boxShadow: 'var(--editor-panel-shadow)'
             }}
             onMouseEnter={(e) => {
                 if (collapsed) {
@@ -310,7 +312,7 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
             }}
             onMouseLeave={(e) => {
                 if (collapsed) {
-                    e.currentTarget.style.backgroundColor = 'var(--editor-panel-bg)';
+                    e.currentTarget.style.backgroundColor = 'var(--editor-panel-chrome)';
                 }
             }}
         >
@@ -319,7 +321,8 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
                     collapsed ? 'justify-center py-3' : 'justify-between px-4 py-3'
                 }`}
                 style={{
-                    borderBottom: collapsed ? 'none' : '1px solid var(--editor-border)',
+                    borderBottom: collapsed ? 'none' : '1px solid var(--editor-panel-border)',
+                    backgroundColor: collapsed ? 'transparent' : 'var(--editor-panel-header)',
                 }}
                 onMouseEnter={(e) => {
                     if (!collapsed) {
@@ -343,7 +346,7 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
                             Tools
                         </h3>
                         <button
-                            className="p-1.5 rounded-md transition-colors"
+                            className="p-1.5 rounded-lg transition-colors"
                             style={{ 
                                 color: 'var(--editor-text-secondary)',
                             }}
@@ -378,7 +381,7 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
                             .map((item) => (
                                 <div
                                     key={item.id}
-                                    className="px-3 py-2 mb-1 rounded-md cursor-pointer flex items-center gap-3 transition-all duration-150 border border-transparent"
+                                    className="px-3 py-2 mb-1 rounded-lg cursor-pointer flex items-center gap-3 transition-all duration-150 border border-transparent"
                                     style={{
                                         color: 'var(--editor-text-secondary)',
                                     }}
@@ -412,7 +415,7 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
                                     key={item.id}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, item)}
-                                    className="px-3 py-2 mb-1 rounded-md cursor-grab active:cursor-grabbing flex items-center gap-3 transition-all duration-150 border border-transparent"
+                                    className="px-3 py-2 mb-1 rounded-lg cursor-grab active:cursor-grabbing flex items-center gap-3 transition-all duration-150 border border-transparent"
                                     style={{
                                         color: 'var(--editor-text-secondary)',
                                     }}
@@ -448,7 +451,7 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
                                     key={item.id}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, item)}
-                                    className="px-3 py-2 mb-1 rounded-md cursor-grab active:cursor-grabbing flex items-center gap-3 transition-all duration-150 border border-transparent"
+                                    className="px-3 py-2 mb-1 rounded-lg cursor-grab active:cursor-grabbing flex items-center gap-3 transition-all duration-150 border border-transparent"
                                     style={{
                                         color: 'var(--editor-text-secondary)',
                                     }}
@@ -482,11 +485,12 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
                             // .filter((item) => item.type === 'edge')
                             .map((item) => {
                                 const isSelected = selectedEdgeType === item.edgeType;
+                                const edgeLabel = item.edgeType ? t(`diagram.${item.edgeType}Edge`) : item.label;
                                 return (
                                     <div
                                         key={item.id}
                                         onClick={() => item.edgeType && handleEdgeTypeClick(item.edgeType)}
-                                        className="px-3 py-2 mb-1 rounded-md cursor-pointer flex items-center gap-3 transition-all duration-150 border"
+                                        className="px-3 py-2 mb-1 rounded-lg cursor-pointer flex items-center gap-3 transition-all duration-150 border"
                                         style={{
                                             color: isSelected ? 'var(--editor-text)' : 'var(--editor-text-secondary)',
                                             backgroundColor: isSelected ? 'var(--editor-surface-hover)' : 'transparent',
@@ -506,12 +510,12 @@ const PalettePanel = ({ onDragStart, selectedEdgeType, onEdgeTypeSelect }: Palet
                                                 e.currentTarget.style.borderColor = 'transparent';
                                             }
                                         }}
-                                        title={`Select ${item.label} as default edge type`}
+                                        title={`Select ${edgeLabel} as default edge type`}
                                     >
                                         <span className="transition-colors" style={{ color: isSelected ? 'var(--editor-accent)' : 'var(--editor-text-muted)' }}>
                                             {item.icon}
                                         </span>
-                                        <span className="text-sm font-medium">{item.label}</span>
+                                        <span className="text-sm font-medium">{edgeLabel}</span>
                                         {isSelected && (
                                             <span className="ml-auto text-xs" style={{ color: 'var(--editor-accent)' }}>
                                                 ✓
