@@ -415,6 +415,8 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     const importFromJson = useCallback(
         (json: string) => {
         let obj: ReactFlowJsonObject<DiagramNode, DiagramEdge>;
+        console.log("HOOK")
+        console.log(typeof(json))
         try {
             obj = JSON.parse(json);
         } catch (e) {

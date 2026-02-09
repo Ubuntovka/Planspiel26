@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { exportDiagramToRdfTurtle, exportDiagramToXml } from '../controllers/exportController';
+import { JSONtoRDF, JSONtoXML } from '../controllers/exportController';
 import { DiagramState } from '../../types/diagramTypes';
 
 const router: Router = Router();
@@ -21,14 +21,14 @@ router.post('/rdf', async (req: ExportRequest, res: Response) => {
 
     let rdf: string;
     try {
-      rdf = exportDiagramToRdfTurtle(data);
+      rdf = JSONtoRDF(data);
     } catch (error) {
       console.error('Error exporting to RDF:', error);
       return res.status(500).json({ error: 'Failed to export diagram to RDF.' });
     }
     return res.status(200).json({ diagram: rdf });
   } catch (error) {
-    console.error('Unexpected error in /rdf handler:', error);
+    console.error('Unexpected error in export /rdf handler:', error);
     return res.status(500).json({ error: 'Internal server error.' });
   }
 });
@@ -41,16 +41,16 @@ router.post('/xml', async (req: ExportRequest, res: Response) => {
       return res.status(400).json({ error: 'Missing data in request body.' });
     }
 
-    let rdf: string;
+    let xml: string;
     try {
-      rdf = exportDiagramToXml(data);
+      xml = JSONtoXML(data);
     } catch (error) {
       console.error('Error exporting to RDF:', error);
       return res.status(500).json({ error: 'Failed to export diagram to RDF.' });
     }
-    return res.status(200).json({ diagram: rdf });
+    return res.status(200).json({ diagram: xml });
   } catch (error) {
-    console.error('Unexpected error in /rdf handler:', error);
+    console.error('Unexpected error in exoprt /xml handler:', error);
     return res.status(500).json({ error: 'Internal server error.' });
   }
 });

@@ -87,6 +87,7 @@ const Toolbar = ({
     "idle",
   );
   const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [showImportDropdown, setShowImportDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const saveDropdownRef = useRef<HTMLDivElement>(null);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
@@ -155,46 +156,48 @@ const Toolbar = ({
   };
 
   const handleDownloadRdf = async () => {
-  try {
-    const json = exportToJson();
-    if (!json) {
-      console.error("No diagram to export");
-      return;
+    try {
+      const json = exportToJson();
+      if (!json) {
+        console.error("No diagram to export");
+        return;
+      }
+
+      const diagram = JSON.parse(json);
+      console.log(diagram);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/rdf`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ data: diagram }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`RDF export failed: ${response.status}`);
+      }
+
+      // Backend returns plain Turtle string directly
+      const ttlJson = await response.text();
+      const ttl = JSON.parse(ttlJson).diagram;
+
+      const blob = new Blob([ttl], { type: "text/turtle;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "diagram.ttl";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Problem exporting diagram RDF:", e);
     }
-
-    const diagram = JSON.parse(json);
-    console.log(diagram);
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/rdf`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ data: diagram }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`RDF export failed: ${response.status}`);
-    }
-
-    // Backend returns plain Turtle string directly
-    const ttlJson = await response.text();
-    const ttl = JSON.parse(ttlJson).diagram
-
-    const blob = new Blob([ttl], { type: "text/turtle;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "diagram.ttl";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    console.error("Problem exporting diagram RDF:", e);
-  }
-};
-
+  };
 
   const handleDownloadXml = async () => {
     try {
@@ -204,22 +207,25 @@ const Toolbar = ({
         return;
       }
 
-      const diagram = JSON.parse(json)
+      const diagram = JSON.parse(json);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/xml`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/xml`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ data: diagram }),
         },
-        body: JSON.stringify({ data: diagram }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`XML export failed: ${response.status}`);
       }
 
       const xmlJson = await response.text();
-      const xml = JSON.parse(xmlJson).diagram
+      const xml = JSON.parse(xmlJson).diagram;
 
       const blob = new Blob([xml], { type: "application/xml;charset=utf-8" });
       const url = URL.createObjectURL(blob);
@@ -248,6 +254,90 @@ const Toolbar = ({
       console.error("Problem importing diagram JSON: ", err);
     } finally {
       e.target.value = ""; // reset input
+    }
+  };
+
+  const handleImportRdf: React.ChangeEventHandler<HTMLInputElement> = async (
+    e,
+  ) => {
+    console.log("TTL import triggered");
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (
+      file.size > 10 * 1024 * 1024 ||
+      !file.name.toLowerCase().endsWith(".ttl")
+    ) {
+      e.target.value = "";
+      console.error("Invalid file");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/import/rdf`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Import failed: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log(result)
+      importFromJson(JSON.stringify(result));
+    } catch (err) {
+      console.error("TTL import error:", err);
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  const handleImportXml: React.ChangeEventHandler<HTMLInputElement> = async (
+    e,
+  ) => {
+    console.log("XMLI ran");
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (
+      file.size > 10 * 1024 * 1024 ||
+      !file.name.toLowerCase().endsWith(".xml")
+    ) {
+      e.target.value = "";
+      console.error("File too big");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/import/xml`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Import failed: ${response.status} ${errorText}`);
+    }
+
+    const result = await response.json();
+    try {
+      importFromJson(JSON.stringify(result));
+    } catch (err) {
+      console.error("Problem importing diagram XML: ", err);
+    } finally {
+      e.target.value = "";
     }
   };
 
@@ -530,21 +620,82 @@ const Toolbar = ({
 
       {/* 4. File: Import & Export (always visible with labels) */}
       <div className={group} style={groupStyle}>
-        <label
-          className={`${btnText} flex items-center gap-1.5 cursor-pointer`}
-          style={{ ...btnStyle, border: "1px solid var(--editor-border)" }}
-          onMouseEnter={(e) => btnHover(e, true)}
-          onMouseLeave={(e) => btnHover(e, false)}
-        >
-          <Upload size={16} />
-          <span className="text-sm font-medium">Import</span>
-          <input
-            type="file"
-            accept="application/json"
-            onChange={handleImportJson}
-            className="hidden"
-          />
-        </label>
+        <div className="relative" ref={exportDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setShowImportDropdown((v) => !v)}
+            className={`${btnText} flex items-center gap-1.5`}
+            style={{
+              ...btnStyle,
+              border: "1px solid var(--editor-border)",
+              backgroundColor: showImportDropdown
+                ? "var(--editor-surface-hover)"
+                : undefined,
+            }}
+            onMouseEnter={(e) => !showImportDropdown && btnHover(e, true)}
+            onMouseLeave={(e) => !showImportDropdown && btnHover(e, false)}
+            title="Export diagram"
+          >
+            <Upload size={16} />
+            <span className="text-sm font-medium">Import</span>
+            <ChevronDown
+              size={14}
+              className={showImportDropdown ? "rotate-180" : ""}
+            />
+          </button>
+          {showImportDropdown && (
+            <div
+              className="absolute left-0 top-full mt-0.5 w-44 rounded-lg border py-1 z-50 font-medium text-sm"
+              style={{
+                backgroundColor: "var(--editor-panel-bg)",
+                borderColor: "var(--editor-border)",
+                boxShadow: "0 8px 16px var(--editor-shadow-lg)",
+              }}
+            >
+              <label
+                className="inline-block w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
+                style={{ color: "var(--editor-text)" }}
+              >
+                JSON
+                <input
+                  type="file"
+                  accept="application/json"
+                  onChange={handleImportJson}
+                  className="hidden"
+                  // onClick={() => setShowImportDropdown(false)}
+                />
+              </label>
+              <label
+                className="inline-block w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
+                style={{ color: "var(--editor-text)" }}
+              >
+                RDF
+                <input
+                  type="file"
+                  accept=".ttl"
+                  onChange={handleImportRdf}
+                  className="hidden"
+                  // onClick={() => setShowImportDropdown(false)}
+                />
+              </label>
+              <label
+                htmlFor="import-xml"
+                className="inline-block w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
+                style={{ color: "var(--editor-text)" }}
+                // onClick={() => setShowImportDropdown(false)}
+              >
+                XML
+                <input
+                  id="import-xml"
+                  type="file"
+                  accept=".xml,application/xml"
+                  onChange={handleImportXml}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          )}
+        </div>
         <div className="relative" ref={exportDropdownRef}>
           <button
             type="button"

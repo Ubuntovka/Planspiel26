@@ -5,7 +5,7 @@ import { DiagramEdge, DiagramState } from "../../types/diagramTypes";
  * @param diagram JSON: JSON of current diagram state
  * @returns RDF: RDF string of current diagram state
  */
-export function exportDiagramToRdfTurtle(diagram: DiagramState): string {
+export function JSONtoRDF(diagram: DiagramState): string {
   const nodes = diagram.nodes;
   const edges = diagram.edges;
 
@@ -39,8 +39,8 @@ export function exportDiagramToRdfTurtle(diagram: DiagramState): string {
 
     // position
     if (node.position) {
-      lines.push(`  wam:xPos "${node.position.x}"^^xsd:decimal ;`);
-      lines.push(`  wam:yPos "${node.position.y}"^^xsd:decimal ;`);
+      lines.push(`  wam:x "${node.position.x}"^^xsd:decimal ;`);
+      lines.push(`  wam:y "${node.position.y}"^^xsd:decimal ;`);
     }
 
     // measured width/height
@@ -115,7 +115,7 @@ export function exportDiagramToRdfTurtle(diagram: DiagramState): string {
     }
 
     // edge instance
-    lines.push(`<${iri}> a ${edgeClass} ;`);
+    lines.push(`${iri} a ${edgeClass} ;`);
     lines.push(`  schema:identifier "${id}" ;`);
     lines.push(`  wam:source <${source}> ;`);
     lines.push(`  wam:target <${target}> ;`);
@@ -143,6 +143,9 @@ export function exportDiagramToRdfTurtle(diagram: DiagramState): string {
     }
     if (edge.targetHandle) {
       lines.push(`  wam:targetHandle "${edge.targetHandle}" ;`);
+    }
+    if (edge.label) {
+      lines.push(`  wam:label "${edge.label}" ;`);
     }
 
     // data
@@ -184,7 +187,7 @@ export function exportDiagramToRdfTurtle(diagram: DiagramState): string {
  * @param diagram JSON: JSON of current diagram state
  * @returns XML: XML string of current diagram state
  */
-export function exportDiagramToXml(diagram: DiagramState): string {
+export function JSONtoXML(diagram: DiagramState): string {
   const nodes = diagram.nodes;
   const edges = diagram.edges;
 
@@ -209,6 +212,21 @@ export function exportDiagramToXml(diagram: DiagramState): string {
         `<Size width="${node.measured.width}" height="${node.measured.height}" />`,
       );
     }
+    if (node.className) {
+      xmlParts.push(`<Classname>${node.className}</Classname>`);
+    }
+    if (node.selected) {
+      xmlParts.push(`<Selected>${node.selected}</Selected>`);
+    }
+    if (node.dragging) {
+      xmlParts.push(`<Dragging>${node.dragging}</Dragging>`);
+    }
+    if (node.parentId) {
+      xmlParts.push(`<ParentId>${node.parentId}</ParentId>`);
+    }
+    if (node.extent) {
+      xmlParts.push(`<Extent>${node.extent}</Extent>`);
+    }
     if (node.data && Object.keys(node.data).length > 1) {
       xmlParts.push("<Data>");
       for (const [key, value] of Object.entries(node.data)) {
@@ -220,11 +238,13 @@ export function exportDiagramToXml(diagram: DiagramState): string {
         );
       }
       if (node.data.extra) {
+        xmlParts.push("<Extra>");
         for (const [key, value] of Object.entries(node.data.extra)) {
           xmlParts.push(
             `<${String(key).charAt(0).toUpperCase() + String(key).slice(1)}>${value}</${String(key).charAt(0).toUpperCase() + String(key).slice(1)}>`,
           );
         }
+        xmlParts.push("</Extra>");
       }
       xmlParts.push("</Data>");
     }
@@ -240,6 +260,9 @@ export function exportDiagramToXml(diagram: DiagramState): string {
     xmlParts.push(`<Target>${edge.target}</Target>`);
     xmlParts.push(`<SourceHandle>${edge.sourceHandle}</SourceHandle>`);
     xmlParts.push(`<TargetHandle>${edge.targetHandle}</TargetHandle>`);
+    if (edge.label) {
+      xmlParts.push(`<Label>${edge.label}</Label>`);
+    }
     xmlParts.push("<Style>");
     for (const [key, value] of Object.entries(edge.style)) {
       xmlParts.push(
@@ -264,11 +287,13 @@ export function exportDiagramToXml(diagram: DiagramState): string {
         );
       }
       if (edge.data.extra) {
+        xmlParts.push("<Extra>");
         for (const [key, value] of Object.entries(edge.data.extra)) {
           xmlParts.push(
             `<${String(key).charAt(0).toUpperCase() + String(key).slice(1)}>${value}</${String(key).charAt(0).toUpperCase() + String(key).slice(1)}>`,
           );
         }
+        xmlParts.push("</Extra>");
       }
       xmlParts.push("</Data>");
     }
