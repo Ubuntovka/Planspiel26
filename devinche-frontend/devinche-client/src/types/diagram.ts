@@ -8,7 +8,7 @@ export interface DiagramState {
 
 // Extended node type with our custom data structure
 export interface DiagramNode extends Node {
-  type: string;
+  type?: string;
   data: NodeData;
 }
 
@@ -45,7 +45,7 @@ export interface UseDiagramReturn {
   nodes: DiagramNode[];
   edges: DiagramEdge[];
   menu: ContextMenuState | null;
-  flowWrapperRef: React.RefObject<HTMLDivElement>;
+  flowWrapperRef: React.RefObject<HTMLDivElement | null>;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (params: Connection) => void;
@@ -87,8 +87,15 @@ export interface UseDiagramReturn {
   /** Autosave/dirty state */
   isDirty?: boolean;
   /** 'owner' | 'editor' | 'viewer' when loaded from backend; undefined when not loaded or local. */
-  accessLevel?: 'owner' | 'editor' | 'viewer';
+  accessLevel?: DiagramAccessLevel;
 }
+
+export interface UseDiagramOptions {
+    diagramId?: string | null;
+    getToken?: () => string | null;
+}
+
+export type DiagramAccessLevel = 'owner' | 'editor' | 'viewer';
 
 // Node component props
 export interface NodeProps {

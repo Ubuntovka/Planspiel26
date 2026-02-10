@@ -1,3 +1,4 @@
+import handleDownloadJson from './exportToJson';
 import { exportDiagramToPng } from './exportToPng';
 import { Download, Upload, FileJson, Image, FileCode } from 'lucide-react';
 
@@ -6,29 +7,15 @@ interface ExportsPropsType {
     exportToRdf: () => string;
     exportToXml: () => string;
     importFromJson: (json: string) => void;
-    flowWrapperRef: React.RefObject<HTMLDivElement>
+    flowWrapperRef: React.RefObject<HTMLDivElement | null>
 }
 
 const Exports = ({ exportToJson, flowWrapperRef, exportToRdf, exportToXml, importFromJson }: ExportsPropsType) => {
 
-    const handleDownloadJson = () => {
-        try {
-            const json = exportToJson();
-            if (!json) return;
-
-            const blob = new Blob([json], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "diagram.json";
-            a.click();
-            URL.revokeObjectURL(url);
-        } catch (e) {
-            console.error("Problem exporting diagram JSON: ", e)
-        }
-        
+    const onDownloadJsonClick = () => {
+        const jsonString = exportToJson();
+        handleDownloadJson(jsonString); 
     };
-
     const handleDownloadPng = async () => {
         if (!flowWrapperRef.current) return;
         try {
@@ -99,7 +86,7 @@ const Exports = ({ exportToJson, flowWrapperRef, exportToRdf, exportToXml, impor
             </div>
             
             <button 
-                onClick={handleDownloadJson}
+                onClick={onDownloadJsonClick}
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 border border-transparent"
                 style={{ color: 'var(--editor-text)' }}
                 onMouseEnter={(e) => {

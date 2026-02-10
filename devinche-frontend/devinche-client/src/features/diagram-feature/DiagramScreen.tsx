@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useDiagram } from './hooks';
+import { useDiagram } from './hooks/useDiagram';
 import DiagramCanvas from './ui/DiagramCanvas';
 import { ProcessUnitNode } from "./ui/nodes/ProcessUnitNode";
 import DataProviderNode from "./ui/nodes/DataProviderNode";
