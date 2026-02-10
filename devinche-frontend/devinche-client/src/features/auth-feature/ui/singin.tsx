@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { login as apiLogin, getApiBase } from '@/features/auth-feature/api';
 
 // Minimal types for Google Identity Services (GIS) OAuth Code flow
@@ -51,14 +50,11 @@ const inriaSerif = Inria_Serif({
 export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { t } = useLanguage();
     const { setSession, isAuthenticated } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
-    const redirectingAfterLoginRef = useRef(false);
     const googleScriptLoadedRef = useRef(false);
     const codeClientRef = useRef<GoogleCodeClient | null>(null);
 
@@ -67,7 +63,7 @@ export default function LoginPage() {
     const postLoginUrl = returnUrl.startsWith('/editor/') ? '/editor' : returnUrl;
 
     useEffect(() => {
-        if (isAuthenticated && !redirectingAfterLoginRef.current) {
+        if (isAuthenticated) {
             router.replace(postLoginUrl);
         }
     }, [isAuthenticated, router, postLoginUrl]);
@@ -79,13 +75,8 @@ export default function LoginPage() {
 
         try {
             const { user, token } = await apiLogin(email, password);
-            redirectingAfterLoginRef.current = true;
             setSession(token, user);
-            setShowSuccess(true);
-            setTimeout(() => {
-                router.push(postLoginUrl);
-                redirectingAfterLoginRef.current = false;
-            }, 450);
+            router.push(postLoginUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
         } finally {
@@ -148,16 +139,9 @@ export default function LoginPage() {
                                         return;
                                     }
                                     if (data.token && data.user) {
-                                        redirectingAfterLoginRef.current = true;
                                         setSession(data.token, data.user);
-                                        setShowSuccess(true);
-                                        setTimeout(() => {
-                                            router.push(postLoginUrl);
-                                            redirectingAfterLoginRef.current = false;
-                                        }, 450);
-                                    } else {
-                                        router.push(postLoginUrl);
                                     }
+                                    router.push(postLoginUrl);
                                 } catch (e) {
                                     setError('Failed to login with Google');
                                 }
@@ -201,17 +185,6 @@ export default function LoginPage() {
 
     return (
         <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="login">
-            {showSuccess && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-[#4a5568]/90 animate-success-pulse"
-                    aria-live="polite"
-                >
-                    <div className="text-center text-white">
-                        <p className="text-xl font-semibold">{t('login.success')}</p>
-                        <p className="text-sm mt-1 opacity-90">{t('login.redirecting')}</p>
-                    </div>
-                </div>
-            )}
             <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -239,12 +212,25 @@ export default function LoginPage() {
                       href="/"
                       className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
                   >
-                      {t('login.home')}
+                      Home
                   </Link>
                 </div>
             </header>
 
-            <div className="fixed bottom-0 left-8 z-0">
+            <div className="md:hidden absolute bottom-0 left-0 z-0 pointer-events-none flex items-end justify-start opacity-20">
+                <div className="w-[180vw] max-w-[800px]">
+                    <Image
+                        src="/mona_2.svg"
+                        alt="Mona Lisa"
+                        width={800}
+                        height={800}
+                        className="w-full h-auto object-contain"
+                        priority
+                    />
+                </div>
+            </div>
+
+            <div className="hidden md:block fixed bottom-0 left-8 z-0">
                 <Image
                     src="/mona_2.svg"
                     alt="Mona Lisa"
@@ -254,34 +240,34 @@ export default function LoginPage() {
                 />
             </div>
 
-            <main className="relative min-h-[calc(100vh-88px)] flex items-start justify-end pr-95 pt-27 z-10">
-                <div className="w-120 animate-login-card">
-                    <div className="relative rounded-3xl shadow-xl p-20 border border-white border-opacity-40 overflow-hidden">
-                        <div className="absolute inset-0 bg-[#FFC31D] opacity-15 backdrop-blur-xl" style={{
+            <main className="relative h-[calc(100vh-88px)] flex items-center justify-center pt-0 md:items-start md:justify-end md:pr-95 md:pt-27 z-10">
+                <div className="h-[70%] md:h-auto w-[90vw] max-w-[580px] sm:w-[90vw] md:w-120">
+                    <div className="h-full relative rounded-3xl shadow-xl p-8 sm:p-12 md:p-20 border border-white border-opacity-40 overflow-hidden">
+                        <div className="absolute inset-0 bg-[#FFC31D] opacity-20 backdrop-blur-xl" style={{
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',
                         }}></div>
 
                         <div className="relative z-10">
-                            <h1 className="text-4xl font-bold text-center mb-10 text-gray-900">
-                                {t('login.title')}
+                            <h1 className="text-[26px] sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8 md:mb-10 text-gray-900">
+                                Login
                             </h1>
 
                             {error && (
-                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-base md:text-sm">
                                     {error}
                                 </div>
                             )}
 
-                            <div className="space-y-6">
+                            <div className="space-y-4 sm:space-y-5 md:space-y-6">
                                 <div>
                                     <input
                                         type="email"
                                         id="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder={t('login.emailPlaceholder')}
-                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-sm bg-transparent"
+                                        placeholder="Email"
+                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                         required
                                         disabled={isLoading}
                                     />
@@ -295,8 +281,8 @@ export default function LoginPage() {
                                             id="password"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            placeholder={t('login.passwordPlaceholder')}
-                                            className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-sm bg-transparent"
+                                            placeholder="Password"
+                                            className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                             required
                                             disabled={isLoading}
                                             onKeyDown={(e) => {
@@ -307,8 +293,8 @@ export default function LoginPage() {
                                         />
                                     </div>
                                     <div className="text-right mt-1">
-                                        <Link href="/forgot-password" className="text-xs text-gray-800 hover:text-gray-800">
-                                            {t('login.forgotPassword')}
+                                        <Link href="/forgot-password" className="text-sm md:text-xs text-gray-800 hover:text-gray-800">
+                                            Forgot password?
                                         </Link>
                                     </div>
                                 </div>
@@ -316,21 +302,21 @@ export default function LoginPage() {
                                 <button
                                     onClick={handleLogin}
                                     disabled={isLoading}
-                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-xl md:text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading ? t('login.loggingIn') : t('login.submit')}
+                                    {isLoading ? 'Logging in...' : 'Login'}
                                 </button>
                             </div>
 
                             <div className="mt-6">
-                                <p className="text-center text-sm text-gray-700 mb-4">
-                                    {t('login.orLoginWith')}
+                                <p className="text-center text-base md:text-sm text-gray-700 mb-4">
+                                    Or log in with:
                                 </p>
                                 <div className="flex justify-center gap-4">
                                     <button
                                         onClick={handleGoogleLogin}
                                         className="w-12 h-12 flex items-center justify-center bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"
-                                        aria-label={t('login.loginWithGoogle')}
+                                        aria-label="Login with Google"
                                         disabled={isLoading}
                                     >
                                         <Image
@@ -381,7 +367,7 @@ export default function LoginPage() {
               :global([data-theme="dark"]) [data-page="login"] h1 {
                 color: var(--editor-text);
               }
-              :global([data-theme="dark"]) [data-page="login"] .pointer-events-none {
+              :global([data-theme="dark"]) [data-page="login"]  {
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
@@ -393,10 +379,10 @@ export default function LoginPage() {
                 color: var(--editor-text);
                 border-color: var(--editor-border-light) !important;
               }
-              :global([data-theme="dark"]) [data-page="login"] button.w-full {
+              :global([data-theme="dark"]) [data-page="login"] {
                 background: var(--editor-accent) !important;
               }
-              :global([data-theme="dark"]) [data-page="login"] button.w-full:hover {
+              :global([data-theme="dark"]) [data-page="login"]  {
                 background: var(--editor-accent-hover) !important;
               }
             `}</style>
