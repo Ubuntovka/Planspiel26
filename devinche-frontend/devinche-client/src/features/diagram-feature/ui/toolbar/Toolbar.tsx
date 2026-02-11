@@ -17,7 +17,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { exportDiagramToPng } from "../exports/exportToPng";
+import { exportDiagramToJson, exportDiagramToPng, exportDiagramToRdf, exportDiagramToXml } from "../../imports-exports/exports";
+import { importDiagramFromJSON, importDiagramFromRdf, importDiagramFromXml } from "../../imports-exports/imports";
 import { DiagramNode } from "@/types/diagram";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -35,10 +36,6 @@ interface ToolbarProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onFitView?: () => void;
-  exportToJson: () => string | null;
-  exportToRdf: () => string;
-  exportToXml: () => string;
-  importFromJson: (json: string) => void;
   handleValidation?: () => void;
   flowWrapperRef: React.RefObject<HTMLDivElement>;
   allNodes: DiagramNode[];
@@ -66,9 +63,7 @@ const Toolbar = ({
   onZoomIn,
   onZoomOut,
   onFitView,
-  exportToJson,
   flowWrapperRef,
-  importFromJson,
   handleValidation,
   allNodes = [],
   canShare = false,
@@ -128,218 +123,6 @@ const Toolbar = ({
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showCostDetails, showSaveDropdown, showExportDropdown]);
-
-  const handleDownloadJson = () => {
-    try {
-      const json = exportToJson();
-      if (!json) return;
-
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "diagram.json";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error("Problem exporting diagram JSON: ", e);
-    }
-  };
-
-  const handleDownloadPng = async () => {
-    if (!flowWrapperRef.current) return;
-    try {
-      await exportDiagramToPng(flowWrapperRef.current, "diagram.png");
-    } catch (e) {
-      console.error("Problem exporting diagram PNG: ", e);
-    }
-  };
-
-  const handleDownloadRdf = async () => {
-    try {
-      const json = exportToJson();
-      if (!json) {
-        console.error("No diagram to export");
-        return;
-      }
-
-      const diagram = JSON.parse(json);
-      console.log(diagram);
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/rdf`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ data: diagram }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`RDF export failed: ${response.status}`);
-      }
-
-      // Backend returns plain Turtle string directly
-      const ttlJson = await response.text();
-      const ttl = JSON.parse(ttlJson).diagram;
-
-      const blob = new Blob([ttl], { type: "text/turtle;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "diagram.ttl";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error("Problem exporting diagram RDF:", e);
-    }
-  };
-
-  const handleDownloadXml = async () => {
-    try {
-      const json = exportToJson();
-      if (!json) {
-        console.error("No diagram to export");
-        return;
-      }
-
-      const diagram = JSON.parse(json);
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/xml`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ data: diagram }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`XML export failed: ${response.status}`);
-      }
-
-      const xmlJson = await response.text();
-      const xml = JSON.parse(xmlJson).diagram;
-
-      const blob = new Blob([xml], { type: "application/xml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "diagram.xml";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error("Problem exporting diagram XML:", e);
-    }
-  };
-
-  const handleImportJson: React.ChangeEventHandler<HTMLInputElement> = async (
-    e,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      importFromJson(text);
-    } catch (err) {
-      console.error("Problem importing diagram JSON: ", err);
-    } finally {
-      e.target.value = ""; // reset input
-    }
-  };
-
-  const handleImportRdf: React.ChangeEventHandler<HTMLInputElement> = async (
-    e,
-  ) => {
-    console.log("TTL import triggered");
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (
-      file.size > 10 * 1024 * 1024 ||
-      !file.name.toLowerCase().endsWith(".ttl")
-    ) {
-      e.target.value = "";
-      console.error("Invalid file");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/import/rdf`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Import failed: ${response.status} ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log(result)
-      importFromJson(JSON.stringify(result));
-    } catch (err) {
-      console.error("TTL import error:", err);
-    } finally {
-      e.target.value = "";
-    }
-  };
-
-  const handleImportXml: React.ChangeEventHandler<HTMLInputElement> = async (
-    e,
-  ) => {
-    console.log("XMLI ran");
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (
-      file.size > 10 * 1024 * 1024 ||
-      !file.name.toLowerCase().endsWith(".xml")
-    ) {
-      e.target.value = "";
-      console.error("File too big");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/import/xml`,
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Import failed: ${response.status} ${errorText}`);
-    }
-
-    const result = await response.json();
-    try {
-      importFromJson(JSON.stringify(result));
-    } catch (err) {
-      console.error("Problem importing diagram XML: ", err);
-    } finally {
-      e.target.value = "";
-    }
-  };
 
   const handleSave = async () => {
     if (!onSave) return;
@@ -660,7 +443,7 @@ const Toolbar = ({
                 <input
                   type="file"
                   accept="application/json"
-                  onChange={handleImportJson}
+                  onChange={importDiagramFromJSON}
                   className="hidden"
                   // onClick={() => setShowImportDropdown(false)}
                 />
@@ -673,7 +456,7 @@ const Toolbar = ({
                 <input
                   type="file"
                   accept=".ttl"
-                  onChange={handleImportRdf}
+                  onChange={importDiagramFromRdf}
                   className="hidden"
                   // onClick={() => setShowImportDropdown(false)}
                 />
@@ -689,7 +472,7 @@ const Toolbar = ({
                   id="import-xml"
                   type="file"
                   accept=".xml,application/xml"
-                  onChange={handleImportXml}
+                  onChange={importDiagramFromXml}
                   className="hidden"
                 />
               </label>
@@ -731,7 +514,7 @@ const Toolbar = ({
               <button
                 type="button"
                 onClick={() => {
-                  handleDownloadJson();
+                  exportDiagramToJson();
                   setShowExportDropdown(false);
                 }}
                 className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
@@ -742,7 +525,7 @@ const Toolbar = ({
               <button
                 type="button"
                 onClick={() => {
-                  handleDownloadPng();
+                  exportDiagramToPng(flowWrapperRef.current, "diagram.png");
                   setShowExportDropdown(false);
                 }}
                 className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
@@ -753,7 +536,7 @@ const Toolbar = ({
               <button
                 type="button"
                 onClick={() => {
-                  handleDownloadRdf();
+                  exportDiagramToRdf();
                   setShowExportDropdown(false);
                 }}
                 className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
@@ -764,7 +547,7 @@ const Toolbar = ({
               <button
                 type="button"
                 onClick={() => {
-                  handleDownloadXml();
+                  exportDiagramToXml();
                   setShowExportDropdown(false);
                 }}
                 className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)]"
