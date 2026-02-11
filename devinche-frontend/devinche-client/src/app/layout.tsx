@@ -4,6 +4,8 @@ import "./globals.css";
 import { ReactFlowProvider } from "@xyflow/react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import PageTransition from "@/components/PageTransition";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,9 +42,11 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            <ReactFlowProvider>
-              {children}
-            </ReactFlowProvider>
+            <LanguageProvider>
+              <ReactFlowProvider>
+                <PageTransition>{children}</PageTransition>
+              </ReactFlowProvider>
+            </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

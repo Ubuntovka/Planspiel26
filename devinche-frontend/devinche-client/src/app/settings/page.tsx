@@ -105,7 +105,7 @@ export default function AccountPage() {
     };
 
     return (
-        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="account">
+        <div className={`min-h-screen bg-[#e8eaed] relative overflow-x-hidden overflow-y-auto md:overflow-visible ${inriaSerif.className}`} data-page="account">
             <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -129,9 +129,9 @@ export default function AccountPage() {
                 </div>
             </header>
 
-            <main className="relative z-10 flex justify-center items-start pt-12 pb-20 px-4">
+            <main className="relative z-10 flex justify-center items-start pt-6 md:pt-12 pb-16 md:pb-20 px-4">
                 <div className="w-full max-w-[580px]">
-                    <div className="card relative rounded-3xl shadow-xl p-8 md:p-12 border border-white border-opacity-40 overflow-hidden">
+                    <div className="card relative rounded-3xl shadow-xl p-6 md:p-12 border border-white border-opacity-40 overflow-hidden">
                         <div className="card-overlay absolute inset-0 bg-[#FFC31D] opacity-15 backdrop-blur-xl" style={{
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',

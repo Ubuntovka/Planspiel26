@@ -58,11 +58,14 @@ export function JSONtoRDF(diagram: DiagramState): string {
       for (const [key, value] of Object.entries(node.data)) {
         if (key === "extra" || typeof value === "object" || key === "label")
           continue; // Handle nested below
-
         const predicate = `wam:${key.replace(/[^a-zA-Z0-9]/g, "")}`; // Sanitize to RDF-safe
         const literal =
           typeof value === "number" ? `"${value}"^^xsd:decimal` : `"${value}"`;
-        lines.push(`  ${predicate} ${literal} ;`);
+        if (key === "type") {
+          lines.push(`  wam:category ${literal} ;`)
+        } else {
+          lines.push(`  ${predicate} ${literal} ;`);
+        }
       }
       if (node.data.extra) {
         for (const [key, value] of Object.entries(node.data.extra)) {

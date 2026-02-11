@@ -40,6 +40,7 @@ export function RDFtoJSON(rdfData: string): DiagramState {
         if (other) values.push(other[2]);
         if (other) nodeJson[other[1]] = other[2];
       }
+      console.log(nodeJson)
       // restructure JSON
       const commonData = [
         "x",
@@ -62,7 +63,7 @@ export function RDFtoJSON(rdfData: string): DiagramState {
       const data: any = {};
       if (nodeJson.label) data.label = nodeJson.label;
       if (nodeJson.name) data.name = nodeJson.name;
-      if (nodeJson.type) data.type = nodeJson.type;
+      if (nodeJson.type) data.type = nodeJson.category;
       if (nodeJson.cost) data.cost = parseFloat(nodeJson.cost);
       data.extra = {
         ...(Object.keys(extra).length && extra),

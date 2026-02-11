@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDiagram } from './hooks';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useDiagram } from './hooks/useDiagram';
 import DiagramCanvas from './ui/DiagramCanvas';
 import { ProcessUnitNode } from "./ui/nodes/ProcessUnitNode";
 import DataProviderNode from "./ui/nodes/DataProviderNode";
@@ -33,8 +34,8 @@ import AiServiceNode from './ui/nodes/AiServiceNode';
 import { generateDiagramFromPrompt } from './api';
 import ShareDialog from './ui/ShareDialog';
 import CommentsPanel from './ui/comments/CommentsPanel';
-import NotificationBell from './ui/notifications/NotificationBell';
 import { listComments, type CommentItem, type CommentAnchor } from './api';
+import { useCollaboration } from './collaboration/useCollaboration';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -110,6 +111,13 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     accessLevel,
   } = useDiagram({ diagramId: diagramId ?? undefined, getToken });
 
+  const { t } = useLanguage();
+  const collaborationEnabled = !!(diagramId && getToken?.());
+  const { cursors: collaborationCursors, sendCursor, myColor: collaborationMyColor, connected: collaborationConnected } = useCollaboration(
+    collaborationEnabled ? diagramId : null,
+    getToken ?? (() => null),
+    userDisplayName
+  );
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const isViewer = accessLevel === 'viewer';
@@ -147,11 +155,6 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   const contextMenuForCanvas = isViewer ? null : contextMenuProps;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
-  const [nameInput, setNameInput] = useState(diagramName ?? 'Untitled Diagram');
-  useEffect(() => {
-    setNameInput(diagramName ?? 'Untitled Diagram');
-  }, [diagramName]);
-
   const handleZoomIn = useCallback(() => {
     zoomIn();
   }, [zoomIn]);
@@ -270,77 +273,16 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
 
   return (
     <div className="relative w-screen h-screen">
-      {diagramId && (
-        <div
-          className="flex items-center gap-2 px-3 py-1.5 shrink-0"
-          style={{ backgroundColor: 'var(--editor-surface)', borderBottom: '1px solid var(--editor-border)' }}
-        >
-          <Link
-            href="/editor"
-            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-[var(--editor-surface-hover)] transition-colors"
-            style={{ color: 'var(--editor-text-secondary)' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Back
-          </Link>
-          {isViewer && (
-            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--editor-surface-hover)', color: 'var(--editor-text-secondary)' }}>
-              View only
-            </span>
-          )}
-          {onRenameDiagram && !isViewer && (
-            <input
-              type="text"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              onBlur={async () => {
-                const val = nameInput.trim() || 'Untitled Diagram';
-                if (val !== (diagramName ?? 'Untitled Diagram')) {
-                  await onRenameDiagram(val);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') e.currentTarget.blur();
-              }}
-              className="flex-1 min-w-0 px-2 py-1 rounded border-0 bg-transparent font-medium focus:outline-none focus:ring-1"
-              style={{ color: 'var(--editor-text)', maxWidth: 300 }}
-            />
-          )}
-          <div className="ml-auto flex items-center gap-1">
-            <NotificationBell getToken={getToken!} onNavigate={() => setCommentsPanelOpen(false)} />
-            {!isViewer && (
-              <button
-                type="button"
-                onClick={() => setCommentsPanelOpen(true)}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-[var(--editor-surface-hover)] transition-colors text-sm"
-                style={{ color: 'var(--editor-text-secondary)' }}
-                title="Comments"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                Comments
-                {comments.filter((c) => !c.resolved).length > 0 && (
-                  <span
-                    className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-medium text-white"
-                    style={{ backgroundColor: 'var(--editor-accent)' }}
-                  >
-                    {comments.filter((c) => !c.resolved).length}
-                  </span>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
       <Toolbar
         onBack={diagramId ? () => router.push('/editor') : undefined}
-        backLabel="Diagrams"
+        backLabel={t('toolbar.diagrams')}
         onSave={isViewer ? undefined : handleSave}
         onSaveAs={isViewer ? undefined : handleSaveAs}
         diagramName={diagramName ?? 'Untitled Diagram'}
+        onRenameDiagram={!isViewer ? onRenameDiagram : undefined}
+        isViewer={isViewer}
+        getToken={getToken ?? undefined}
+        onNotificationNavigate={() => setCommentsPanelOpen(false)}
         isLoggedIn={isAuthenticated}
         onUndo={isViewer ? () => {} : onUndo}
         onRedo={isViewer ? () => {} : onRedo}
@@ -350,6 +292,8 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
         handleValidation={isViewer ? undefined : handleValidation}
+        exportToJson={exportToJson}
+        importFromJson={importFromJson}
         flowWrapperRef={flowWrapperRef}
         allNodes={nodes}
         canShare={isOwner}
@@ -357,6 +301,10 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         onShareClick={isOwner ? () => setShareDialogOpen(true) : undefined}
         onCommentsClick={!isViewer && diagramId ? () => setCommentsPanelOpen(true) : undefined}
         commentsUnresolvedCount={comments.filter((c) => !c.resolved).length}
+        activeUsers={collaborationCursors.map((c) => ({ id: c.id, displayName: c.displayName, color: c.color }))}
+        myColor={collaborationMyColor ?? undefined}
+        myDisplayName={userDisplayName}
+        collaborationConnected={collaborationConnected}
       />
       {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
 
@@ -388,6 +336,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         diagramId={diagramId}
         getToken={getToken}
         userDisplayName={userDisplayName}
+        collaboration={{ cursors: collaborationCursors, sendCursor }}
         comments={comments}
         onCommentClick={() => setCommentsPanelOpen(true)}
         onAddCommentAtPoint={
@@ -423,6 +372,16 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
             };
           }}
           onApplyDiagram={importFromJson}
+          getCurrentDiagram={() => {
+            try {
+              const json = exportToJson();
+              if (!json) return null;
+              const obj = JSON.parse(json) as { nodes?: any[]; edges?: any[]; viewport?: { x: number; y: number; zoom: number } };
+              return { nodes: obj.nodes ?? [], edges: obj.edges ?? [], viewport: obj.viewport ?? { x: 0, y: 0, zoom: 1 } };
+            } catch {
+              return null;
+            }
+          }}
         />
       )}
       {shareDialogOpen && diagramId && getToken && (

@@ -403,3 +403,34 @@ export async function generateDiagramFromPrompt(prompt: string): Promise<Generat
   }
   return data as GenerateDiagramResult;
 }
+
+export interface ExplainDiagramCostSummary {
+  nodes: number;
+  edges: number;
+  realms: number;
+  aiProcesses: number;
+  estimatedMonthlyUsd: number;
+}
+
+export interface ExplainDiagramResponse {
+  explanation: string;
+  validation: { valid: boolean; errors: string[] };
+  cost: ExplainDiagramCostSummary;
+  summary: { nodeCount: number; edgeCount: number; realmCount: number; estimatedMonthlyUsd: number };
+}
+
+export async function explainDiagram(diagram: { nodes: any[]; edges: any[]; viewport?: { x: number; y: number; zoom: number } }): Promise<ExplainDiagramResponse> {
+  const base = getApiBasePublic();
+  if (!base) throw new Error('API base URL not configured');
+  const res = await fetch(`${base}/api/llm/explain-diagram`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ diagram }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = (data as { error?: string }).error || `Request failed: ${res.status}`;
+    throw new Error(msg);
+  }
+  return data as ExplainDiagramResponse;
+}

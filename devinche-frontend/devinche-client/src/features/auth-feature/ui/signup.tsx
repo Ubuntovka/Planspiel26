@@ -98,8 +98,21 @@ export default function SignUpPage() {
                 </div>
             </header>
 
+            <div className="md:hidden absolute bottom-0 right-0 z-0 pointer-events-none flex items-end justify-end opacity-20">
+                <div className="w-[250vw] max-w-[250px]">
+                    <Image
+                        src="/menu.svg"
+                        alt="Menu illustration"
+                        width={600}
+                        height={600}
+                        className="w-full h-auto object-contain"
+                        priority
+                    />
+                </div>
+            </div>
 
-            <div className="fixed bottom-0 right-0 z-0">
+            
+            <div className="hidden md:block fixed bottom-0 right-0 z-0">
                 <Image
                     src="/menu.svg"
                     alt="Menu illustration"
@@ -110,10 +123,10 @@ export default function SignUpPage() {
             </div>
 
 
-            <main className="relative min-h-[calc(100vh-88px)] flex items-start justify-start pl-75 pt-27 z-10">
-                <div className="w-[580px]">
-                    <div className="relative rounded-3xl shadow-xl p-25 border border-white border-opacity-40 overflow-hidden">
-                        <div className="absolute inset-0 bg-[#FFC31D] opacity-15 backdrop-blur-xl" style={{
+            <main className="relative h-[calc(100vh-88px)] flex items-center justify-center md:items-start md:justify-start px-4 md:px-0 md:pl-85 pt-0 md:pt-27 z-10">
+                <div className="h-[70%] md:h-auto w-[90vw] max-w-[500px] md:max-w-[500px] mx-auto md:mx-0">
+                    <div className="h-full relative rounded-3xl shadow-xl p-8 md:p-25 border border-white border-opacity-40 overflow-hidden">
+                        <div className="absolute inset-0 bg-[#FFC31D] opacity-20 backdrop-blur-xl" style={{
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',
                         }}></div>
@@ -133,17 +146,17 @@ export default function SignUpPage() {
                         />
 
                         <div className="relative z-15">
-                            <h1 className="text-4xl font-bold text-center mb-8 text-gray-900">
+                            <h1 className="text-[26px] md:text-4xl font-bold text-center mb-6 md:mb-8 text-gray-900">
                                 Sign up
                             </h1>
 
                             {error && (
-                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-base md:text-sm">
                                     {error}
                                 </div>
                             )}
 
-                            <div className="space-y-5">
+                            <div className="space-y-4 md:space-y-5">
                                 <div>
                                     <input
                                         type="text"
@@ -151,7 +164,7 @@ export default function SignUpPage() {
                                         value={firstName}
                                         onChange={(e) => setFirstName(e.target.value)}
                                         placeholder="First name"
-                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-sm bg-transparent"
+                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                         required
                                         disabled={isLoading}
                                     />
@@ -164,12 +177,11 @@ export default function SignUpPage() {
                                         value={lastName}
                                         onChange={(e) => setLastName(e.target.value)}
                                         placeholder="Last name"
-                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-sm bg-transparent"
+                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                         required
                                         disabled={isLoading}
                                     />
                                 </div>
-
 
                                 <div>
                                     <input
@@ -178,7 +190,7 @@ export default function SignUpPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="Email"
-                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-sm bg-transparent"
+                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                         required
                                         disabled={isLoading}
                                     />
@@ -191,7 +203,7 @@ export default function SignUpPage() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Password"
-                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-sm bg-transparent"
+                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                         required
                                         disabled={isLoading}
                                         onKeyDown={(e) => {
@@ -200,7 +212,7 @@ export default function SignUpPage() {
                                             }
                                         }}
                                     />
-                                    <p className="text-xs text-gray-600 mt-1">
+                                    <p className="text-sm md:text-xs text-gray-600 mt-1">
                                         Password must be at least 8 characters long
                                     </p>
                                 </div>
@@ -208,14 +220,14 @@ export default function SignUpPage() {
                                 <button
                                     onClick={handleSignUp}
                                     disabled={isLoading}
-                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-xl md:text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isLoading ? 'Registering...' : 'Register'}
                                 </button>
                             </div>
 
                             <div className="mt-6 text-center">
-                                <p className="text-sm text-gray-700">
+                                <p className="text-base md:text-sm text-gray-700">
                                     Already have an account?{' '}
                                     <Link href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
                                         Sign in
@@ -238,7 +250,7 @@ export default function SignUpPage() {
               :global([data-theme="dark"]) [data-page="signup"] h1 {
                 color: var(--editor-text);
               }
-              :global([data-theme="dark"]) [data-page="signup"] .pointer-events-none {
+              :global([data-theme="dark"]) [data-page="signup"]{
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
@@ -250,16 +262,16 @@ export default function SignUpPage() {
                 color: var(--editor-text);
                 border-color: var(--editor-border-light) !important;
               }
-              :global([data-theme="dark"]) [data-page="signup"] button.w-full {
+              :global([data-theme="dark"]) [data-page="signup"]{
                 background: var(--editor-accent) !important;
               }
-              :global([data-theme="dark"]) [data-page="signup"] button.w-full:hover {
+              :global([data-theme="dark"]) [data-page="signup"]  {
                 background: var(--editor-accent-hover) !important;
               }
-              :global([data-theme="dark"]) [data-page="signup"] p.text-xs {
+              :global([data-theme="dark"]) [data-page="signup"] {
                 color: var(--editor-text-secondary);
               }
-              :global([data-theme="dark"]) [data-page="signup"] .rounded-3xl {
+              :global([data-theme="dark"]) [data-page="signup"]{
                 box-shadow: 0 8px 16px var(--editor-shadow-lg) !important;
               }
             `}</style>

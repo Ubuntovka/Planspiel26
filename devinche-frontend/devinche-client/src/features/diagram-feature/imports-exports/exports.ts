@@ -1,17 +1,12 @@
-import { useDiagram } from "../hooks";
 import { toPng } from "html-to-image";
-
-const { exportToJson } = useDiagram();
 
 /**
  * Exports diagram to JSON, saving to user's machine
  * @returns null
  */
-export const exportDiagramToJson = () => {
+export const exportDiagramToJson = (json: any) => {
+  if (!json) return;
   try {
-    const json = exportToJson();
-    if (!json) return;
-
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -174,32 +169,30 @@ export async function exportDiagramToPng(
  * Exports diagram to RDF, saving to user's machine
  * @returns null
  */
-export const exportDiagramToRdf = async () => {
-  try {
-    const json = exportToJson();
-    if (!json) {
-      console.error("No diagram to export");
-      return;
-    }
+export const exportDiagramToRdf = async (json: any) => {
+  if (!json) {
+    console.error("No diagram to export");
+    return;
+  }
 
-    const diagram = JSON.parse(json);
-    console.log(diagram);
+  const diagram = JSON.parse(json);
+  console.log(diagram);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/rdf`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ data: diagram }),
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/rdf`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ data: diagram }),
+    },
+  );
 
-    if (!response.ok) {
-      throw new Error(`RDF export failed: ${response.status}`);
-    }
-
+  if (!response.ok) {
+    throw new Error(`RDF export failed: ${response.status}`);
+  }
+  try {
     // Backend returns plain Turtle string directly
     const ttlJson = await response.text();
     const ttl = JSON.parse(ttlJson).diagram;
@@ -222,31 +215,29 @@ export const exportDiagramToRdf = async () => {
  * Exports diagram to XML, saving to user's machine
  * @returns null
  */
-export const exportDiagramToXml = async () => {
-  try {
-    const json = exportToJson();
-    if (!json) {
-      console.error("No diagram to export");
-      return;
-    }
+export const exportDiagramToXml = async (json: any) => {
+  if (!json) {
+    console.error("No diagram to export");
+    return;
+  }
 
-    const diagram = JSON.parse(json);
+  const diagram = JSON.parse(json);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/xml`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ data: diagram }),
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/export/xml`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ data: diagram }),
+    },
+  );
 
-    if (!response.ok) {
-      throw new Error(`XML export failed: ${response.status}`);
-    }
-
+  if (!response.ok) {
+    throw new Error(`XML export failed: ${response.status}`);
+  }
+  try {
     const xmlJson = await response.text();
     const xml = JSON.parse(xmlJson).diagram;
 

@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { MessageSquare, X, Send, Check, RotateCcw, Trash2 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   listComments,
   createComment,
@@ -28,6 +30,15 @@ function authorDisplay(author?: { email: string; firstName?: string; lastName?: 
   return name || author.email || 'Unknown';
 }
 
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || '?';
+}
+
 interface CommentsPanelProps {
   diagramId: string;
   getToken: () => string | null;
@@ -50,6 +61,7 @@ export default function CommentsPanel({
   comments: externalComments,
   setComments: externalSetComments,
 }: CommentsPanelProps) {
+  const { t } = useLanguage();
   const [internalComments, setInternalComments] = useState<CommentItem[]>([]);
   const comments = externalComments ?? internalComments;
   const setComments = externalSetComments ?? setInternalComments;
@@ -162,173 +174,246 @@ export default function CommentsPanel({
       const { comment } = await updateComment(token, diagramId, c._id, { resolved: !c.resolved });
       setComments((prev) => prev.map((x) => (x._id === comment._id ? comment : x)));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to update');
+      setError(e instanceof Error ? e.message : t('comments.failedToUpdate'));
     }
   };
 
   const handleDelete = async (c: CommentItem) => {
-    if (!confirm('Delete this comment?')) return;
+    if (!confirm(t('comments.deleteCommentConfirm'))) return;
     const token = getToken();
     if (!token) return;
     try {
       await deleteComment(token, diagramId, c._id);
       setComments((prev) => prev.filter((x) => x._id !== c._id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to delete');
+      setError(e instanceof Error ? e.message : t('comments.failedToDelete'));
     }
   };
 
   return (
-    <div
-      className="fixed top-0 right-0 h-full w-full max-w-md flex flex-col z-50 shadow-lg custom-scrollbar"
-      style={{
-        backgroundColor: 'var(--editor-panel-bg)',
-        borderLeft: '1px solid var(--editor-border)',
-        color: 'var(--editor-text)',
-      }}
-    >
+    <>
+      {/* Backdrop – above toolbar so drawer is clearly on top */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="fixed inset-0 z-[90] transition-opacity duration-200"
+        style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
+        aria-label={t('comments.closePanel')}
+      />
+      {/* Drawer – below toolbar with gap so avatar doesn’t overlap; high z so nothing overlaps it */}
       <div
-        className="flex items-center justify-between px-4 py-3 shrink-0"
-        style={{ borderBottom: '1px solid var(--editor-border)' }}
+        className="fixed right-0 w-full max-w-[380px] flex flex-col z-[91] custom-scrollbar rounded-l-xl comments-drawer-enter isolate"
+        style={{
+          top: 92,
+          height: 'calc(100vh - 92px)',
+          backgroundColor: 'var(--editor-panel-bg)',
+          borderLeft: '1px solid var(--editor-panel-border)',
+          boxShadow: 'var(--editor-panel-shadow)',
+          color: 'var(--editor-text)',
+        }}
       >
-        <h2 className="font-semibold text-lg">Comments</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-2 rounded hover:bg-[var(--editor-surface-hover)] transition-colors"
-          aria-label="Close"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      {error && (
+        {/* Header */}
         <div
-          className="mx-4 mt-2 px-3 py-2 rounded text-sm"
-          style={{ backgroundColor: 'var(--editor-error)', color: 'white' }}
+          className="flex items-center justify-between gap-3 px-5 py-4 shrink-0 rounded-tl-xl"
+          style={{
+            backgroundColor: 'var(--editor-panel-header)',
+            borderBottom: '1px solid var(--editor-panel-border)',
+          }}
         >
-          {error}
-        </div>
-      )}
-      <div className="flex-1 overflow-y-auto px-4 py-3">
-        {loading ? (
-          <p style={{ color: 'var(--editor-text-muted)' }}>Loading comments…</p>
-        ) : (
-          <ul className="space-y-3">
-            {comments.map((c) => (
-              <li
-                key={c._id}
-                className="rounded-lg p-3 border"
-                style={{
-                  backgroundColor: 'var(--editor-surface)',
-                  borderColor: c.resolved ? 'var(--editor-border-light)' : 'var(--editor-border)',
-                  opacity: c.resolved ? 0.85 : 1,
-                }}
-              >
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="font-medium text-sm">{authorDisplay(c.author)}</span>
-                  <span className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
-                    {formatDate(c.createdAt)}
-                  </span>
-                </div>
-                <p className="text-sm whitespace-pre-wrap break-words">{c.content}</p>
-                {c.mentions?.length > 0 && (
-                  <p className="text-xs mt-1" style={{ color: 'var(--editor-text-muted)' }}>
-                    Mentioned {c.mentions.length} user{c.mentions.length !== 1 ? 's' : ''}
-                  </p>
-                )}
-                <div className="flex gap-2 mt-2">
-                  {c.userId === currentUserId && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleResolve(c)}
-                        className="text-xs px-2 py-1 rounded hover:bg-[var(--editor-surface-hover)]"
-                        style={{ color: 'var(--editor-accent)' }}
-                      >
-                        {c.resolved ? 'Reopen' : 'Resolve'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(c)}
-                        className="text-xs px-2 py-1 rounded hover:bg-[var(--editor-surface-hover)]"
-                        style={{ color: 'var(--editor-error)' }}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <div
-        className="shrink-0 p-4 border-t"
-        style={{ borderColor: 'var(--editor-border)' }}
-      >
-        {anchorToAttach && (
-          <p className="text-xs mb-2" style={{ color: 'var(--editor-text-muted)' }}>
-            Attaching to {anchorToAttach.type === 'point' ? 'canvas' : anchorToAttach.type}
-          </p>
-        )}
-        <div className="relative">
-          <textarea
-            ref={textareaRef}
-            value={newContent}
-            onChange={handleTextChange}
-            onKeyDown={(e) => {
-              if (showMentionSuggestions && (e.key === 'Escape' || e.key === 'Tab')) {
-                setShowMentionSuggestions(false);
-              }
-            }}
-            placeholder="Add a comment… Use @ to mention others"
-            rows={3}
-            className="w-full rounded border px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2"
-            style={{
-              borderColor: 'var(--editor-border)',
-              backgroundColor: 'var(--editor-bg)',
-              color: 'var(--editor-text)',
-            }}
-          />
-          {showMentionSuggestions && filteredCollaborators.length > 0 && (
+          <div className="flex items-center gap-2">
             <div
-              ref={suggestionRef}
-              className="absolute left-0 right-0 bottom-full mb-1 max-h-40 overflow-y-auto rounded border shadow-lg py-1 z-10 custom-scrollbar"
-              style={{
-                backgroundColor: 'var(--editor-surface)',
-                borderColor: 'var(--editor-border)',
-              }}
+              className="flex items-center justify-center w-9 h-9 rounded-xl"
+              style={{ backgroundColor: 'var(--editor-accent)', color: 'white' }}
             >
-              {filteredCollaborators.map((u) => (
-                <button
-                  key={u._id}
-                  type="button"
-                  onClick={() => insertMention(u)}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-surface-hover)]"
-                  style={{ color: 'var(--editor-text)' }}
-                >
-                  {[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email}
-                  <span className="ml-2 text-xs" style={{ color: 'var(--editor-text-muted)' }}>
-                    {u.email}
-                  </span>
-                </button>
-              ))}
+              <MessageSquare size={20} />
             </div>
+            <div>
+              <h2 className="font-semibold text-base tracking-tight" style={{ color: 'var(--editor-text)' }}>
+                {t('comments.title')}
+              </h2>
+              <p className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
+                {t('comments.commentCount', { count: comments.length })}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-[var(--editor-surface-hover)] transition-colors"
+            style={{ color: 'var(--editor-text-secondary)' }}
+            aria-label={t('common.close')}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {error && (
+          <div
+            className="mx-4 mt-3 px-3 py-2.5 rounded-xl text-sm border"
+            style={{
+              backgroundColor: 'var(--editor-error)',
+              borderColor: 'var(--editor-error)',
+              color: 'white',
+              opacity: 0.95,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {/* Comment list */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12" style={{ color: 'var(--editor-text-muted)' }}>
+              <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-3" />
+              <p className="text-sm">{t('comments.loading')}</p>
+            </div>
+          ) : comments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center" style={{ color: 'var(--editor-text-muted)' }}>
+              <MessageSquare size={40} className="opacity-40 mb-2" />
+              <p className="text-sm">{t('comments.noCommentsYet')}</p>
+              <p className="text-xs mt-1">{t('comments.noCommentsHint')}</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {comments.map((c) => {
+                const authorName = authorDisplay(c.author);
+                return (
+                  <li
+                    key={c._id}
+                    className="rounded-xl p-4 border transition-colors"
+                    style={{
+                      backgroundColor: 'var(--editor-surface)',
+                      borderColor: c.resolved ? 'var(--editor-border-light)' : 'var(--editor-border)',
+                      opacity: c.resolved ? 0.9 : 1,
+                    }}
+                  >
+                    <div className="flex gap-3">
+                      <div
+                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold"
+                        style={{ backgroundColor: 'var(--editor-surface-hover)', color: 'var(--editor-text-secondary)' }}
+                      >
+                        {initials(authorName)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="font-medium text-sm" style={{ color: 'var(--editor-text)' }}>
+                            {authorName}
+                          </span>
+                          <span className="text-xs" style={{ color: 'var(--editor-text-muted)' }}>
+                            {formatDate(c.createdAt)}
+                          </span>
+                        </div>
+                        <p
+                          className={`text-sm whitespace-pre-wrap break-words mt-1 ${c.resolved ? 'line-through' : ''}`}
+                          style={{ color: c.resolved ? 'var(--editor-text-muted)' : 'var(--editor-text-secondary)' }}
+                        >
+                          {c.content}
+                        </p>
+                        {c.mentions?.length > 0 && (
+                          <p className="text-xs mt-1.5" style={{ color: 'var(--editor-text-muted)' }}>
+                            {t('comments.mentionedUsers', { count: c.mentions.length })}
+                          </p>
+                        )}
+                        {c.userId === currentUserId && (
+                          <div className="flex gap-1.5 mt-3">
+                            <button
+                              type="button"
+                              onClick={() => handleResolve(c)}
+                              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg hover:bg-[var(--editor-surface-hover)] transition-colors"
+                              style={{ color: 'var(--editor-accent)' }}
+                            >
+                              {c.resolved ? <RotateCcw size={12} /> : <Check size={12} />}
+                              {c.resolved ? t('comments.reopen') : t('comments.resolve')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(c)}
+                              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg hover:bg-[var(--editor-surface-hover)] transition-colors"
+                              style={{ color: 'var(--editor-error)' }}
+                            >
+                              <Trash2 size={12} />
+                              {t('comments.delete')}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!newContent.trim() || submitting}
-          className="mt-2 px-4 py-2 rounded text-sm font-medium disabled:opacity-50 hover:enabled:opacity-90 transition-opacity"
-          style={{ backgroundColor: 'var(--editor-accent)', color: 'white' }}
+
+        {/* Composer – own stacking context so toolbar/avatar never overlap button */}
+        <div
+          className="relative z-10 shrink-0 p-4 rounded-bl-xl border-t"
+          style={{ borderColor: 'var(--editor-panel-border)', backgroundColor: 'var(--editor-panel-header)' }}
         >
-          {submitting ? 'Sending…' : 'Comment'}
-        </button>
+          {anchorToAttach && (
+            <p className="text-xs mb-2 px-1" style={{ color: 'var(--editor-text-muted)' }}>
+              {t('comments.attachingTo', { type: anchorToAttach.type === 'point' ? t('comments.canvas') : anchorToAttach.type })}
+            </p>
+          )}
+          <div className="relative">
+            <textarea
+              ref={textareaRef}
+              value={newContent}
+              onChange={handleTextChange}
+              onKeyDown={(e) => {
+                if (showMentionSuggestions && (e.key === 'Escape' || e.key === 'Tab')) {
+                  setShowMentionSuggestions(false);
+                }
+              }}
+              placeholder={t('comments.addComment')}
+              rows={3}
+              className="w-full rounded-xl border px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-offset-0"
+              style={{
+                borderColor: 'var(--editor-border)',
+                backgroundColor: 'var(--editor-bg)',
+                color: 'var(--editor-text)',
+              }}
+            />
+            {showMentionSuggestions && filteredCollaborators.length > 0 && (
+              <div
+                ref={suggestionRef}
+                className="absolute left-0 right-0 bottom-full mb-2 max-h-40 overflow-y-auto rounded-xl border py-1 z-10 custom-scrollbar"
+                style={{
+                  backgroundColor: 'var(--editor-surface)',
+                  borderColor: 'var(--editor-border)',
+                  boxShadow: 'var(--editor-panel-shadow)',
+                }}
+              >
+                {filteredCollaborators.map((u) => (
+                  <button
+                    key={u._id}
+                    type="button"
+                    onClick={() => insertMention(u)}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--editor-surface-hover)] transition-colors rounded-lg mx-1"
+                    style={{ color: 'var(--editor-text)' }}
+                  >
+                    {[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email}
+                    <span className="ml-2 text-xs" style={{ color: 'var(--editor-text-muted)' }}>
+                      {u.email}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!newContent.trim() || submitting}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 transition-all shadow-sm"
+            style={{ backgroundColor: 'var(--editor-accent)', color: 'white' }}
+          >
+            <Send size={16} />
+            {submitting ? t('common.sending') : t('comments.comment')}
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

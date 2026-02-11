@@ -1,38 +1,25 @@
-import { useDiagram } from "../hooks";
-
-const { importFromJson } = useDiagram();
-
 /**
  * Imports diagram from JSON
  * @param e input change event
  * @returns null
  */
-export const importDiagramFromJSON: React.ChangeEventHandler<
-  HTMLInputElement
-> = async (e) => {
+export const importDiagramFromJSON = async (e: React.ChangeEvent<HTMLInputElement>): Promise<string> => {
   const file = e.target.files?.[0];
-  if (!file) return;
-
-  try {
-    const text = await file.text();
-    importFromJson(text);
-  } catch (err) {
-    console.error("Problem importing diagram JSON: ", err);
-  } finally {
-    e.target.value = ""; // reset input
-  }
+  if (!file) return "";
+  const text = await file.text();
+  e.target.value = "";
+  return text;
 };
+
 
 /**
  * Imports diagram from RDF
  * @param e input change event
  * @returns null
  */
-export const importDiagramFromRdf: React.ChangeEventHandler<HTMLInputElement> = async (
-  e,
-) => {
+export const importDiagramFromRdf = async (e: React.ChangeEvent<HTMLInputElement>): Promise<string> => {
   const file = e.target.files?.[0];
-  if (!file) return;
+  if (!file) return "";
 
   if (
     file.size > 10 * 1024 * 1024 ||
@@ -40,34 +27,27 @@ export const importDiagramFromRdf: React.ChangeEventHandler<HTMLInputElement> = 
   ) {
     e.target.value = "";
     console.error("Invalid file");
-    return;
+    return "";
   }
 
   const formData = new FormData();
   formData.append("file", file);
 
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/import/rdf`,
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/import/rdf`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Import failed: ${response.status} ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log(result);
-    importFromJson(JSON.stringify(result));
-  } catch (err) {
-    console.error("TTL import error:", err);
-  } finally {
-    e.target.value = "";
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Import failed: ${response.status} ${errorText}`);
   }
+
+  const result = await response.json();
+  return JSON.stringify(result);
 };
 
 /**
@@ -75,11 +55,9 @@ export const importDiagramFromRdf: React.ChangeEventHandler<HTMLInputElement> = 
  * @param e input change event
  * @returns null
  */
-export const importDiagramFromXml: React.ChangeEventHandler<HTMLInputElement> = async (
-  e,
-) => {
+export const importDiagramFromXml = async (e: React.ChangeEvent<HTMLInputElement>): Promise<string> => {
   const file = e.target.files?.[0];
-  if (!file) return;
+  if (!file) return "";
 
   if (
     file.size > 10 * 1024 * 1024 ||
@@ -87,7 +65,7 @@ export const importDiagramFromXml: React.ChangeEventHandler<HTMLInputElement> = 
   ) {
     e.target.value = "";
     console.error("File too big");
-    return;
+    return "";
   }
 
   const formData = new FormData();
@@ -106,11 +84,5 @@ export const importDiagramFromXml: React.ChangeEventHandler<HTMLInputElement> = 
   }
 
   const result = await response.json();
-  try {
-    importFromJson(JSON.stringify(result));
-  } catch (err) {
-    console.error("Problem importing diagram XML: ", err);
-  } finally {
-    e.target.value = "";
-  }
+  return JSON.stringify(result);
 };

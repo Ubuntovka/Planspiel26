@@ -27,8 +27,8 @@ const port: number = config.port;
 // Security & parsing middleware
 app.use(helmet());
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '3mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '3mb' }));
 
 // Swagger setup
 const swaggerOptions = {
