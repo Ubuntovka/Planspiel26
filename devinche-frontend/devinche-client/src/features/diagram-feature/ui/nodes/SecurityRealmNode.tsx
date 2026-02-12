@@ -8,17 +8,17 @@ const SecurityRealmNode = ({
   selected,
 }: NodeProps<SecurityRealmDataNode>) => {
   const errorColor = "#FF4D4F";
-  const strokeColor = data.hasError ? errorColor : (selected ? "var(--editor-accent)" : "var(--editor-text)");
+  const strokeColor = data.hasError
+    ? errorColor
+    : selected
+      ? "var(--editor-accent)"
+      : "var(--editor-text)";
   const textColor = selected ? "var(--editor-accent)" : "var(--editor-text)";
   const fillColor = "var(--editor-surface)";
   const fixedStrokeWidth = 3;
   const hasName = data.name && data.name.trim();
-
   return (
-    <div 
-      className="relative w-full h-full"
-      style={{ containerType: "size" }} 
-    >
+    <div className="relative w-full h-full" style={{ containerType: "size" }}>
       <NodeResizer
         color="var(--editor-accent)"
         isVisible={selected}
@@ -33,10 +33,11 @@ const SecurityRealmNode = ({
           borderRadius: "2px",
         }}
       />
-    
+
       <svg
         className="absolute inset-0 w-full h-full"
         style={{ overflow: "visible", display: "block" }}
+        transform="scale(-1,1)"
       >
         <rect
           x="0"
@@ -49,10 +50,10 @@ const SecurityRealmNode = ({
           fill={fillColor}
         />
         <line
-          x1="calc(100% - 80px)"
+          x1="80px"
           y1="0"
-          x2="100%"
-          y2="80"
+          x2="0"
+          y2="80px"
           stroke={strokeColor}
           strokeWidth={fixedStrokeWidth}
         />
@@ -62,14 +63,14 @@ const SecurityRealmNode = ({
         className="absolute inset-0 flex flex-col items-start justify-end pointer-events-none"
         style={{
           color: textColor,
-          fontSize: "10px", 
+          fontSize: "10px",
           paddingTop: "10",
           paddingRight: "10",
           width: "100%",
           height: "100%",
         }}
       >
-        <div 
+        <div
           className="flex items-center justify-center text-center"
           style={{
             width: "50px",
