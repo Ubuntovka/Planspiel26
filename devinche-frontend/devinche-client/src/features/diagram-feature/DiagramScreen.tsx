@@ -84,8 +84,6 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     closeMenu,
     onFlowInit,
     exportToJson,
-    exportToRdf,
-    exportToXml,
     importFromJson,
     setNodes,
     setEdges,
@@ -293,11 +291,9 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
-        exportToJson={exportToJson}
-        exportToRdf={exportToRdf}
-        exportToXml={exportToXml}
-        importFromJson={isViewer ? (_json: string) => {} : importFromJson}
         handleValidation={isViewer ? undefined : handleValidation}
+        exportToJson={exportToJson}
+        importFromJson={importFromJson}
         flowWrapperRef={flowWrapperRef}
         allNodes={nodes}
         canShare={isOwner}

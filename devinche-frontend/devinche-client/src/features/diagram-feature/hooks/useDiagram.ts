@@ -2,8 +2,6 @@
 import { useCallback, useEffect } from "react";
 import { addEdge, type Connection, MarkerType, type Viewport } from "@xyflow/react";
 import type { DiagramNode, DiagramEdge, UseDiagramReturn } from "@/types/diagram";
-import { exportDiagramToRdfTurtle } from "../ui/exports/exportToRdf";
-import { exportDiagramToXML } from "../ui/exports/exportToXML";
 
 import { useDiagramState } from "./useDiagramState";
 import { useDiagramHistory } from "./useDiagramHistory";
@@ -144,8 +142,6 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
 
   // 8. Exports
   const exportToJson = useCallback(() => rfInstance ? JSON.stringify(rfInstance.toObject(), null, 2) : null, [rfInstance]);
-  const exportToRdf = useCallback(() => exportDiagramToRdfTurtle(nodes, edges), [nodes, edges]);
-  const exportToXml = useCallback(() => exportDiagramToXML(nodes, edges), [nodes, edges]);
   
   const importFromJson = useCallback((json: string) => {
     try {
@@ -227,8 +223,6 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     // IO
     onFlowInit: state.onFlowInit,
     exportToJson,
-    exportToRdf,
-    exportToXml,
     importFromJson,
     setNodes,
     setEdges
