@@ -2,6 +2,11 @@
  * LLM controller: generate WAM diagram JSON from a natural-language prompt.
  * Uses OpenAI Chat Completions with a strict system prompt and optional
  * validation-retry so output respects WAM rules and draws accurately.
+ * 
+ * Features:
+ * - generateDiagramFromPrompt: Quick diagram from simple prompt
+ * - buildDiagramFromSystemDescription: Comprehensive diagram from detailed system description
+ * - explainDiagram: Natural language explanation of existing diagram
  */
 
 import type { Request, Response } from 'express';
@@ -19,7 +24,7 @@ const NODE_DEFAULT_SIZE: Record<string, { width: number; height: number }> = {
   identityProviderNode: { width: 76, height: 77 },
   processUnitNode: { width: 87, height: 87 },
   aiProcessNode: { width: 87, height: 87 },
-  securityRealmNode: { width: 280, height: 220 },
+  securityRealmNode: { width: 400, height: 400 },
   serviceNode: { width: 87, height: 77 },
 };
 
@@ -28,12 +33,12 @@ const VALID_EDGE_TYPES = new Set(['invocation', 'trust', 'legacy']);
 
 const EXAMPLE_JSON = `{
   "nodes": [
-    { "id": "realm1", "type": "securityRealmNode", "position": { "x": 0, "y": 0 }, "data": { "label": "Realm A" }, "width": 280, "height": 220 },
-    { "id": "app1", "type": "applicationNode", "position": { "x": 20, "y": 30 }, "data": { "label": "Web App" }, "width": 87, "height": 88, "parentId": "realm1" },
-    { "id": "svc1", "type": "serviceNode", "position": { "x": 130, "y": 30 }, "data": { "label": "API" }, "width": 87, "height": 77, "parentId": "realm1" },
-    { "id": "ds1", "type": "datasetNode", "position": { "x": 70, "y": 120 }, "data": { "label": "DB" }, "width": 77, "height": 88, "parentId": "realm1" },
-    { "id": "realm2", "type": "securityRealmNode", "position": { "x": 350, "y": 0 }, "data": { "label": "Realm B" }, "width": 280, "height": 220 },
-    { "id": "svc2", "type": "serviceNode", "position": { "x": 90, "y": 70 }, "data": { "label": "Backend" }, "width": 87, "height": 77, "parentId": "realm2" }
+    { "id": "realm1", "type": "securityRealmNode", "position": { "x": 0, "y": 0 }, "data": { "label": "Realm A", "name": "Security Realm A" }, "width": 400, "height": 400 },
+    { "id": "app1", "type": "applicationNode", "position": { "x": 20, "y": 30 }, "data": { "label": "Web App", "name": "Customer Web Application" }, "width": 87, "height": 88, "parentId": "realm1" },
+    { "id": "svc1", "type": "serviceNode", "position": { "x": 130, "y": 30 }, "data": { "label": "API", "name": "REST API Service" }, "width": 87, "height": 77, "parentId": "realm1" },
+    { "id": "ds1", "type": "datasetNode", "position": { "x": 70, "y": 120 }, "data": { "label": "DB", "name": "Customer Database" }, "width": 77, "height": 88, "parentId": "realm1" },
+    { "id": "realm2", "type": "securityRealmNode", "position": { "x": 450, "y": 0 }, "data": { "label": "Realm B", "name": "Security Realm B" }, "width": 400, "height": 400 },
+    { "id": "svc2", "type": "serviceNode", "position": { "x": 90, "y": 70 }, "data": { "label": "Backend", "name": "Backend Processing Service" }, "width": 87, "height": 77, "parentId": "realm2" }
   ],
   "edges": [
     { "id": "trust1", "source": "realm1", "target": "realm2", "type": "trust" },
@@ -104,6 +109,109 @@ Requirements:
 - Respect the provided validation results if present. Do not invent nodes/edges not in the input.
 `;
 
+const WAM_SYSTEM_DESCRIPTION_PROMPT = `You are an expert system architect creating WAM (Workflow and Access Model) diagrams from textual system descriptions. 
+
+## YOUR TASK
+Analyze the system description provided by the user and create a comprehensive WAM diagram that accurately models the architecture. Use meaningful, descriptive names for all nodes based on the context.
+
+## WAM MODEL ELEMENTS (use these definitions to identify components)
+
+**a. Services (serviceNode)** - Distributed components from different organizations, typically SOAP Web services. Can be:
+   - Atomic services: Basic, reusable operations
+   - Composite services: Invoke other services to perform work (use invocation edges)
+
+**b. Applications (applicationNode)** - Web applications/portals that users interact with via browser. Can be internet or intranet applications requiring authentication.
+
+**c. Data Providers (dataProviderNode)** - Underlying data sources (databases, legacy systems) that services wrap. Connect to services/applications with legacy edges.
+
+**d. Process Units (processUnitNode)** - Systems performing functionality beyond data management (computations, external process triggers).
+
+**e. Security Realms (securityRealmNode)** - Organizational zones of control over networks/hardware/software. Group services and applications. Represent:
+   - Firewall boundaries
+   - Identity/access management contexts
+   - Common authorization systems
+   - Can be nested for sub-groups with dedicated role systems
+
+**f. Identity Providers (identityProviderNode)** - User registration and authentication systems. Issue tokens for STS authorization. NO edges allowed.
+
+**g. Invocation Links (invocation edges)** - Service/application access patterns:
+   - Application → Service
+   - Service → Service
+   - Indicates the target is called by the source
+
+**h. Trust Relationships (trust edges)** - Federation between realms. ONLY between securityRealmNode instances. Means the trusting realm's STS accepts tokens from the trusted realm.
+
+**i. Legacy Connections (legacy edges)** - Connections to data providers or process units from applications/services.
+
+## CRITICAL VALIDATION RULES
+
+1. **Node types**: applicationNode, serviceNode, dataProviderNode, datasetNode, processUnitNode, aiProcessNode, securityRealmNode, identityProviderNode
+2. **Trust edges**: ONLY securityRealmNode → securityRealmNode
+3. **Invocation edges**: ONLY applicationNode → serviceNode OR serviceNode → serviceNode
+4. **Legacy edges**: ONLY applicationNode/serviceNode → dataProviderNode/datasetNode/processUnitNode/aiProcessNode
+5. **Identity providers**: ZERO edges (standalone)
+6. **Security realms**: MUST contain at least one node. Use "parentId" to place nodes inside realms.
+7. **Naming**: Use descriptive, context-appropriate names (e.g., "Customer Portal", "Order Service", "Legacy CRM Database", "Corporate Network Realm")
+
+## JSON STRUCTURE
+
+CRITICAL: Each node MUST have both "label" AND "name" in the data object.
+- "label": Short display text (1-3 words, e.g., "Customer Portal")
+- "name": More descriptive name with context (2-5 words, e.g., "Public Customer Web Portal")
+
+{
+  "nodes": [
+    {
+      "id": "unique-id",
+      "type": "nodeType",
+      "position": {"x": number, "y": number},
+      "data": {
+        "label": "Short Display Name",
+        "name": "Descriptive Contextual Name"
+      },
+      "width": number,
+      "height": number,
+      "parentId": "realm-id" (optional, for contained nodes)
+    }
+  ],
+  "edges": [
+    {
+      "id": "unique-id",
+      "source": "node-id",
+      "target": "node-id",
+      "type": "invocation|trust|legacy"
+    }
+  ],
+  "viewport": {"x": 0, "y": 0, "zoom": 1}
+}
+
+## EXAMPLES OF GOOD NAMING
+- Service: label="Order Service", name="Order Processing Service"
+- Application: label="Customer Portal", name="Public Customer Web Portal"
+- Data Provider: label="CRM DB", name="Legacy CRM Database"
+- Security Realm: label="DMZ", name="DMZ Network Zone"
+- Identity Provider: label="Active Directory", name="Corporate Active Directory"
+- Process Unit: label="Batch Processor", name="Nightly Batch Processor"
+
+## SIZING
+- applicationNode: 87x88
+- serviceNode: 87x77
+- dataProviderNode: 77x88
+- datasetNode: 77x88
+- processUnitNode: 87x87
+- aiProcessNode: 87x87
+- identityProviderNode: 76x77
+- securityRealmNode: 400x400 (or larger if nested/contains many nodes)
+
+## LAYOUT GUIDELINES
+1. List parent realms FIRST in nodes array
+2. Place children after their parents
+3. Use relative positions (20-150 x,y) for nodes inside realms
+4. Space top-level realms ~300-400 pixels apart
+5. Ensure nested realms fit within parent dimensions
+
+Output ONLY the JSON object - no markdown, no explanation.`;
+
 function parseAndNormalize(raw: string): {
   nodes: any[];
   edges: any[];
@@ -154,8 +262,12 @@ function parseAndNormalize(raw: string): {
             : { x: 100 + i * 180, y: 100 },
         data:
           n?.data && typeof n.data === 'object'
-            ? { ...n.data, label: n.data.label ?? 'Node' }
-            : { label: n?.label ?? 'Node' },
+            ? { 
+                label: n.data.label ?? 'Node',
+                name: n.data.name ?? n.data.label ?? 'Node',
+                ...n.data
+              }
+            : { label: n?.label ?? 'Node', name: n?.label ?? 'Node' },
         width: n?.width != null ? Number(n.width) : size.width,
         height: n?.height != null ? Number(n.height) : size.height,
         ...(n?.parentId != null && { parentId: String(n.parentId), extent: 'parent' }),
@@ -312,6 +424,106 @@ export async function generateDiagramFromPrompt(
     console.error('LLM generate diagram error:', err);
     res.status(500).json({
       error: err?.message ?? 'Failed to generate diagram from prompt.',
+    });
+  }
+}
+
+export async function buildDiagramFromSystemDescription(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const description = typeof req.body?.description === 'string' ? req.body.description.trim() : '';
+  if (!description) {
+    res.status(400).json({ error: 'Missing or empty "description" in request body.' });
+    return;
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    res.status(503).json({
+      error: 'Diagram generation is not configured. Set OPENAI_API_KEY on the server.',
+    });
+    return;
+  }
+
+  const model = process.env.OPENAI_MODEL || 'gpt-4o';
+  const temperature = 0.15; // Slightly higher for more creative naming
+
+  async function callLlm(userMessage: string): Promise<string> {
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: WAM_SYSTEM_DESCRIPTION_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
+      temperature,
+      max_tokens: 4096,
+    });
+
+    const raw = completion.choices[0]?.message?.content;
+    if (!raw || typeof raw !== 'string') {
+      throw new Error('No content in LLM response.');
+    }
+    return raw;
+  }
+
+  try {
+    const userMessage = `Analyze this system description and create a comprehensive WAM diagram with descriptive, meaningful node names:\n\n${description}`;
+    
+    let raw = await callLlm(userMessage);
+    let diagram = parseAndNormalize(raw);
+    let diagramJson = JSON.stringify({ 
+      nodes: diagram.nodes, 
+      edges: diagram.edges, 
+      viewport: diagram.viewport 
+    });
+    let validation = await validate(diagramJson);
+
+    // If validation fails, try one retry with error feedback
+    if (validation.errors.length > 0) {
+      const errorText = validation.errors.join('\n');
+      const retryUser = `Your previous WAM diagram had validation errors. Analyze the system description again and create a corrected diagram with proper node relationships and descriptive names.\n\nValidation errors:\n${errorText}\n\nOriginal description:\n${description}\n\nFix the diagram and output ONLY the corrected JSON.`;
+      
+      try {
+        raw = await callLlm(retryUser);
+        diagram = parseAndNormalize(raw);
+        diagramJson = JSON.stringify({
+          nodes: diagram.nodes,
+          edges: diagram.edges,
+          viewport: diagram.viewport,
+        });
+        validation = await validate(diagramJson);
+      } catch (_) {
+        // If retry fails, send first result anyway; client can still show it
+      }
+    }
+
+    res.status(200).json({
+      diagram: {
+        nodes: diagram.nodes,
+        edges: diagram.edges,
+        viewport: diagram.viewport,
+      },
+      validationErrors:
+        validation.errors.length > 0 ? validation.errors : undefined,
+    });
+  } catch (err: any) {
+    if (err?.status === 401) {
+      res.status(401).json({ error: 'Invalid or missing OpenAI API key.' });
+      return;
+    }
+    if (err?.code === 'ENOTFOUND' || err?.message?.includes('fetch')) {
+      res.status(502).json({ error: 'Could not reach the AI service.' });
+      return;
+    }
+    if (err instanceof SyntaxError) {
+      res.status(502).json({
+        error: 'AI returned invalid JSON. Try providing a clearer system description.',
+      });
+      return;
+    }
+    console.error('LLM build diagram from description error:', err);
+    res.status(500).json({
+      error: err?.message ?? 'Failed to build diagram from system description.',
     });
   }
 }
