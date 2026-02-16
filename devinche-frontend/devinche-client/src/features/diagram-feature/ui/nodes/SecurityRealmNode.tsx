@@ -60,12 +60,12 @@ const SecurityRealmNode = ({
       </svg>
 
       <div
-        className="absolute inset-0 flex flex-col items-start justify-end pointer-events-none"
+        className="absolute inset-0 flex flex-col items-end justify-start pointer-events-none"
         style={{
           color: textColor,
           fontSize: "10px",
-          paddingTop: "10",
-          paddingRight: "10",
+          paddingTop: "0",
+          paddingRight: "0",
           width: "100%",
           height: "100%",
         }}
@@ -75,11 +75,11 @@ const SecurityRealmNode = ({
           style={{
             width: "50px",
             minHeight: "50px",
-            lineHeight: "1.1",
+            lineHeight: "0.8",
           }}
         >
           {hasName && (
-            <span className="wrap-break-words line-clamp-3 w-full pr-2 font-medium">
+            <span className="wrap-break-words line-clamp-3 w-full font-medium">
               {data.name}
             </span>
           )}
