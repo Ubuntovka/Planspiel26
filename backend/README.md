@@ -260,3 +260,163 @@ curl -X POST http://localhost:4000/api/users/logoutall -H "Authorization: Bearer
 - Ensure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` are present in `backend/.env`.
 - The redirect URI in `.env` must exactly match the one configured in Google Cloud Console.
 - Frontend should run on `http://localhost:3000` and call backend at `http://localhost:4000` (or via a proxy). Clear site data for both origins if you change settings.
+
+## LLM / AI Diagram Generation
+
+The backend provides three AI-powered endpoints for WAM diagram generation and analysis. All require `OPENAI_API_KEY` to be set in `.env`.
+
+### Generate diagram from simple prompt
+- Method/URL: `POST /api/llm/generate-diagram`
+- Auth: Not required (public endpoint)
+- Purpose: Quick diagram generation from a short natural language prompt
+- Request body:
+```json
+{
+  "prompt": "Create a diagram with two security realms that trust each other"
+}
+```
+- Success response: `200` with:
+```json
+{
+  "diagram": {
+    "nodes": [...],
+    "edges": [...],
+    "viewport": {"x": 0, "y": 0, "zoom": 1}
+  },
+  "validationErrors": ["error1", "error2"] // Optional, only if validation failed
+}
+```
+- Example:
+```bash
+curl -X POST http://localhost:4000/api/llm/generate-diagram \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Two security realms with trust relationship"}'
+```
+
+### Build diagram from system description
+- Method/URL: `POST /api/llm/build-from-description`
+- Auth: Not required (public endpoint)
+- Purpose: Comprehensive WAM diagram from detailed system architecture description
+- Features:
+  - Analyzes system descriptions using WAM methodology
+  - Identifies services, applications, security realms, data providers, etc.
+  - Creates meaningful, context-appropriate node names
+  - Establishes proper relationships (invocation, trust, legacy)
+  - Validates against WAM rules with automatic retry on errors
+- Request body:
+```json
+{
+  "description": "Our e-commerce platform consists of a customer-facing web portal in the DMZ that calls an order processing service in the internal network. The order service connects to a legacy SAP system for inventory management. Both networks are separate security realms with a trust relationship. The internal realm has an Active Directory for authentication."
+}
+```
+- Success response: `200` with:
+```json
+{
+  "diagram": {
+    "nodes": [
+      {
+        "id": "dmz-realm",
+        "type": "securityRealmNode",
+        "data": {"label": "DMZ Network"},
+        ...
+      },
+      {
+        "id": "customer-portal",
+        "type": "applicationNode",
+        "data": {"label": "Customer Web Portal"},
+        "parentId": "dmz-realm",
+        ...
+      }
+    ],
+    "edges": [...],
+    "viewport": {...}
+  },
+  "validationErrors": [] // Optional
+}
+```
+- Example:
+```bash
+curl -X POST http://localhost:4000/api/llm/build-from-description \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "A microservices architecture with an API gateway in the public cloud, three backend services in a private VPC, and a PostgreSQL database. All services communicate via REST APIs."
+  }'
+```
+
+### Explain existing diagram
+- Method/URL: `POST /api/llm/explain-diagram`
+- Auth: Not required (public endpoint)
+- Purpose: Generate human-readable explanation of a WAM diagram with selectable detail level
+- Features:
+  - **Simple explanation**: Easy-to-understand, jargon-free description for non-technical stakeholders
+  - **Technical explanation**: Detailed architecture analysis for developers and architects
+  - Concise output (250-500 words)
+  - Validation status included
+- Request body:
+```json
+{
+  "diagram": {
+    "nodes": [...],
+    "edges": [...],
+    "viewport": {...}
+  },
+  "level": "simple"  // Optional: "simple" (default) or "technical"
+}
+```
+- Success response: `200` with:
+```json
+{
+  "explanation": "### 🎯 What This System Does\nThis is a web-based...",
+  "level": "simple",
+  "validation": {
+    "valid": true,
+    "errors": []
+  },
+  "summary": {
+    "nodeCount": 5,
+    "edgeCount": 3,
+    "realmCount": 2,
+    "isValid": true
+  }
+}
+```
+- Example (simple explanation for non-developers):
+```bash
+curl -X POST http://localhost:4000/api/llm/explain-diagram \
+  -H "Content-Type: application/json" \
+  -d '{
+    "diagram": {"nodes": [...], "edges": [...]},
+    "level": "simple"
+  }'
+```
+- Example (technical explanation for architects):
+```bash
+curl -X POST http://localhost:4000/api/llm/explain-diagram \
+  -H "Content-Type: application/json" \
+  -d '{
+    "diagram": {"nodes": [...], "edges": [...]},
+    "level": "technical"
+  }'
+```
+```
+
+### WAM Model Elements Reference
+
+The system description endpoint understands these WAM elements:
+
+- **Services** (serviceNode): Distributed components, SOAP/REST APIs, microservices
+- **Applications** (applicationNode): Web portals, user-facing applications
+- **Data Providers** (dataProviderNode): Databases, data sources
+- **Process Units** (processUnitNode): Computation systems, batch processors
+- **Security Realms** (securityRealmNode): Network zones, organizational boundaries, VPCs
+- **Identity Providers** (identityProviderNode): Authentication systems (AD, LDAP, OAuth)
+- **Invocation**: Service-to-service or app-to-service calls
+- **Trust**: Federation between security realms
+- **Legacy**: Connections to data providers or process units
+
+### Troubleshooting LLM endpoints
+- Ensure `OPENAI_API_KEY` is set in `.env`
+- Default model is `gpt-4o`; override with `OPENAI_MODEL=gpt-4o-mini` for lower cost
+- If you get 503: API key is missing or invalid
+- If you get 502: Network issue reaching OpenAI or invalid JSON returned
+- Validation errors are returned but diagram is still provided for manual fixing

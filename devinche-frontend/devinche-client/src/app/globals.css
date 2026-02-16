@@ -1215,6 +1215,49 @@ body {
   to { transform: rotate(360deg); }
 }
 
+.mona-chat-chips {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.mona-chat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: var(--mona-accent-muted);
+  border: 2px solid var(--mona-accent);
+  color: var(--editor-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mona-chat-chip:hover:not(:disabled) {
+  background: var(--mona-accent);
+  color: white;
+  border-color: var(--mona-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mona-accent) 20%, transparent);
+}
+
+.mona-chat-chip:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.mona-chat-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mona-chat-chip svg {
+  flex-shrink: 0;
+}
+
 .mona-chat-panel__input-wrap {
   display: flex;
   align-items: center;
