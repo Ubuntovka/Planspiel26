@@ -346,7 +346,12 @@ curl -X POST http://localhost:4000/api/llm/build-from-description \
 ### Explain existing diagram
 - Method/URL: `POST /api/llm/explain-diagram`
 - Auth: Not required (public endpoint)
-- Purpose: Generate human-readable explanation of a WAM diagram
+- Purpose: Generate human-readable explanation of a WAM diagram with selectable detail level
+- Features:
+  - **Simple explanation**: Easy-to-understand, jargon-free description for non-technical stakeholders
+  - **Technical explanation**: Detailed architecture analysis for developers and architects
+  - Concise output (250-500 words)
+  - Validation status included
 - Request body:
 ```json
 {
@@ -354,30 +359,45 @@ curl -X POST http://localhost:4000/api/llm/build-from-description \
     "nodes": [...],
     "edges": [...],
     "viewport": {...}
-  }
+  },
+  "level": "simple"  // Optional: "simple" (default) or "technical"
 }
 ```
 - Success response: `200` with:
 ```json
 {
-  "explanation": "## Overview\nThis diagram represents...",
+  "explanation": "### 🎯 What This System Does\nThis is a web-based...",
+  "level": "simple",
   "validation": {
     "valid": true,
     "errors": []
-  },
-  "cost": {
-    "nodes": 5,
-    "edges": 3,
-    "realms": 2,
-    "estimatedMonthlyUsd": 25.5
   },
   "summary": {
     "nodeCount": 5,
     "edgeCount": 3,
     "realmCount": 2,
-    "estimatedMonthlyUsd": 25.5
+    "isValid": true
   }
 }
+```
+- Example (simple explanation for non-developers):
+```bash
+curl -X POST http://localhost:4000/api/llm/explain-diagram \
+  -H "Content-Type: application/json" \
+  -d '{
+    "diagram": {"nodes": [...], "edges": [...]},
+    "level": "simple"
+  }'
+```
+- Example (technical explanation for architects):
+```bash
+curl -X POST http://localhost:4000/api/llm/explain-diagram \
+  -H "Content-Type: application/json" \
+  -d '{
+    "diagram": {"nodes": [...], "edges": [...]},
+    "level": "technical"
+  }'
+```
 ```
 
 ### WAM Model Elements Reference

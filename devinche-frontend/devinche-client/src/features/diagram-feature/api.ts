@@ -414,18 +414,21 @@ export interface ExplainDiagramCostSummary {
 
 export interface ExplainDiagramResponse {
   explanation: string;
+  level: string;
   validation: { valid: boolean; errors: string[] };
-  cost: ExplainDiagramCostSummary;
-  summary: { nodeCount: number; edgeCount: number; realmCount: number; estimatedMonthlyUsd: number };
+  summary: { nodeCount: number; edgeCount: number; realmCount: number; isValid: boolean };
 }
 
-export async function explainDiagram(diagram: { nodes: any[]; edges: any[]; viewport?: { x: number; y: number; zoom: number } }): Promise<ExplainDiagramResponse> {
+export async function explainDiagram(
+  diagram: { nodes: any[]; edges: any[]; viewport?: { x: number; y: number; zoom: number } },
+  level?: 'simple' | 'technical'
+): Promise<ExplainDiagramResponse> {
   const base = getApiBasePublic();
   if (!base) throw new Error('API base URL not configured');
   const res = await fetch(`${base}/api/llm/explain-diagram`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ diagram }),
+    body: JSON.stringify({ diagram, level: level || 'simple' }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

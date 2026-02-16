@@ -42,6 +42,7 @@ export default function MonaChatFab({
   const [messages, setMessages] = useState<ChatMessage[]>(PLACEHOLDER_MESSAGES);
   const [isLoading, setIsLoading] = useState(false);
   const [isExplaining, setIsExplaining] = useState(false);
+  const [showExplainChips, setShowExplainChips] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,8 +59,9 @@ export default function MonaChatFab({
     return hasExplainVerb && mentionsDiagram;
   };
 
-  const handleExplain = async () => {
+  const handleExplain = async (level: 'simple' | 'technical') => {
     if (isExplaining) return;
+    setShowExplainChips(false);
     const diagram = getCurrentDiagram?.();
     if (!diagram) {
       setMessages((prev) => [
@@ -91,9 +93,9 @@ export default function MonaChatFab({
         nodes: diagram.nodes ?? [],
         edges: diagram.edges ?? [],
         viewport: diagram.viewport ?? { x: 0, y: 0, zoom: 1 },
-      });
+      }, level);
 
-      const summaryLine = `\n\n— Validation: ${resp.validation.valid ? "valid ✅" : `invalid ❌ (${resp.validation.errors.length} issues)`} • Estimated monthly cost: $${resp.summary.estimatedMonthlyUsd}`;
+      const summaryLine = `\n\n— Validation: ${resp.validation.valid ? "valid ✅" : `invalid ❌ (${resp.validation.errors.length} issues)`} • ${resp.summary.nodeCount} nodes, ${resp.summary.edgeCount} edges, ${resp.summary.realmCount} security realms`;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
@@ -126,10 +128,16 @@ export default function MonaChatFab({
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // If the user asked to explain/analyze, route to explanation mode
+    // If the user asked to explain/analyze, show chips to choose explanation level
     if (isExplainIntent(text)) {
-      // Do not set isLoading or show generation bubble; handleExplain adds its own status message
-      handleExplain();
+      setShowExplainChips(true);
+      const assistantMsg: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: "What kind of explanation would you like?",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
       return;
     }
 
@@ -229,6 +237,28 @@ export default function MonaChatFab({
                 )}
               </div>
             ))}
+            {showExplainChips && (
+              <div className="mona-chat-chips">
+                <button
+                  type="button"
+                  onClick={() => handleExplain('simple')}
+                  className="mona-chat-chip"
+                  disabled={isExplaining}
+                >
+                  <Sparkles size={16} />
+                  Simple (easy to understand)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExplain('technical')}
+                  className="mona-chat-chip"
+                  disabled={isExplaining}
+                >
+                  <Sparkles size={16} />
+                  Technical (for developers)
+                </button>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 

@@ -94,19 +94,62 @@ ${EXAMPLE_JSON}
 
 Output ONLY the JSON object for the user's requested diagram.`;
 
-const WAM_EXPLAIN_SYSTEM_PROMPT = `You are a senior systems analyst. Given a WAM diagram (nodes, edges, viewport) you produce a clear, well-structured, human-readable explanation.
+const WAM_EXPLAIN_TECHNICAL_PROMPT = `You are a senior systems architect explaining a WAM (Workflow and Access Model) diagram to technical stakeholders.
 
-Requirements:
-- Output should be Markdown, no code blocks unless quoting a tiny snippet. Keep it readable.
-- Cover these sections in order with headings:
-  1. Overview
-  2. Elements
-  3. Connections
-  4. Validation
-  5. Cost breakdown
-  6. Notes & recommendations
-- Be concise but specific. Use bullet lists and short paragraphs. Include IDs and labels where helpful.
-- Respect the provided validation results if present. Do not invent nodes/edges not in the input.
+## OUTPUT REQUIREMENTS
+- **Format**: Clean Markdown with clear headings
+- **Length**: Keep it concise - aim for 300-500 words total
+- **Style**: Technical but accessible, assume reader has software engineering background
+
+## STRUCTURE (use these headings)
+
+### 🏗️ System Overview
+2-3 sentences describing the overall architecture at a high level.
+
+### 🔧 Key Components
+Bullet list of main components (services, applications, data sources) with their technical purpose.
+
+### 🔗 Integration Points
+Describe how components interact (invocation patterns, data flows, trust relationships).
+
+### ⚠️ Architecture Notes
+Brief observations about security boundaries, potential bottlenecks, or architectural patterns.
+
+## GUIDELINES
+- Focus on technical architecture and integration patterns
+- Mention specific node types (services, applications, security realms)
+- Include validation status if errors exist
+- Keep explanations direct and actionable
+- Use technical terminology appropriately
+`;
+
+const WAM_EXPLAIN_SIMPLE_PROMPT = `You are explaining a system architecture diagram to someone who is not a developer but needs to understand how the system works.
+
+## OUTPUT REQUIREMENTS
+- **Format**: Simple Markdown with clear headings and emojis
+- **Length**: Keep it brief - aim for 250-400 words total
+- **Style**: Conversational and jargon-free, use analogies where helpful
+
+## STRUCTURE (use these headings)
+
+### 🎯 What This System Does
+2-3 sentences in plain language describing what the system is for.
+
+### 📦 Main Parts
+Simple bullet list explaining each major component in terms of what it does for users.
+
+### 🔄 How It Works Together
+Describe the flow: what happens when someone uses the system? Use simple cause-and-effect language.
+
+### 🔒 Security & Reliability
+Brief, non-technical explanation of how the system is protected and organized.
+
+## GUIDELINES
+- Avoid technical jargon (replace "service" with "system component", "invocation" with "connects to")
+- Use analogies when helpful (e.g., "like a post office routing mail")
+- Focus on user-facing functionality, not implementation details
+- Explain "why" not just "what"
+- If validation errors exist, briefly mention "some configuration issues detected"
 `;
 
 const WAM_SYSTEM_DESCRIPTION_PROMPT = `You are an expert system architect creating WAM (Workflow and Access Model) diagrams from textual system descriptions. 
@@ -538,6 +581,11 @@ export async function explainDiagram(
     return;
   }
 
+  // Accept optional "level" parameter: "technical" or "simple" (default: "simple")
+  const level = typeof req.body?.level === 'string' ? req.body.level.toLowerCase() : 'simple';
+  const validLevels = ['technical', 'simple'];
+  const explanationLevel = validLevels.includes(level) ? level : 'simple';
+
   const nodes: any[] = Array.isArray(diagram.nodes) ? diagram.nodes : [];
   const edges: any[] = Array.isArray(diagram.edges) ? diagram.edges : [];
   const viewport = diagram.viewport && typeof diagram.viewport === 'object' ? diagram.viewport : { x: 0, y: 0, zoom: 1 };
@@ -548,43 +596,27 @@ export async function explainDiagram(
   }
 
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  const temperature = 0.2;
+  const temperature = 0.3;
 
-  // Build a compact factual summary for the LLM
-  const elementLines = nodes.map((n) => `- ${n.id} (${n.type}) — label: ${n?.data?.label ?? '—'}${n.parentId ? `, parent: ${n.parentId}` : ''}`);
-  const connectionLines = edges.map((e) => `- ${e.id}: ${e.source} → ${e.target} [${e.type}]`);
+  // Choose the appropriate system prompt based on level
+  const systemPrompt = explanationLevel === 'technical' 
+    ? WAM_EXPLAIN_TECHNICAL_PROMPT 
+    : WAM_EXPLAIN_SIMPLE_PROMPT;
 
-  // Simple transparent cost model (can be adjusted later)
-  const cost = {
-    nodes: nodes.length,
-    edges: edges.length,
-    realms: nodes.filter((n) => n.type === 'securityRealmNode').length,
-    aiProcesses: nodes.filter((n) => n.type === 'aiProcessNode').length,
-    estimatedMonthlyUsd: (() => {
-      const base = 5; // base platform cost
-      const perService = 2 * nodes.filter((n) => n.type === 'serviceNode').length;
-      const perApp = 1.5 * nodes.filter((n) => n.type === 'applicationNode').length;
-      const dataStores = 1 * nodes.filter((n) => n.type === 'datasetNode' || n.type === 'dataProviderNode').length;
-      const interServiceHops = 0.2 * edges.filter((e) => e.type === 'invocation').length;
-      const legacyIntegrations = 0.5 * edges.filter((e) => e.type === 'legacy').length;
-      const realmOverhead = 1 * nodes.filter((n) => n.type === 'securityRealmNode').length;
-      return Number((base + perService + perApp + dataStores + interServiceHops + legacyIntegrations + realmOverhead).toFixed(2));
-    })(),
-  };
+  // Build a concise factual summary for the LLM
+  const elementSummary = nodes.map((n) => {
+    const label = n?.data?.label || n?.data?.name || 'Unnamed';
+    const type = n.type.replace('Node', '');
+    return `${label} (${type})${n.parentId ? ` in ${nodes.find(p => p.id === n.parentId)?.data?.label || n.parentId}` : ''}`;
+  }).join(', ');
 
-  const facts = [
-    'DIAGRAM FACTS',
-    'Elements:',
-    ...elementLines,
-    'Connections:',
-    ...connectionLines,
-    'Viewport:',
-    `- x: ${viewport.x ?? 0}, y: ${viewport.y ?? 0}, zoom: ${viewport.zoom ?? 1}`,
-    'COST INPUTS (transparent):',
-    `- nodes: ${cost.nodes}, edges: ${cost.edges}, realms: ${cost.realms}, aiProcesses: ${cost.aiProcesses}, estimatedMonthlyUsd: ${cost.estimatedMonthlyUsd}`,
-  ].join('\n');
+  const connectionSummary = edges.map((e) => {
+    const sourceLabel = nodes.find(n => n.id === e.source)?.data?.label || e.source;
+    const targetLabel = nodes.find(n => n.id === e.target)?.data?.label || e.target;
+    return `${sourceLabel} → ${targetLabel} (${e.type})`;
+  }).join('; ');
 
-  // Validate the diagram server-side and pass findings to the LLM
+  // Validate the diagram server-side
   const diagramJson = JSON.stringify({ nodes, edges, viewport });
   let validation: { valid: boolean; errors: string[] } = { valid: true, errors: [] } as any;
   try {
@@ -595,36 +627,37 @@ export async function explainDiagram(
   }
 
   const userMessage = [
-    'Explain the following WAM diagram to a non-expert but technical audience.',
+    `Explain this WAM diagram:`,
     '',
-    facts,
-    '',
-    'VALIDATION RESULTS:',
-    validation.valid ? '- valid: true' : `- valid: false\n- errors:\n${validation.errors.map((x) => `  - ${x}`).join('\n')}`,
-  ].join('\n');
+    `Components: ${elementSummary}`,
+    `Connections: ${connectionSummary || 'None'}`,
+    `Security Realms: ${nodes.filter(n => n.type === 'securityRealmNode').length}`,
+    `Validation: ${validation.valid ? 'Valid ✓' : `Invalid - ${validation.errors.length} errors`}`,
+    validation.valid ? '' : `Errors: ${validation.errors.join('; ')}`,
+  ].filter(Boolean).join('\n');
 
   try {
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: WAM_EXPLAIN_SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
       ],
       temperature,
-      max_tokens: 1200,
+      max_tokens: 600, // Shorter output
     });
 
     const explanation = completion.choices[0]?.message?.content ?? '';
 
     res.status(200).json({
       explanation,
+      level: explanationLevel,
       validation,
-      cost,
       summary: {
         nodeCount: nodes.length,
         edgeCount: edges.length,
-        realmCount: cost.realms,
-        estimatedMonthlyUsd: cost.estimatedMonthlyUsd,
+        realmCount: nodes.filter((n) => n.type === 'securityRealmNode').length,
+        isValid: validation.valid,
       },
     });
   } catch (err: any) {
