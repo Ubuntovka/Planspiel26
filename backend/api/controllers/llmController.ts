@@ -18,14 +18,14 @@ const openai = new OpenAI({
 });
 
 const NODE_DEFAULT_SIZE: Record<string, { width: number; height: number }> = {
-  applicationNode: { width: 87, height: 88 },
-  dataProviderNode: { width: 77, height: 88 },
-  datasetNode: { width: 77, height: 88 },
-  identityProviderNode: { width: 76, height: 77 },
-  processUnitNode: { width: 87, height: 87 },
-  aiProcessNode: { width: 87, height: 87 },
-  securityRealmNode: { width: 400, height: 400 },
-  serviceNode: { width: 87, height: 77 },
+  applicationNode: { width: 150, height: 150 },
+  dataProviderNode: { width: 140, height: 150 },
+  datasetNode: { width: 140, height: 150 },
+  identityProviderNode: { width: 130, height: 130 },
+  processUnitNode: { width: 150, height: 150 },
+  aiProcessNode: { width: 150, height: 150 },
+  securityRealmNode: { width: 600, height: 600 },
+  serviceNode: { width: 150, height: 140 },
 };
 
 const VALID_NODE_TYPES = new Set(Object.keys(NODE_DEFAULT_SIZE));
@@ -33,12 +33,12 @@ const VALID_EDGE_TYPES = new Set(['invocation', 'trust', 'legacy']);
 
 const EXAMPLE_JSON = `{
   "nodes": [
-    { "id": "realm1", "type": "securityRealmNode", "position": { "x": 0, "y": 0 }, "data": { "label": "Realm A", "name": "Security Realm A" }, "width": 400, "height": 400 },
-    { "id": "app1", "type": "applicationNode", "position": { "x": 20, "y": 30 }, "data": { "label": "Web App", "name": "Customer Web Application" }, "width": 87, "height": 88, "parentId": "realm1" },
-    { "id": "svc1", "type": "serviceNode", "position": { "x": 130, "y": 30 }, "data": { "label": "API", "name": "REST API Service" }, "width": 87, "height": 77, "parentId": "realm1" },
-    { "id": "ds1", "type": "datasetNode", "position": { "x": 70, "y": 120 }, "data": { "label": "DB", "name": "Customer Database" }, "width": 77, "height": 88, "parentId": "realm1" },
-    { "id": "realm2", "type": "securityRealmNode", "position": { "x": 450, "y": 0 }, "data": { "label": "Realm B", "name": "Security Realm B" }, "width": 400, "height": 400 },
-    { "id": "svc2", "type": "serviceNode", "position": { "x": 90, "y": 70 }, "data": { "label": "Backend", "name": "Backend Processing Service" }, "width": 87, "height": 77, "parentId": "realm2" }
+    { "id": "realm1", "type": "securityRealmNode", "position": { "x": 0, "y": 0 }, "data": { "label": "Realm A", "name": "Security Realm A" }, "width": 600, "height": 600 },
+    { "id": "app1", "type": "applicationNode", "position": { "x": 30, "y": 50 }, "data": { "label": "Web App", "name": "Customer Web Application" }, "width": 150, "height": 150, "parentId": "realm1" },
+    { "id": "svc1", "type": "serviceNode", "position": { "x": 220, "y": 50 }, "data": { "label": "API", "name": "REST API Service" }, "width": 150, "height": 140, "parentId": "realm1" },
+    { "id": "ds1", "type": "datasetNode", "position": { "x": 120, "y": 250 }, "data": { "label": "DB", "name": "Customer Database" }, "width": 140, "height": 150, "parentId": "realm1" },
+    { "id": "realm2", "type": "securityRealmNode", "position": { "x": 700, "y": 0 }, "data": { "label": "Realm B", "name": "Security Realm B" }, "width": 600, "height": 600 },
+    { "id": "svc2", "type": "serviceNode", "position": { "x": 150, "y": 150 }, "data": { "label": "Backend", "name": "Backend Processing Service" }, "width": 150, "height": 140, "parentId": "realm2" }
   ],
   "edges": [
     { "id": "trust1", "source": "realm1", "target": "realm2", "type": "trust" },
@@ -75,7 +75,7 @@ const WAM_SYSTEM_PROMPT = `You are an expert at creating WAM (Workflow and Acces
 ## Exact JSON shape
 
 - "nodes": array of node objects. Each node: "id" (string), "type" (one of the types above), "position" ({"x": number, "y": number}), "data" ({"label": "Display text"}), and for correct display add "width" and "height" from this table:
-  applicationNode 87x88, serviceNode 87x77, dataProviderNode 77x88, datasetNode 77x88, processUnitNode 87x87, aiProcessNode 87x87, identityProviderNode 76x77, securityRealmNode 280x220.
+  applicationNode 150x150, serviceNode 150x140, dataProviderNode 140x150, datasetNode 140x150, processUnitNode 150x150, aiProcessNode 150x150, identityProviderNode 130x130, securityRealmNode 600x600.
   Children of a realm must have "parentId" set to that realm's id.
 - "edges": array of edge objects. Each edge: "id" (string), "source" (node id), "target" (node id), "type" ("invocation" | "trust" | "legacy").
 - "viewport": { "x": 0, "y": 0, "zoom": 1 }
@@ -194,20 +194,20 @@ CRITICAL: Each node MUST have both "label" AND "name" in the data object.
 - Process Unit: label="Batch Processor", name="Nightly Batch Processor"
 
 ## SIZING
-- applicationNode: 87x88
-- serviceNode: 87x77
-- dataProviderNode: 77x88
-- datasetNode: 77x88
-- processUnitNode: 87x87
-- aiProcessNode: 87x87
-- identityProviderNode: 76x77
-- securityRealmNode: 400x400 (or larger if nested/contains many nodes)
+- applicationNode: 150x150
+- serviceNode: 150x140
+- dataProviderNode: 140x150
+- datasetNode: 140x150
+- processUnitNode: 150x150
+- aiProcessNode: 150x150
+- identityProviderNode: 130x130
+- securityRealmNode: 600x600 (or larger if nested/contains many nodes)
 
 ## LAYOUT GUIDELINES
 1. List parent realms FIRST in nodes array
 2. Place children after their parents
-3. Use relative positions (20-150 x,y) for nodes inside realms
-4. Space top-level realms ~300-400 pixels apart
+3. Use relative positions (30-250 x,y) for nodes inside realms
+4. Space top-level realms ~650-800 pixels apart
 5. Ensure nested realms fit within parent dimensions
 
 Output ONLY the JSON object - no markdown, no explanation.`;

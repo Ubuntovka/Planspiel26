@@ -63,7 +63,7 @@ const SecurityRealmNode = ({
         className="absolute inset-0 flex flex-col items-end justify-start pointer-events-none"
         style={{
           color: textColor,
-          fontSize: "10px",
+          fontSize: "11px",
           paddingTop: "0",
           paddingRight: "0",
           width: "100%",
@@ -75,7 +75,7 @@ const SecurityRealmNode = ({
           style={{
             width: "50px",
             minHeight: "50px",
-            lineHeight: "0.8",
+            lineHeight: "1",
           }}
         >
           {hasName && (
