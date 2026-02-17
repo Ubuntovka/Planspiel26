@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
 import { resetPassword } from '@/features/auth-feature/api';
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
 
             <form onSubmit={handleSubmit} className="relative rounded-3xl shadow-xl p-8 sm:p-12 md:p-20 border border-white border-opacity-40 overflow-hidden">
               <div
-                className="absolute inset-0 bg-[#FFC31D] opacity-20 backdrop-blur-xl"
+                className="absolute inset-0 bg-[#FFC31D] opacity-20 backdrop-blur-xl glass-bg"
                 style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
               />
               <div className="relative z-10">
@@ -147,7 +147,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="mt-6 w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-full font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-xl md:text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Resetting…' : 'Reset password'}
                 </button>
@@ -161,6 +161,58 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       </main>
+      <style jsx>{`
+        :global([data-theme="dark"]) [data-page="forgot-password"] {
+          background: var(--editor-bg);
+          color: #ffffff;
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] header {
+          background: var(--editor-surface);
+          border-bottom: 1px solid var(--editor-border);
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"]{
+          background: #FFC31D;
+          opacity: 0.20;
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"]{
+          background-image:
+            linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] h1,
+        :global([data-theme="dark"]) [data-page="forgot-password"] p,
+        :global([data-theme="dark"]) [data-page="forgot-password"] ,
+        :global([data-theme="dark"]) [data-page="forgot-password"] ,
+        :global([data-theme="dark"]) [data-page="forgot-password"] ,
+        :global([data-theme="dark"]) [data-page="forgot-password"] a,
+        :global([data-theme="dark"]) [data-page="forgot-password"] a {
+          color: #ffffff !important;
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] header a{
+          background: var(--editor-warning) !important;
+          color: #ffffff !important;
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] form {
+          border-color: var(--editor-border);
+        }
+
+        :global([data-theme="dark"]) [data-page="forgot-password"] input[type="email"],
+        :global([data-theme="dark"]) [data-page="forgot-password"] input[type="password"] {
+          color: #ffffff;
+          border-bottom-color: var(--editor-border);
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] input::placeholder {
+          color: #ffffff;
+          opacity: 0.8;
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] button[type="submit"] {
+          background: #6b93c0;
+          color: #ffffff;
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] button[type="submit"]:hover {
+          background: #5a7fa8;
+        }
+      `}</style>
     </div>
   );
 }
