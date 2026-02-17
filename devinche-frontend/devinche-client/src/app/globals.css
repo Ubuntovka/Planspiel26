@@ -1280,6 +1280,26 @@ body {
   word-break: break-word;
 }
 
+.mona-chat-bubble__content h1,
+.mona-chat-bubble__content h2,
+.mona-chat-bubble__content h3,
+.mona-chat-bubble__content h4,
+.mona-chat-bubble__content h5,
+.mona-chat-bubble__content h6 {
+  font-weight: 700;
+  margin: 0.6em 0 0.25em;
+  line-height: 1.3;
+}
+
+.mona-chat-bubble__content h1:first-child,
+.mona-chat-bubble__content h2:first-child,
+.mona-chat-bubble__content h3:first-child,
+.mona-chat-bubble__content h4:first-child,
+.mona-chat-bubble__content h5:first-child,
+.mona-chat-bubble__content h6:first-child {
+  margin-top: 0;
+}
+
 .mona-chat-bubble__loading {
   display: inline-flex;
   align-items: center;
