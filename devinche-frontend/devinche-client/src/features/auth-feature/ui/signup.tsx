@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { register as apiRegister } from '@/features/auth-feature/api';
 
@@ -66,7 +67,7 @@ export default function SignUpPage() {
     return (
         <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="signup">
             <div
-                className="absolute inset-0 pointer-events-none"
+                className="absolute inset-0 pointer-events-none page-grid-bg"
                 style={{
                     backgroundImage: `
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
@@ -88,6 +89,7 @@ export default function SignUpPage() {
                     />
                 </Link>
                 <div className="flex items-center gap-3">
+                    <LanguageSwitcher variant="darkHeader" />
                     <ThemeToggleButton />
                     <Link
                         href="/"
@@ -218,9 +220,10 @@ export default function SignUpPage() {
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={handleSignUp}
                                     disabled={isLoading}
-                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-xl md:text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="page-primary-btn w-full bg-[#6b93c0] text-white py-3 rounded-full text-xl md:text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isLoading ? 'Registering...' : 'Register'}
                                 </button>
@@ -250,7 +253,7 @@ export default function SignUpPage() {
               :global([data-theme="dark"]) [data-page="signup"] h1 {
                 color: var(--editor-text);
               }
-              :global([data-theme="dark"]) [data-page="signup"]{
+              :global([data-theme="dark"]) [data-page="signup"] .page-grid-bg {
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
@@ -262,17 +265,21 @@ export default function SignUpPage() {
                 color: var(--editor-text);
                 border-color: var(--editor-border-light) !important;
               }
-              :global([data-theme="dark"]) [data-page="signup"]{
+              :global([data-theme="dark"]) [data-page="signup"] .page-primary-btn {
                 background: var(--editor-accent) !important;
+                color: var(--editor-text) !important;
               }
-              :global([data-theme="dark"]) [data-page="signup"]  {
+              :global([data-theme="dark"]) [data-page="signup"] .page-primary-btn:hover:not(:disabled) {
                 background: var(--editor-accent-hover) !important;
               }
-              :global([data-theme="dark"]) [data-page="signup"] {
-                color: var(--editor-text-secondary);
+              :global([data-theme="dark"]) [data-page="signup"] a.text-blue-600 {
+                color: var(--editor-accent) !important;
               }
-              :global([data-theme="dark"]) [data-page="signup"]{
-                box-shadow: 0 8px 16px var(--editor-shadow-lg) !important;
+              :global([data-theme="dark"]) [data-page="signup"] a.text-blue-600:hover {
+                color: var(--editor-accent-hover) !important;
+              }
+              :global([data-theme="dark"]) [data-page="signup"] p {
+                color: var(--editor-text-secondary);
               }
             `}</style>
         </div>

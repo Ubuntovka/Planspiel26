@@ -16,8 +16,8 @@
     "createDiagram": "Diagramm erstellen",
     "myDiagrams": "Meine Diagramme",
     "letsGo": "Los geht's",
-    "headline": "Schwierige Diagramme sind mit dem Devinche-Editor einfacher.",
-    "subheadline": "Ein Ort, an dem Menschen zusammenarbeiten, um die besten Ergebnisse zu erzielen."
+    "headline": "Schwierige Diagramme sind\nmit dem Devinche-Editor einfacher.",
+    "subheadline": "Ein Ort, an dem Menschen zusammenarbeiten,\num die besten Ergebnisse zu erzielen."
   },
   "auth": {
     "signIn": "Anmelden",
@@ -138,7 +138,8 @@
     "updating": "Wird aktualisiert…",
     "dangerZone": "Gefahrenzone",
     "dangerZoneWarning": "Wenn Sie Ihr Konto löschen, gibt es kein Zurück. Bitte seien Sie sich sicher.",
-    "photoSelectedHint": "Foto ausgewählt. Klicken Sie auf \"Änderungen speichern\", um zu aktualisieren."
+    "photoSelectedHint": "Foto ausgewählt. Klicken Sie auf \"Änderungen speichern\", um zu aktualisieren.",
+    "backToEditor": "Editor"
   },
   "editor": {
     "myDiagrams": "Meine Diagramme",
@@ -172,7 +173,15 @@
     "orLoginWith": "Oder anmelden mit:",
     "forgotPassword": "Passwort vergessen?",
     "loginWithGoogle": "Mit Google anmelden",
-    "home": "Startseite"
+    "home": "Startseite",
+    "errorOccurred": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "googleCodeMissing": "Google-Autorisierungscode fehlt",
+    "googleLoginFailed": "Google-Anmeldung fehlgeschlagen",
+    "failedGoogleLogin": "Anmeldung mit Google fehlgeschlagen",
+    "googleNotInitialized": "Google-Client nicht initialisiert",
+    "googleNotReady": "Google-Code-Client nicht bereit",
+    "failedInitGoogle": "Google-Anmeldung konnte nicht initialisiert werden",
+    "dontHaveAccount": "Noch kein Konto?"
   },
   "contextMenu": {
     "canvas": "Leinwand",

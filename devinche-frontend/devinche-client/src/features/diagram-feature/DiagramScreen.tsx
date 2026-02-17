@@ -36,6 +36,7 @@ import ShareDialog from './ui/ShareDialog';
 import CommentsPanel from './ui/comments/CommentsPanel';
 import { listComments, type CommentItem, type CommentAnchor } from './api';
 import { useCollaboration } from './collaboration/useCollaboration';
+import { getDiagramAsPngDataUrl } from './imports-exports/exports';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -382,6 +383,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
               return null;
             }
           }}
+          getDiagramImage={() => getDiagramAsPngDataUrl(flowWrapperRef.current)}
         />
       )}
       {shareDialogOpen && diagramId && getToken && (

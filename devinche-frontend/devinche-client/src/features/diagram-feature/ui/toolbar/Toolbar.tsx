@@ -492,7 +492,7 @@ const Toolbar = ({
           </>
         )}
         <ToolbarDivider />
-        {/* <LanguageSwitcher /> */}
+        <LanguageSwitcher />
         <button
           onClick={toggleTheme}
           className={btn}

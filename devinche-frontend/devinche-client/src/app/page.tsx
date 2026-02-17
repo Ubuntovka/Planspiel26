@@ -4,11 +4,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Home() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const { isAuthenticated, logout } = useAuth();
+    const { t } = useLanguage();
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -45,21 +48,22 @@ export default function Home() {
                     />
                 </div>
                 <div className="flex items-center gap-3">
+                    <LanguageSwitcher variant="darkHeader" />
                     <ThemeToggleButton />
                     {isAuthenticated ? (
                         <button
                             onClick={() => logout()}
                             className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
-                            aria-label="Log out"
+                            aria-label={t('auth.signOut')}
                         >
-                            Log out
+                            {t('auth.signOut')}
                         </button>
                     ) : (
                         <Link
                             href="/login"
                             className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
                         >
-                            Sign In
+                            {t('home.signIn')}
                         </Link>
                     )}
                 </div>
@@ -86,20 +90,22 @@ export default function Home() {
 
                 <div className="relative z-10 text-center px-4 max-w-3xl mt-4 md:-mt-80">
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
-                        Difficult diagrams are easier<br />
-                        with the Devinche's editor.
+                        {t('home.headline').split('\n').map((line, i, arr) => (
+                            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                        ))}
                     </h1>
 
                     <p className="text-base md:text-base text-gray-700 mb-8 md:mb-10">
-                        Space, where people work together to achieve<br />
-                        the highest results.
+                        {t('home.subheadline').split('\n').map((line, i, arr) => (
+                            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                        ))}
                     </p>
 
                     <Link
                         href="/editor"
                         className="inline-block bg-[#f5c842] text-gray-900 px-8 md:px-14 py-3 rounded-full text-lg md:text-base font-semibold hover:bg-[#f0c030] transition-colors"
                     >
-                        Let's go
+                        {t('home.letsGo')}
                     </Link>
                 </div>
             </main>
