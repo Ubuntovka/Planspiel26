@@ -9,7 +9,6 @@ import ThemeToggleButton from '@/components/ThemeToggleButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { login as apiLogin, getApiBase } from '@/features/auth-feature/api';
 
-// Minimal types for Google Identity Services (GIS) OAuth Code flow
 type GoogleOAuthCodeResponse = {
     code?: string;
     scope?: string;
@@ -104,7 +103,6 @@ export default function LoginPage() {
         });
     }, []);
 
-    // Initialize Google OAuth Code Client once (popup flow)
     useEffect(() => {
         let mounted = true;
         (async () => {
@@ -148,15 +146,12 @@ export default function LoginPage() {
                             },
                         });
                     } catch (e) {
-                        // no-op, will surface on click
                     }
                 }
             } catch {
-                // script load error handled on click
             }
         })();
         return () => { mounted = false; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleGoogleLogin = useCallback(async () => {
@@ -192,7 +187,7 @@ export default function LoginPage() {
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
             linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
           `,
-                    backgroundSize: '1cm 1cm'
+                    backgroundSize: '4cm 4cm'
                 }}
             />
 
@@ -367,6 +362,9 @@ export default function LoginPage() {
               :global([data-theme="dark"]) [data-page="login"] h1 {
                 color: var(--editor-text);
               }
+              :global([data-theme="dark"]) [data-page="login"] p {
+                color: var(--editor-text-secondary);
+              }
               :global([data-theme="dark"]) [data-page="login"]  {
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
@@ -377,13 +375,11 @@ export default function LoginPage() {
               }
               :global([data-theme="dark"]) [data-page="login"] input {
                 color: var(--editor-text);
-                border-color: var(--editor-border-light) !important;
+                border-color: var(--editor-border) !important;
               }
-              :global([data-theme="dark"]) [data-page="login"] {
-                background: var(--editor-accent) !important;
-              }
-              :global([data-theme="dark"]) [data-page="login"]  {
-                background: var(--editor-accent-hover) !important;
+              :global([data-theme="dark"]) [data-page="login"] header a{
+                background: var(--editor-warning) !important;
+                color: #111827 !important;
               }
             `}</style>
         </div>

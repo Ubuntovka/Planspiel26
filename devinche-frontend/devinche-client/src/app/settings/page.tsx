@@ -113,7 +113,7 @@ export default function AccountPage() {
                         linear-gradient(to right, #d1d5db 1px, transparent 1px),
                         linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
                     `,
-                    backgroundSize: '1cm 1cm'
+                    backgroundSize: '4cm 4cm'
                 }}
             />
 
@@ -249,26 +249,9 @@ export default function AccountPage() {
                     border-bottom: 1px solid var(--editor-border);
                 }
                 :global([data-theme="dark"]) [data-page="account"]{
-                    background: var(--editor-surface) !important;
-                    color: var(--editor-text) !important;
-                    border: 1px solid var(--editor-border);
-                }
-                :global([data-theme="dark"]) [data-page="account"]  {
-                    background: rgba(255,255,255,0.04) !important;
-                }
-                :global([data-theme="dark"]) [data-page="account"]  {
-                    background: var(--editor-surface);
-                    border-color: var(--editor-border);
-                }
-                :global([data-theme="dark"]) [data-page="account"]  {
-                    display: none; 
-                }
-                :global([data-theme="dark"]) [data-page="account"] input {
-                    color: var(--editor-text);
-                    border-color: var(--editor-border-light) !important;
-                }
-                :global([data-theme="dark"]) [data-page="account"] input::placeholder {
-                    color: var(--editor-text-secondary);
+                    background-image:
+                        linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                        linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
                 }
                 :global([data-theme="dark"]) [data-page="account"] h1 {
                     color: var(--editor-text);
@@ -277,9 +260,12 @@ export default function AccountPage() {
                 :global([data-theme="dark"]) [data-page="account"] p {
                     color: var(--editor-text-secondary);
                 }
-                :global([data-theme="dark"]) [data-page="account"] {
-                    border-color: var(--editor-border);
-                    opacity: 1;
+                :global([data-theme="dark"]) [data-page="account"] input {
+                    color: var(--editor-text);
+                    border-color: var(--editor-border) !important;
+                }
+                :global([data-theme="dark"]) [data-page="account"] input::placeholder {
+                    color: var(--editor-text-secondary);
                 }
             `}</style>
         </div>

@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
             linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
           `,
-          backgroundSize: '1cm 1cm',
+          backgroundSize: '4cm 4cm',
         }}
       />
 
@@ -164,46 +164,38 @@ export default function ForgotPasswordPage() {
       <style jsx>{`
         :global([data-theme="dark"]) [data-page="forgot-password"] {
           background: var(--editor-bg);
-          color: #ffffff;
+          color: var(--editor-text);
         }
         :global([data-theme="dark"]) [data-page="forgot-password"] header {
           background: var(--editor-surface);
           border-bottom: 1px solid var(--editor-border);
         }
         :global([data-theme="dark"]) [data-page="forgot-password"]{
-          background: #FFC31D;
-          opacity: 0.20;
-        }
-        :global([data-theme="dark"]) [data-page="forgot-password"]{
           background-image:
             linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
             linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
         }
-        :global([data-theme="dark"]) [data-page="forgot-password"] h1,
-        :global([data-theme="dark"]) [data-page="forgot-password"] p,
-        :global([data-theme="dark"]) [data-page="forgot-password"] ,
-        :global([data-theme="dark"]) [data-page="forgot-password"] ,
-        :global([data-theme="dark"]) [data-page="forgot-password"] ,
-        :global([data-theme="dark"]) [data-page="forgot-password"] a,
-        :global([data-theme="dark"]) [data-page="forgot-password"] a {
-          color: #ffffff !important;
+        :global([data-theme="dark"]) [data-page="forgot-password"] h1 {
+          color: var(--editor-text);
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] p {
+          color: var(--editor-text-secondary);
         }
         :global([data-theme="dark"]) [data-page="forgot-password"] header a{
           background: var(--editor-warning) !important;
-          color: #ffffff !important;
+          color: #111827 !important;
         }
         :global([data-theme="dark"]) [data-page="forgot-password"] form {
           border-color: var(--editor-border);
         }
-
         :global([data-theme="dark"]) [data-page="forgot-password"] input[type="email"],
         :global([data-theme="dark"]) [data-page="forgot-password"] input[type="password"] {
-          color: #ffffff;
+          color: var(--editor-text);
           border-bottom-color: var(--editor-border);
         }
         :global([data-theme="dark"]) [data-page="forgot-password"] input::placeholder {
-          color: #ffffff;
-          opacity: 0.8;
+          color: var(--editor-text-secondary);
+          opacity: 0.9;
         }
         :global([data-theme="dark"]) [data-page="forgot-password"] button[type="submit"] {
           background: #6b93c0;

@@ -72,7 +72,7 @@ export default function SignUpPage() {
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
             linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
           `,
-                    backgroundSize: '1cm 1cm'
+                    backgroundSize: '4cm 4cm'
                 }}
             />
 
@@ -250,6 +250,9 @@ export default function SignUpPage() {
               :global([data-theme="dark"]) [data-page="signup"] h1 {
                 color: var(--editor-text);
               }
+              :global([data-theme="dark"]) [data-page="signup"] p {
+                color: var(--editor-text-secondary);
+              }
               :global([data-theme="dark"]) [data-page="signup"]{
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
@@ -260,19 +263,11 @@ export default function SignUpPage() {
               }
               :global([data-theme="dark"]) [data-page="signup"] input {
                 color: var(--editor-text);
-                border-color: var(--editor-border-light) !important;
+                border-color: var(--editor-border) !important;
               }
-              :global([data-theme="dark"]) [data-page="signup"]{
-                background: var(--editor-accent) !important;
-              }
-              :global([data-theme="dark"]) [data-page="signup"]  {
-                background: var(--editor-accent-hover) !important;
-              }
-              :global([data-theme="dark"]) [data-page="signup"] {
-                color: var(--editor-text-secondary);
-              }
-              :global([data-theme="dark"]) [data-page="signup"]{
-                box-shadow: 0 8px 16px var(--editor-shadow-lg) !important;
+              :global([data-theme="dark"]) [data-page="signup"] header a{
+                background: var(--editor-warning) !important;
+                color: #111827 !important;
               }
             `}</style>
         </div>
