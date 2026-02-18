@@ -5,8 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { updateUser, deleteAccount, type UpdateUserPayload } from '@/features/auth-feature/api';
 
 const inriaSerif = Inria_Serif({
@@ -17,6 +19,7 @@ const inriaSerif = Inria_Serif({
 export default function AccountPage() {
     const router = useRouter();
     const { user, token, loading, refreshUser, logout } = useAuth();
+    const { t } = useLanguage();
 
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -64,9 +67,9 @@ export default function AccountPage() {
             await updateUser(token, payload);
             await refreshUser();
             setPassword('');
-            setSuccess('Profile updated');
+            setSuccess(t('settings.profileUpdated'));
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Failed to update profile';
+            const message = err instanceof Error ? err.message : t('settings.failedToUpdate');
             setError(message);
         } finally {
             setIsLoading(false);
@@ -75,7 +78,7 @@ export default function AccountPage() {
 
     const handleDeleteAccount = async () => {
         if (!token) return;
-        const confirmed = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+        const confirmed = window.confirm(t('settings.deleteAccountConfirm'));
         if (!confirmed) return;
         setIsLoading(true);
         setError(null);
@@ -84,7 +87,7 @@ export default function AccountPage() {
             await logout();
             router.replace('/');
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Failed to delete account';
+            const message = err instanceof Error ? err.message : t('settings.failedToUpdate');
             setError(message);
         } finally {
             setIsLoading(false);
@@ -122,9 +125,10 @@ export default function AccountPage() {
                     <Image src="/devince_log.svg" alt="Logo" width={48} height={48} />
                 </Link>
                 <div className="flex items-center gap-3">
+                    <LanguageSwitcher variant="darkHeader" />
                     <ThemeToggleButton />
                     <Link href="/editor" className="editor-btn bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm">
-                        Editor
+                        {t('settings.backToEditor')}
                     </Link>
                 </div>
             </header>
@@ -138,7 +142,7 @@ export default function AccountPage() {
                         }}></div>
 
                         <div className="relative z-10">
-                            <h1 className="text-3xl font-bold text-center mb-4 text-gray-900">Account Settings</h1>
+                            <h1 className="text-3xl font-bold text-center mb-4 text-gray-900">{t('settings.accountSettings')}</h1>
                             {error && (
                                 <div className="mb-4 text-red-600 text-sm text-center">{error}</div>
                             )}
@@ -158,7 +162,7 @@ export default function AccountPage() {
                                         className="object-cover transition-transform group-hover:scale-110"
                                     />
                                     <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-white text-xs font-bold text-center">Change Photo</span>
+                                        <span className="text-white text-xs font-bold text-center">{t('settings.changePhoto')}</span>
                                     </div>
                                 </div>
                                 <input
@@ -173,7 +177,7 @@ export default function AccountPage() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">First Name</label>
+                                        <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">{t('settings.firstNameLabel')}</label>
                                         <input
                                             type="text"
                                             value={firstName}
@@ -182,7 +186,7 @@ export default function AccountPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">Last Name</label>
+                                        <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">{t('settings.lastNameLabel')}</label>
                                         <input
                                             type="text"
                                             value={lastName}
@@ -193,7 +197,7 @@ export default function AccountPage() {
                                 </div>
 
                                 <div className="mt-2">
-                                    <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">Email Address</label>
+                                    <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">{t('settings.emailAddressLabel')}</label>
                                     <input
                                         type="email"
                                         value={email}
@@ -203,34 +207,35 @@ export default function AccountPage() {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">New Password</label>
+                                    <label className="text-xs font-bold text-gray-600 ml-4 mb-1 block uppercase">{t('settings.newPasswordLabel')}</label>
                                     <input
                                         type="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="Leave blank to keep current"
+                                        placeholder={t('settings.leaveBlankToKeep')}
                                         className="w-full px-4 py-2 border-b-4 border-white focus:outline-none bg-transparent text-gray-900 placeholder:text-gray-500 text-sm"
                                     />
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={handleUpdateProfile}
                                     disabled={isLoading}
-                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-4 disabled:opacity-50"
+                                    className="page-primary-btn w-full bg-[#6b93c0] text-white py-3 rounded-full text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-4 disabled:opacity-50"
                                 >
-                                    {isLoading ? 'Updating...' : 'Save Changes'}
+                                    {isLoading ? t('settings.updating') : t('settings.saveChanges')}
                                 </button>
 
                                 <hr className="divider border-white border-opacity-30 my-6" />
 
                                 <div className="pt-1">
-                                    <h3 className="text-base font-bold text-red-600 mb-2">Danger Zone</h3>
-                                    <p className="text-xs text-gray-600 mb-3">Once you delete your account, there is no going back. Please be certain.</p>
+                                    <h3 className="text-base font-bold text-red-600 mb-2">{t('settings.dangerZone')}</h3>
+                                    <p className="text-xs text-gray-600 mb-3">{t('settings.dangerZoneWarning')}</p>
                                     <button
                                         onClick={handleDeleteAccount}
                                         className="w-full text-red-600 border-2 border-red-600 px-5 py-2 rounded-full text-sm font-bold hover:bg-red-600 hover:text-white transition-all"
                                     >
-                                        Delete Account
+                                        {t('settings.deleteAccount')}
                                     </button>
                                 </div>
                             </div>
@@ -248,20 +253,20 @@ export default function AccountPage() {
                     background: var(--editor-surface);
                     border-bottom: 1px solid var(--editor-border);
                 }
-                :global([data-theme="dark"]) [data-page="account"]{
+                :global([data-theme="dark"]) [data-page="account"] .card {
                     background: var(--editor-surface) !important;
-                    color: var(--editor-text) !important;
+                    color: var(--editor-text);
                     border: 1px solid var(--editor-border);
                 }
-                :global([data-theme="dark"]) [data-page="account"]  {
+                :global([data-theme="dark"]) [data-page="account"] .card-overlay {
                     background: rgba(255,255,255,0.04) !important;
                 }
-                :global([data-theme="dark"]) [data-page="account"]  {
-                    background: var(--editor-surface);
-                    border-color: var(--editor-border);
+                :global([data-theme="dark"]) [data-page="account"] .page-primary-btn {
+                    background: var(--editor-accent) !important;
+                    color: var(--editor-text) !important;
                 }
-                :global([data-theme="dark"]) [data-page="account"]  {
-                    display: none; 
+                :global([data-theme="dark"]) [data-page="account"] .page-primary-btn:hover:not(:disabled) {
+                    background: var(--editor-accent-hover) !important;
                 }
                 :global([data-theme="dark"]) [data-page="account"] input {
                     color: var(--editor-text);
@@ -277,7 +282,7 @@ export default function AccountPage() {
                 :global([data-theme="dark"]) [data-page="account"] p {
                     color: var(--editor-text-secondary);
                 }
-                :global([data-theme="dark"]) [data-page="account"] {
+                :global([data-theme="dark"]) [data-page="account"] .divider {
                     border-color: var(--editor-border);
                     opacity: 1;
                 }

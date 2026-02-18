@@ -17,13 +17,13 @@ export const LOCALE_OPTIONS: { value: Locale; label: string }[] = [
   { value: 'uk', label: 'Українська' },
   { value: 'ru', label: 'Русский' },
   { value: 'ko', label: '한국어' },
-  // { value: 'ur', label: 'اردو' },
-  // { value: 'ar', label: 'العربية' },
-  // { value: 'ja', label: '日本語' },
-  // { value: 'zh', label: '中文' },
-  // { value: 'fr', label: 'Français' },
-  // { value: 'tr', label: 'Türkçe' },
-  // { value: 'sq', label: 'Shqip' },
+  { value: 'ur', label: 'اردو' },
+  { value: 'ar', label: 'العربية' },
+  { value: 'ja', label: '日本語' },
+  { value: 'zh', label: '中文' },
+  { value: 'fr', label: 'Français' },
+  { value: 'tr', label: 'Türkçe' },
+  { value: 'sq', label: 'Shqip' },
 ];
 
 interface LanguageSwitcherProps {

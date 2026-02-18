@@ -1171,6 +1171,87 @@ body {
   gap: 12px;
 }
 
+.mona-chat-message-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.mona-chat-message-row .mona-chat-bubble--user {
+  align-self: flex-end;
+}
+
+.mona-chat-chip-wrap {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.mona-chat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: white;
+  background: linear-gradient(135deg, var(--mona-accent) 0%, color-mix(in srgb, var(--mona-accent) 82%, black) 100%);
+  border: 1px solid color-mix(in srgb, var(--mona-accent) 50%, transparent);
+  box-shadow:
+    0 2px 8px color-mix(in srgb, var(--mona-accent) 30%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+.mona-chat-chip:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 20px color-mix(in srgb, var(--mona-accent) 38%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  filter: brightness(1.08);
+  border-color: color-mix(in srgb, var(--mona-accent) 70%, transparent);
+}
+
+.mona-chat-chip:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--mona-accent) 28%, transparent);
+}
+
+.mona-chat-chip:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+
+.mona-chat-chip__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  flex-shrink: 0;
+}
+
+.mona-chat-chip:disabled .mona-chat-chip__icon {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mona-chat-chip__label {
+  white-space: nowrap;
+}
+
+.mona-chat-panel__download-spinner {
+  flex-shrink: 0;
+  animation: mona-spin 0.8s linear infinite;
+}
+
 .mona-chat-bubble {
   max-width: 88%;
   padding: 12px 16px;
@@ -1197,6 +1278,26 @@ body {
 .mona-chat-bubble__content {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.mona-chat-bubble__content h1,
+.mona-chat-bubble__content h2,
+.mona-chat-bubble__content h3,
+.mona-chat-bubble__content h4,
+.mona-chat-bubble__content h5,
+.mona-chat-bubble__content h6 {
+  font-weight: 700;
+  margin: 0.6em 0 0.25em;
+  line-height: 1.3;
+}
+
+.mona-chat-bubble__content h1:first-child,
+.mona-chat-bubble__content h2:first-child,
+.mona-chat-bubble__content h3:first-child,
+.mona-chat-bubble__content h4:first-child,
+.mona-chat-bubble__content h5:first-child,
+.mona-chat-bubble__content h6:first-child {
+  margin-top: 0;
 }
 
 .mona-chat-bubble__loading {
