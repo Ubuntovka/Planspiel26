@@ -673,3 +673,158 @@ export async function explainDiagram(
     res.status(500).json({ error: err?.message ?? 'Failed to explain diagram.' });
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Documentation generation
+// ─────────────────────────────────────────────────────────────
+
+const WAM_DOCUMENTATION_PROMPT = `You are a senior solutions architect writing technical documentation for a WAM (Workflow and Access Model) architecture diagram.
+
+## YOUR TASK
+Generate a comprehensive Markdown documentation file from the provided diagram data. The documentation must be clear, structured, and useful both for developers and stakeholders.
+
+## REQUIRED SECTIONS (always include all of them)
+
+### 1. Overview
+- 2-3 sentence executive summary of what this architecture represents
+- Key purpose and scope of the system
+
+### 2. Architecture Summary
+- Quick stats table: total nodes, edges, security realms, node type breakdown
+- Overall architecture style/pattern description
+
+### 3. Security Realms
+For each security realm: name, purpose, list of contained components
+
+### 4. Components
+Table with columns: Name | Type | Realm | Description
+- Provide a meaningful description for each component based on its type and name
+
+### 5. Connections & Data Flow
+For each edge: describe the interaction in plain English
+- Group by realm or flow direction when logical
+
+### 6. Trust Relationships
+- Describe federation/trust between realms
+- If none, state that all components operate within a single trust boundary
+
+### 7. Validation Status
+- State whether the diagram is valid
+- If errors exist, list them clearly with brief guidance on how to fix each
+
+### 8. Architecture Notes & Recommendations
+- 3-5 concise bullet points: patterns observed, potential improvements, or things to review
+
+## FORMATTING RULES
+- Use proper Markdown (headings, tables, bullets, code blocks where helpful)
+- Use **bold** for component names on first mention
+- Use backtick \`type names\` for WAM node types
+- Tables must have headers and proper alignment markers
+- Keep total length between 600-1200 words
+- Do NOT include a title (the frontend will add it from the diagram name)
+
+Output ONLY the Markdown content. No wrapping code block. No preamble.`;
+
+export async function generateDocumentation(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const diagram = req.body?.diagram;
+  if (!diagram || typeof diagram !== 'object') {
+    res.status(400).json({ error: 'Missing or invalid "diagram" in request body.' });
+    return;
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    res.status(503).json({ error: 'Documentation generation is not configured. Set OPENAI_API_KEY on the server.' });
+    return;
+  }
+
+  const nodes: any[] = Array.isArray(diagram.nodes) ? diagram.nodes : [];
+  const edges: any[] = Array.isArray(diagram.edges) ? diagram.edges : [];
+  const viewport = diagram.viewport ?? { x: 0, y: 0, zoom: 1 };
+  const diagramName: string = typeof req.body?.diagramName === 'string' ? req.body.diagramName.trim() : 'Untitled Diagram';
+
+  // Validate the diagram server-side for inclusion in docs
+  const diagramJson = JSON.stringify({ nodes, edges, viewport });
+  let validation: { valid: boolean; errors: string[] } = { valid: true, errors: [] };
+  try {
+    const result = await validate(diagramJson);
+    validation = { valid: result.errors.length === 0, errors: result.errors };
+  } catch (_) {
+    // continue with best-effort
+  }
+
+  // Build a structured description of the diagram for the LLM
+  const nodeLines = nodes.map((n) => {
+    const label = n?.data?.label || n?.data?.name || 'Unnamed';
+    const name = n?.data?.name || label;
+    const type = n?.type || 'unknown';
+    const parentNode = n?.parentId ? nodes.find((p) => p.id === n.parentId) : null;
+    const realm = parentNode ? (parentNode?.data?.label || parentNode?.data?.name || n.parentId) : null;
+    return `- ${name} (label: "${label}", type: \`${type}\`${realm ? `, realm: "${realm}"` : ''})`;
+  }).join('\n');
+
+  const edgeLines = edges.map((e) => {
+    const src = nodes.find((n) => n.id === e.source);
+    const tgt = nodes.find((n) => n.id === e.target);
+    const srcLabel = src?.data?.label || src?.data?.name || e.source;
+    const tgtLabel = tgt?.data?.label || tgt?.data?.name || e.target;
+    return `- ${srcLabel} → ${tgtLabel} (type: \`${e.type}\`)`;
+  }).join('\n');
+
+  const realmCount = nodes.filter((n) => n.type === 'securityRealmNode').length;
+  const typeCounts = nodes.reduce<Record<string, number>>((acc, n) => {
+    const t = n.type || 'unknown';
+    acc[t] = (acc[t] || 0) + 1;
+    return acc;
+  }, {});
+
+  const userMessage = [
+    `Generate documentation for this WAM diagram named "${diagramName}".`,
+    '',
+    `## Components (${nodes.length} total)`,
+    nodeLines || '(none)',
+    '',
+    `## Connections (${edges.length} total)`,
+    edgeLines || '(none)',
+    '',
+    `## Stats`,
+    `- Security Realms: ${realmCount}`,
+    `- Type breakdown: ${Object.entries(typeCounts).map(([t, c]) => `${t}: ${c}`).join(', ')}`,
+    '',
+    `## Validation`,
+    validation.valid
+      ? '✓ Diagram is valid.'
+      : `✗ ${validation.errors.length} validation error(s):\n${validation.errors.map((e) => `  - ${e}`).join('\n')}`,
+  ].join('\n');
+
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: WAM_DOCUMENTATION_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
+      temperature: 0.3,
+      max_tokens: 2000,
+    });
+
+    const markdown = completion.choices[0]?.message?.content ?? '';
+
+    res.status(200).json({ markdown, diagramName });
+  } catch (err: any) {
+    if (err?.status === 401) {
+      res.status(401).json({ error: 'Invalid or missing OpenAI API key.' });
+      return;
+    }
+    if (err?.code === 'ENOTFOUND' || err?.message?.includes('fetch')) {
+      res.status(502).json({ error: 'Could not reach the AI service.' });
+      return;
+    }
+    console.error('LLM generate documentation error:', err);
+    res.status(500).json({ error: err?.message ?? 'Failed to generate documentation.' });
+  }
+}
