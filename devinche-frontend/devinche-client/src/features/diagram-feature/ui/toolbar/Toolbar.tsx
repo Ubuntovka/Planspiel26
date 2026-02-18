@@ -19,6 +19,8 @@ import {
   Image,
   FileCode,
   CheckCircle,
+  GitCommitHorizontal,
+  History,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -90,6 +92,10 @@ interface ToolbarProps {
   myDisplayName?: string;
   /** Whether collaboration socket is connected. */
   collaborationConnected?: boolean;
+  /** Called when user clicks "Save version" in the File menu. */
+  onCommitVersion?: () => void;
+  /** Called when user clicks "Version history" in the File menu. */
+  onVersionHistory?: () => void;
 }
 
 const Toolbar = ({
@@ -124,6 +130,8 @@ const Toolbar = ({
   myColor,
   myDisplayName,
   collaborationConnected = false,
+  onCommitVersion,
+  onVersionHistory,
 }: ToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
   const { t } = useLanguage();
@@ -569,6 +577,38 @@ const Toolbar = ({
                 >
                   <FilePlus size={14} /> {t("toolbar.saveAs")}
                 </button>
+              )}
+              {isLoggedIn && !isViewer && onCommitVersion && (
+                <>
+                  <div
+                    className="my-1 border-t"
+                    style={{ borderColor: "var(--editor-border)" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onCommitVersion();
+                      setOpenMenu(null);
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2"
+                    style={{ color: "var(--editor-text)" }}
+                  >
+                    <GitCommitHorizontal size={14} /> Save version
+                  </button>
+                  {onVersionHistory && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onVersionHistory();
+                        setOpenMenu(null);
+                      }}
+                      className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] flex items-center gap-2"
+                      style={{ color: "var(--editor-text)" }}
+                    >
+                      <History size={14} /> Version history
+                    </button>
+                  )}
+                </>
               )}
               <div
                 className="my-1 border-t"

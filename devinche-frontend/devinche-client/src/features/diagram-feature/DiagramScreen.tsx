@@ -33,8 +33,10 @@ import AiApplicationNode from './ui/nodes/AiApplicationNode';
 import AiServiceNode from './ui/nodes/AiServiceNode';
 import { generateDiagramFromPrompt } from './api';
 import ShareDialog from './ui/ShareDialog';
+import CommitDialog from './ui/CommitDialog';
+import VersionHistoryPanel from './ui/VersionHistoryPanel';
 import CommentsPanel from './ui/comments/CommentsPanel';
-import { listComments, type CommentItem, type CommentAnchor } from './api';
+import { listComments, type CommentItem, type CommentAnchor, createDiagramVersion, type DiagramVersionFull } from './api';
 import { useCollaboration } from './collaboration/useCollaboration';
 
 const nodeTypes: NodeTypes = {
@@ -126,6 +128,8 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [commentAnchor, setCommentAnchor] = useState<CommentAnchor | null>(null);
+  const [commitDialogOpen, setCommitDialogOpen] = useState(false);
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
 
   const loadComments = useCallback(async () => {
     if (!diagramId || !getToken?.()) return;
@@ -171,6 +175,26 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     if (saveDiagram) return saveDiagram();
     return true;
   }, [saveDiagram]);
+
+  const handleCommit = useCallback(
+    async (message: string, description: string) => {
+      if (!diagramId || !getToken) throw new Error('No diagram or auth token');
+      const token = getToken();
+      if (!token) throw new Error('Not authenticated');
+      await createDiagramVersion(token, diagramId, message, description);
+    },
+    [diagramId, getToken]
+  );
+
+  const handleVersionRestore = useCallback(
+    (version: DiagramVersionFull) => {
+      importFromJson(
+        JSON.stringify({ nodes: version.nodes, edges: version.edges, viewport: version.viewport })
+      );
+      setVersionHistoryOpen(false);
+    },
+    [importFromJson]
+  );
 
   const handleSaveAs = useCallback(
     async (name: string) => {
@@ -305,6 +329,8 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         myColor={collaborationMyColor ?? undefined}
         myDisplayName={userDisplayName}
         collaborationConnected={collaborationConnected}
+        onCommitVersion={!isViewer && diagramId ? () => setCommitDialogOpen(true) : undefined}
+        onVersionHistory={diagramId && getToken?.() ? () => setVersionHistoryOpen(true) : undefined}
       />
       {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
 
@@ -389,6 +415,20 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
           diagramId={diagramId}
           getToken={getToken}
           onClose={() => setShareDialogOpen(false)}
+        />
+      )}
+      {commitDialogOpen && (
+        <CommitDialog
+          onClose={() => setCommitDialogOpen(false)}
+          onCommit={handleCommit}
+        />
+      )}
+      {versionHistoryOpen && diagramId && getToken && (
+        <VersionHistoryPanel
+          diagramId={diagramId}
+          getToken={getToken}
+          onClose={() => setVersionHistoryOpen(false)}
+          onRestore={handleVersionRestore}
         />
       )}
       {commentsPanelOpen && diagramId && getToken && user?._id && (
