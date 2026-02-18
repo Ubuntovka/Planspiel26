@@ -14,6 +14,7 @@ import {
   transferOwnership,
 } from '../controllers/diagramController';
 import commentRoutes from './commentRoutes';
+import versionRoutes from './versionRoutes';
 
 const router = express.Router();
 
@@ -165,5 +166,8 @@ router.delete('/:id', async (req: CustomRequest, res: Response) => {
 
 /** Mount comment & collaborators under /:id (e.g. /:id/comments, /:id/collaborators) */
 router.use('/:id', commentRoutes);
+
+/** Mount version history under /:id/versions */
+router.use('/:id/versions', versionRoutes);
 
 export default router;

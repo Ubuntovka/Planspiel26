@@ -437,3 +437,105 @@ export async function explainDiagram(
   }
   return data as ExplainDiagramResponse;
 }
+
+// --- Diagram Versions ---
+
+export interface DiagramVersionSummary {
+  _id: string;
+  diagramId: string;
+  message: string;
+  description?: string;
+  nodeCount: number;
+  edgeCount: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface DiagramVersionFull extends DiagramVersionSummary {
+  nodes: any[];
+  edges: any[];
+  viewport?: { x: number; y: number; zoom: number };
+}
+
+export async function createDiagramVersion(
+  token: string,
+  diagramId: string,
+  message: string,
+  description?: string
+): Promise<{ version: DiagramVersionSummary }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/versions`, {
+    method: 'POST',
+    headers: headers(token),
+    body: JSON.stringify({ message, description }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to create version');
+  return data;
+}
+
+export async function listDiagramVersions(
+  token: string,
+  diagramId: string
+): Promise<{ versions: DiagramVersionSummary[] }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/versions`, {
+    method: 'GET',
+    headers: headers(token),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to list versions');
+  return data;
+}
+
+export async function getDiagramVersion(
+  token: string,
+  diagramId: string,
+  versionId: string
+): Promise<{ version: DiagramVersionFull }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/versions/${versionId}`, {
+    method: 'GET',
+    headers: headers(token),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to get version');
+  return data;
+}
+
+export async function restoreDiagramVersion(
+  token: string,
+  diagramId: string,
+  versionId: string
+): Promise<{ message: string }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/diagrams/${diagramId}/versions/${versionId}/restore`, {
+    method: 'POST',
+    headers: headers(token),
+    body: JSON.stringify({}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to restore version');
+  return data;
+}
+
+// --- LLM Documentation ---
+
+export async function generateDiagramDocumentation(
+  diagram: { nodes: any[]; edges: any[]; viewport?: { x: number; y: number; zoom: number } },
+  diagramName?: string
+): Promise<{ markdown: string; diagramName: string }> {
+  const base = getApiBasePublic();
+  if (!base) throw new Error('API base URL not configured');
+  const res = await fetch(`${base}/api/llm/generate-documentation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ diagram, diagramName: diagramName || 'Untitled Diagram' }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = (data as { error?: string }).error || `Request failed: ${res.status}`;
+    throw new Error(msg);
+  }
+  return data as { markdown: string; diagramName: string };
+}

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import asyncHandler from 'express-async-handler';
-import { generateDiagramFromPrompt, explainDiagram, buildDiagramFromSystemDescription } from '../controllers/llmController';
+import { generateDiagramFromPrompt, explainDiagram, buildDiagramFromSystemDescription, generateDocumentation } from '../controllers/llmController';
 
 const router = Router();
 
@@ -24,5 +24,12 @@ router.post('/build-from-description', asyncHandler(buildDiagramFromSystemDescri
  * Returns: { explanation: string, validation: { valid, errors[] }, cost: {...} }
  */
 router.post('/explain-diagram', asyncHandler(explainDiagram));
+
+/**
+ * POST /api/llm/generate-documentation
+ * Body: { diagram: { nodes, edges, viewport }, diagramName?: string }
+ * Returns: { markdown: string, diagramName: string }
+ */
+router.post('/generate-documentation', asyncHandler(generateDocumentation));
 
 export default router;
