@@ -518,3 +518,24 @@ export async function restoreDiagramVersion(
   if (!res.ok) throw new Error((data as { error?: string }).error || 'Failed to restore version');
   return data;
 }
+
+// --- LLM Documentation ---
+
+export async function generateDiagramDocumentation(
+  diagram: { nodes: any[]; edges: any[]; viewport?: { x: number; y: number; zoom: number } },
+  diagramName?: string
+): Promise<{ markdown: string; diagramName: string }> {
+  const base = getApiBasePublic();
+  if (!base) throw new Error('API base URL not configured');
+  const res = await fetch(`${base}/api/llm/generate-documentation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ diagram, diagramName: diagramName || 'Untitled Diagram' }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = (data as { error?: string }).error || `Request failed: ${res.status}`;
+    throw new Error(msg);
+  }
+  return data as { markdown: string; diagramName: string };
+}
