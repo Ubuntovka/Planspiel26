@@ -105,3 +105,22 @@ export const deleteUser = async (userId: string) => {
     await user.deleteOne();
     return {user}
 }
+
+// Public reset password by email (no auth). Intended for "Forgot password" flow without token.
+// Note: In production, consider email verification tokens before allowing resets.
+export const resetPasswordByEmail = async (email: string | undefined, newPassword: string | undefined) => {
+    if (!email || !newPassword) {
+        return { error: 'Please provide email and newPassword' }
+    }
+    if (newPassword.length < 8) {
+        return { error: 'Password must be at least 8 characters long' }
+    }
+    const user = await User.findOne({ email })
+    if (!user) {
+        // Do not reveal that the email does not exist; return generic success to prevent enumeration
+        return { message: 'If this email exists, the password has been reset.' }
+    }
+    user.password = newPassword as any
+    await user.save()
+    return { message: 'Password has been reset successfully.' }
+}

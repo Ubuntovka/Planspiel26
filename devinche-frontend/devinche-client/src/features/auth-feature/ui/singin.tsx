@@ -6,12 +6,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { login as apiLogin, getApiBase } from '@/features/auth-feature/api';
 
-// Minimal types for Google Identity Services (GIS) OAuth Code flow
 type GoogleOAuthCodeResponse = {
     code?: string;
     scope?: string;
@@ -53,7 +50,6 @@ export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { setSession, isAuthenticated } = useAuth();
-    const { t } = useLanguage();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -81,7 +77,7 @@ export default function LoginPage() {
             setSession(token, user);
             router.push(postLoginUrl);
         } catch (err) {
-            setError(err instanceof Error ? err.message : t('login.errorOccurred'));
+            setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -107,7 +103,6 @@ export default function LoginPage() {
         });
     }, []);
 
-    // Initialize Google OAuth Code Client once (popup flow)
     useEffect(() => {
         let mounted = true;
         (async () => {
@@ -127,7 +122,7 @@ export default function LoginPage() {
                                 try {
                                     const code = response?.code;
                                     if (!code) {
-                                        setError(t('login.googleCodeMissing'));
+                                        setError('Google authorization code missing');
                                         return;
                                     }
                                     const apiBase = getApiBase();
@@ -138,7 +133,7 @@ export default function LoginPage() {
                                     });
                                     const data = await res.json();
                                     if (!res.ok) {
-                                        setError(data?.error || t('login.googleLoginFailed'));
+                                        setError(data?.error || 'Google login failed');
                                         return;
                                     }
                                     if (data.token && data.user) {
@@ -146,20 +141,17 @@ export default function LoginPage() {
                                     }
                                     router.push(postLoginUrl);
                                 } catch (e) {
-                                    setError(t('login.failedGoogleLogin'));
+                                    setError('Failed to login with Google');
                                 }
                             },
                         });
                     } catch (e) {
-                        // no-op, will surface on click
                     }
                 }
             } catch {
-                // script load error handled on click
             }
         })();
         return () => { mounted = false; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleGoogleLogin = useCallback(async () => {
@@ -168,16 +160,16 @@ export default function LoginPage() {
             await loadGoogleScript();
             const googleObj = (typeof window !== 'undefined') ? window.google : undefined;
             if (!googleObj) {
-                setError(t('login.googleNotInitialized'));
+                setError('Google client not initialized');
                 return;
             }
             if (!codeClientRef.current) {
-                setError(t('login.googleNotReady'));
+                setError('Google code client not ready');
                 return;
             }
             codeClientRef.current.requestCode();
         } catch (err) {
-            setError(t('login.failedInitGoogle'));
+            setError('Failed to initialize Google login');
         }
     }, [loadGoogleScript, router]);
 
@@ -189,13 +181,13 @@ export default function LoginPage() {
     return (
         <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="login">
             <div
-                className="absolute inset-0 pointer-events-none page-grid-bg"
+                className="absolute inset-0 pointer-events-none"
                 style={{
                     backgroundImage: `
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
             linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
           `,
-                    backgroundSize: '1cm 1cm'
+                    backgroundSize: '4cm 4cm'
                 }}
             />
 
@@ -210,13 +202,12 @@ export default function LoginPage() {
                     />
                 </Link>
                 <div className="flex items-center gap-3">
-                  <LanguageSwitcher variant="darkHeader" />
                   <ThemeToggleButton />
                   <Link
                       href="/"
                       className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
                   >
-                      {t('login.home')}
+                      Home
                   </Link>
                 </div>
             </header>
@@ -254,7 +245,7 @@ export default function LoginPage() {
 
                         <div className="relative z-10">
                             <h1 className="text-[26px] sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8 md:mb-10 text-gray-900">
-                                {t('login.title')}
+                                Login
                             </h1>
 
                             {error && (
@@ -270,7 +261,7 @@ export default function LoginPage() {
                                         id="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder={t('login.emailPlaceholder')}
+                                        placeholder="Email"
                                         className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                         required
                                         disabled={isLoading}
@@ -285,7 +276,7 @@ export default function LoginPage() {
                                             id="password"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            placeholder={t('login.passwordPlaceholder')}
+                                            placeholder="Password"
                                             className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                             required
                                             disabled={isLoading}
@@ -298,30 +289,29 @@ export default function LoginPage() {
                                     </div>
                                     <div className="text-right mt-1">
                                         <Link href="/forgot-password" className="text-sm md:text-xs text-gray-800 hover:text-gray-800">
-                                            {t('login.forgotPassword')}
+                                            Forgot password?
                                         </Link>
                                     </div>
                                 </div>
 
                                 <button
-                                    type="button"
                                     onClick={handleLogin}
                                     disabled={isLoading}
-                                    className="page-primary-btn w-full bg-[#6b93c0] text-white py-3 rounded-full text-xl md:text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-xl md:text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading ? t('login.loggingIn') : t('login.submit')}
+                                    {isLoading ? 'Logging in...' : 'Login'}
                                 </button>
                             </div>
 
                             <div className="mt-6">
                                 <p className="text-center text-base md:text-sm text-gray-700 mb-4">
-                                    {t('login.orLoginWith')}
+                                    Or log in with:
                                 </p>
                                 <div className="flex justify-center gap-4">
                                     <button
                                         onClick={handleGoogleLogin}
                                         className="w-12 h-12 flex items-center justify-center bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"
-                                        aria-label={t('login.loginWithGoogle')}
+                                        aria-label="Login with Google"
                                         disabled={isLoading}
                                     >
                                         <Image
@@ -350,9 +340,9 @@ export default function LoginPage() {
 
                             <div className="mt-6 text-center">
                                 <p className="text-sm text-gray-700">
-                                    {t('login.dontHaveAccount')}{' '}
+                                    Don't you have an account?{' '}
                                     <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-medium">
-                                        {t('auth.signUp')}
+                                        Sign up
                                     </Link>
                                 </p>
                             </div>
@@ -372,7 +362,10 @@ export default function LoginPage() {
               :global([data-theme="dark"]) [data-page="login"] h1 {
                 color: var(--editor-text);
               }
-              :global([data-theme="dark"]) [data-page="login"] .page-grid-bg {
+              :global([data-theme="dark"]) [data-page="login"] p {
+                color: var(--editor-text-secondary);
+              }
+              :global([data-theme="dark"]) [data-page="login"]  {
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
@@ -382,20 +375,11 @@ export default function LoginPage() {
               }
               :global([data-theme="dark"]) [data-page="login"] input {
                 color: var(--editor-text);
-                border-color: var(--editor-border-light) !important;
+                border-color: var(--editor-border) !important;
               }
-              :global([data-theme="dark"]) [data-page="login"] .page-primary-btn {
-                background: var(--editor-accent) !important;
-                color: var(--editor-text) !important;
-              }
-              :global([data-theme="dark"]) [data-page="login"] .page-primary-btn:hover:not(:disabled) {
-                background: var(--editor-accent-hover) !important;
-              }
-              :global([data-theme="dark"]) [data-page="login"] a.text-blue-600 {
-                color: var(--editor-accent) !important;
-              }
-              :global([data-theme="dark"]) [data-page="login"] a.text-blue-600:hover {
-                color: var(--editor-accent-hover) !important;
+              :global([data-theme="dark"]) [data-page="login"] header a{
+                background: var(--editor-warning) !important;
+                color: #111827 !important;
               }
             `}</style>
         </div>
