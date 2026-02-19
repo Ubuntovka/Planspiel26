@@ -1,15 +1,18 @@
-import React, { useState, useMemo, useRef, ChangeEvent } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   Save, Undo, Redo, ZoomIn, ZoomOut, Maximize2, Sun, Moon,
   Share2, MessageSquare, Download, Upload, ArrowLeft, FilePlus,
   Image, FileCode, CheckCircle, FileText, GitCommitHorizontal, History
 } from "lucide-react";
+
+// Contexts & Components
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import UserAvatarMenu from "@/components/UserAvatarMenu";
+import LanguageSwitcher from "@/components/LanguageSwitcher"; // 👈 누락되었던 언어 선택기 복구
 import NotificationBell from "../notifications/NotificationBell";
 
-// 팀원이 추가한 Import & Export 기능들 유지
+// Imports & Exports (main 브랜치 기능)
 import {
   exportDiagramToJson,
   exportDiagramToPng,
@@ -23,7 +26,7 @@ import {
 } from "../../imports-exports/imports";
 import { DiagramNode } from "@/types/diagram";
 
-// 질문자님이 모듈화한 UI 컴포넌트들 유지
+// 질문자님이 리팩토링한 모듈들
 import ToolbarDropDown from "./ToolbarDropDown";
 import DropdownItem from "./ToolbarDropDownItem";
 import { CostBreakdown } from "./CostBreakdown";
@@ -37,6 +40,7 @@ interface ToolbarProps {
   onSaveAs?: (name: string) => Promise<string | null>;
   diagramName?: string | null;
   isLoggedIn?: boolean;
+  isViewer?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -45,6 +49,18 @@ interface ToolbarProps {
   onZoomOut?: () => void;
   onFitView?: () => void;
   allNodes?: DiagramNode[];
+  
+  // 기능별 핸들러
+  handleValidation?: () => void; // 👈 Diagram Validate 기능 복구
+  exportToJson?: () => string | null;
+  importFromJson?: (json: string) => void;
+  flowWrapperRef?: React.RefObject<HTMLDivElement>;
+  
+  // 버전 및 문서 기능 (main 브랜치 추가 내용 복구)
+  onCommitVersion?: () => void;
+  onVersionHistory?: () => void;
+  onGenerateDocumentation?: () => void;
+  isGeneratingDocumentation?: boolean;
 }
 
 const Toolbar = (props: ToolbarProps) => {
@@ -56,31 +72,64 @@ const Toolbar = (props: ToolbarProps) => {
   const [saveAsName, setSaveAsName] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // 팀원이 추가한 File Upload 용 Ref 유지
+  // 숨겨진 input을 조작하기 위한 Ref
   const fileInputRef = useRef<HTMLInputElement>(null);
   const rdfInputRef = useRef<HTMLInputElement>(null);
   const xmlInputRef = useRef<HTMLInputElement>(null);
 
-  // 팀원이 추가한 기능 핸들러
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await importDiagramFromJSON(file);
+  // ----------------------------------------------------
+  // Import Handlers
+  // ----------------------------------------------------
+  const handleJsonImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const text = await importDiagramFromJSON(e);
+      if (text && props.importFromJson) props.importFromJson(text);
+    } catch (err) { console.error("Import failed:", err); }
     if (fileInputRef.current) fileInputRef.current.value = "";
     setOpenMenu(null);
   };
 
-  const handleRdfUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await importDiagramFromRdf(file);
+  const handleRdfImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const text = await importDiagramFromRdf(e);
+      if (text && props.importFromJson) props.importFromJson(text);
+    } catch (err) { console.error("Import failed:", err); }
     if (rdfInputRef.current) rdfInputRef.current.value = "";
     setOpenMenu(null);
   };
 
-  const handleXmlUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await importDiagramFromXml(file);
+  const handleXmlImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const text = await importDiagramFromXml(e);
+      if (text && props.importFromJson) props.importFromJson(text);
+    } catch (err) { console.error("Import failed:", err); }
     if (xmlInputRef.current) xmlInputRef.current.value = "";
     setOpenMenu(null);
+  };
+
+  // ----------------------------------------------------
+  // Export Handlers
+  // ----------------------------------------------------
+  const handleJsonExport = () => {
+    if (props.exportToJson) {
+      const json = props.exportToJson();
+      if (json) exportDiagramToJson(json);
+    }
+  };
+  const handlePngExport = () => {
+    if (props.flowWrapperRef?.current) exportDiagramToPng(props.flowWrapperRef.current);
+  };
+  const handleRdfExport = () => {
+    if (props.exportToJson) {
+      const json = props.exportToJson();
+      if (json) exportDiagramToRdf(json);
+    }
+  };
+  const handleXmlExport = () => {
+    if (props.exportToJson) {
+      const json = props.exportToJson();
+      if (json) exportDiagramToXml(json);
+    }
   };
 
   const handleSaveAs = async () => {
@@ -94,7 +143,7 @@ const Toolbar = (props: ToolbarProps) => {
     }
   };
 
-  // 비용 계산 로직 (질문자님 로직 유지)
+  // 비용 계산기 로직
   const costSummary = useMemo(() => {
     if (!props.allNodes) return { nodesWithCost: [], total: 0 };
     const nodesWithCost = props.allNodes
@@ -113,92 +162,155 @@ const Toolbar = (props: ToolbarProps) => {
   return (
     <div className="absolute top-0 left-0 right-0 z-20 flex flex-col bg-[var(--editor-bar-bg)] border-b border-[var(--editor-bar-border)]">
       
-      {/* 1. 상단 타이틀 및 설정 영역 */}
-      <div className="flex justify-between items-center h-12 border-b border-[var(--editor-bar-border)]">
+      {/* 바 1: 타이틀 바 */}
+      <div className="flex justify-between items-center h-12 border-b border-[var(--editor-bar-border)] shadow-sm">
         <ScrollableMenuBar className="flex-1 h-full">
           <div className="flex items-center h-full px-2">
             {props.onBack && (
-              <button
-                onClick={props.onBack}
-                className="p-2 mr-2 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors"
-                title={props.backLabel || t("common.back")}
-              >
-                <ArrowLeft size={18} />
-              </button>
+              <>
+                <button
+                  onClick={props.onBack}
+                  className="flex items-center gap-1.5 h-8 px-3.5 rounded-lg transition-colors cursor-pointer border border-[var(--editor-bar-border)] text-[var(--editor-text-secondary)] hover:bg-[var(--editor-surface-hover)] hover:text-[var(--editor-text)]"
+                  title="Back to diagrams"
+                >
+                  <ArrowLeft size={16} />
+                  <span className="text-sm font-medium">{props.backLabel ?? t("toolbar.diagrams")}</span>
+                </button>
+                <ToolbarDivider />
+              </>
             )}
-            <span className="font-semibold text-sm text-[var(--editor-text)] truncate max-w-[200px]">
+            <span className="font-semibold text-base text-[var(--editor-text)] truncate max-w-[240px]">
               {props.diagramName || t("toolbar.untitledDiagram")}
             </span>
           </div>
         </ScrollableMenuBar>
         
+        {/* 우측 상단 고정 영역 (알림, 언어, 테마, 프로필) */}
         <div className="flex items-center gap-2 px-4 h-full flex-shrink-0">
-          {props.isLoggedIn && <NotificationBell />}
+          {props.isLoggedIn && !props.isViewer && <NotificationBell />}
+          
+          {/* 👈 Language Switcher 복구 */}
+          <LanguageSwitcher /> 
+          
           <button
             onClick={toggleTheme}
             className="p-1.5 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors"
-            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            title={theme === "dark" ? "Light theme" : "Dark theme"}
           >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           <UserAvatarMenu />
         </div>
       </div>
 
-      {/* 2. 하단 툴바 메뉴 영역 */}
+      {/* 바 2: 메뉴 바 */}
       <div className="flex justify-between items-center h-10 bg-[var(--editor-bg)]">
         <ScrollableMenuBar className="flex-1 h-full">
-          {/* File Menu (팀원의 Import/Export를 DropdownItem으로 통합) */}
+          
+          {/* 1. File 메뉴 */}
           <ToolbarDropDown
             label={t("toolbar.file")}
             isOpen={openMenu === "file"}
             onToggle={() => setOpenMenu(openMenu === "file" ? null : "file")}
           >
             <DropdownItem icon={FilePlus}>{t("toolbar.new")}</DropdownItem>
-            <DropdownItem icon={Save} onClick={props.onSave}>{t("toolbar.save")}</DropdownItem>
-            <DropdownItem icon={Save} onClick={() => { setSaveAsName(props.diagramName || ""); setShowSaveAsModal(true); }}>
-              {t("toolbar.saveAs")}
+            <DropdownItem icon={Save} onClick={props.onSave} disabled={saving}>
+              {saving ? t("toolbar.saving") : t("toolbar.saveMenuItem")}
             </DropdownItem>
+            {props.isLoggedIn && props.onSaveAs && (
+              <DropdownItem icon={Save} onClick={() => { setSaveAsName(props.diagramName || ""); setShowSaveAsModal(true); setOpenMenu(null); }}>
+                {t("toolbar.saveAs")}
+              </DropdownItem>
+            )}
+
+            {/* 👈 Save version 및 History 기능 복구 */}
+            {props.isLoggedIn && !props.isViewer && props.onCommitVersion && (
+              <>
+                <div className="my-1 border-t border-[var(--editor-border)]" />
+                <DropdownItem icon={GitCommitHorizontal} onClick={() => { props.onCommitVersion!(); setOpenMenu(null); }}>
+                  Save version
+                </DropdownItem>
+                {props.onVersionHistory && (
+                  <DropdownItem icon={History} onClick={() => { props.onVersionHistory!(); setOpenMenu(null); }}>
+                    Version history
+                  </DropdownItem>
+                )}
+              </>
+            )}
+
+            {/* 👈 문서화 (Generate documentation) 기능 복구 */}
+            {props.onGenerateDocumentation && (
+              <>
+                <div className="my-1 border-t border-[var(--editor-border)]" />
+                <button
+                  type="button"
+                  onClick={() => { setOpenMenu(null); props.onGenerateDocumentation!(); }}
+                  disabled={props.isGeneratingDocumentation}
+                  className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] disabled:opacity-50 flex items-center gap-2 text-sm text-[var(--editor-text)]"
+                >
+                  {props.isGeneratingDocumentation ? (
+                    <>
+                      <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                      Generating…
+                    </>
+                  ) : (
+                    <><FileText size={14} /> Generate documentation</>
+                  )}
+                </button>
+              </>
+            )}
+
+            <div className="my-1 border-t border-[var(--editor-border)]" />
             
-            <ToolbarDivider />
-            
-            {/* Import Group */}
-            <DropdownItem icon={Upload} onClick={() => fileInputRef.current?.click()}>Import JSON</DropdownItem>
+            {/* Import 옵션들 */}
+            <DropdownItem icon={Upload} onClick={() => fileInputRef.current?.click()}>{t("toolbar.importJson")}</DropdownItem>
             <DropdownItem icon={Upload} onClick={() => rdfInputRef.current?.click()}>Import RDF</DropdownItem>
             <DropdownItem icon={Upload} onClick={() => xmlInputRef.current?.click()}>Import XML</DropdownItem>
             
-            <ToolbarDivider />
+            <div className="my-1 border-t border-[var(--editor-border)]" />
             
-            {/* Export Group */}
-            <DropdownItem icon={Download} onClick={() => { exportDiagramToJson(); setOpenMenu(null); }}>Export JSON</DropdownItem>
-            <DropdownItem icon={Download} onClick={() => { exportDiagramToRdf(); setOpenMenu(null); }}>Export RDF</DropdownItem>
-            <DropdownItem icon={Download} onClick={() => { exportDiagramToXml(); setOpenMenu(null); }}>Export XML</DropdownItem>
-            <DropdownItem icon={Image} onClick={() => { exportDiagramToPng(); setOpenMenu(null); }}>Export PNG</DropdownItem>
+            {/* Export 옵션들 */}
+            <DropdownItem icon={Download} onClick={() => { handleJsonExport(); setOpenMenu(null); }}>{t("toolbar.exportJson")}</DropdownItem>
+            <DropdownItem icon={Image} onClick={() => { handlePngExport(); setOpenMenu(null); }}>{t("toolbar.exportPng")}</DropdownItem>
+            <DropdownItem icon={FileCode} onClick={() => { handleRdfExport(); setOpenMenu(null); }}>{t("toolbar.exportRdf")}</DropdownItem>
+            <DropdownItem icon={FileCode} onClick={() => { handleXmlExport(); setOpenMenu(null); }}>{t("toolbar.exportXml")}</DropdownItem>
           </ToolbarDropDown>
 
-          {/* Edit Menu */}
+          {/* 2. Edit 메뉴 */}
           <ToolbarDropDown
             label={t("toolbar.edit")}
             isOpen={openMenu === "edit"}
             onToggle={() => setOpenMenu(openMenu === "edit" ? null : "edit")}
           >
-            <DropdownItem icon={Undo} onClick={props.onUndo} disabled={!props.canUndo}>{t("toolbar.undo")}</DropdownItem>
-            <DropdownItem icon={Redo} onClick={props.onRedo} disabled={!props.canRedo}>{t("toolbar.redo")}</DropdownItem>
+            <DropdownItem icon={Undo} onClick={() => { props.onUndo?.(); setOpenMenu(null); }} disabled={!props.canUndo}>{t("toolbar.undo")}</DropdownItem>
+            <DropdownItem icon={Redo} onClick={() => { props.onRedo?.(); setOpenMenu(null); }} disabled={!props.canRedo}>{t("toolbar.redo")}</DropdownItem>
           </ToolbarDropDown>
 
-          {/* View Menu */}
+          {/* 3. View 메뉴 */}
           <ToolbarDropDown
             label={t("toolbar.view")}
             isOpen={openMenu === "view"}
             onToggle={() => setOpenMenu(openMenu === "view" ? null : "view")}
           >
-            <DropdownItem icon={ZoomIn} onClick={props.onZoomIn}>{t("toolbar.zoomIn")}</DropdownItem>
-            <DropdownItem icon={ZoomOut} onClick={props.onZoomOut}>{t("toolbar.zoomOut")}</DropdownItem>
-            <DropdownItem icon={Maximize2} onClick={props.onFitView}>{t("toolbar.fitToScreen")}</DropdownItem>
+            <DropdownItem icon={ZoomIn} onClick={() => { props.onZoomIn?.(); setOpenMenu(null); }}>{t("toolbar.zoomIn")}</DropdownItem>
+            <DropdownItem icon={ZoomOut} onClick={() => { props.onZoomOut?.(); setOpenMenu(null); }}>{t("toolbar.zoomOut")}</DropdownItem>
+            <DropdownItem icon={Maximize2} onClick={() => { props.onFitView?.(); setOpenMenu(null); }}>{t("toolbar.fitView")}</DropdownItem>
           </ToolbarDropDown>
+
+          {/* 4. Diagram 메뉴 👈 복구 완료 */}
+          <ToolbarDropDown
+            label={t("toolbar.diagram")}
+            isOpen={openMenu === "diagram"}
+            onToggle={() => setOpenMenu(openMenu === "diagram" ? null : "diagram")}
+          >
+            <DropdownItem icon={CheckCircle} onClick={() => { props.handleValidation?.(); setOpenMenu(null); }}>
+              {t("toolbar.validate")}
+            </DropdownItem>
+          </ToolbarDropDown>
+
         </ScrollableMenuBar>
 
-        {/* 3. 우측 고정 비용 계산기 (질문자님 모듈 유지) */}
+        {/* 5. 비용 계산기 */}
         <CostBreakdown 
           total={costSummary.total} 
           nodesWithCost={costSummary.nodesWithCost} 
@@ -206,12 +318,12 @@ const Toolbar = (props: ToolbarProps) => {
         />
       </div>
 
-      {/* 팀원이 추가한 숨겨진 Input 필드 (Import용) */}
-      <input type="file" ref={fileInputRef} hidden accept=".json" onChange={handleFileUpload} />
-      <input type="file" ref={rdfInputRef} hidden accept=".rdf,.ttl" onChange={handleRdfUpload} />
-      <input type="file" ref={xmlInputRef} hidden accept=".xml" onChange={handleXmlUpload} />
+      {/* 숨겨진 파일 업로드 Input 필드들 */}
+      <input type="file" ref={fileInputRef} hidden accept="application/json" onChange={handleJsonImport} />
+      <input type="file" ref={rdfInputRef} hidden accept=".rdf,.ttl" onChange={handleRdfImport} />
+      <input type="file" ref={xmlInputRef} hidden accept=".xml" onChange={handleXmlImport} />
 
-      {/* Save As Modal (질문자님의 Tailwind CSS 스타일로 병합) */}
+      {/* Save As Modal */}
       {showSaveAsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-[var(--editor-panel-bg)] border border-[var(--editor-border)] rounded-xl p-6 w-[400px] shadow-2xl">
