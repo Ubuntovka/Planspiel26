@@ -14,16 +14,29 @@ interface CostBreakdownProps {
   t: (key: string) => string;
 }
 
+const formatCompactNumber = (number: number) => {
+  if (number < 1000) return number.toLocaleString(); 
+  
+  const formatter = (value: number, divisor: number, unit: string) => {
+    const formatted = value / divisor;
+    return formatted.toFixed(1).replace(/\.0$/, '') + unit;
+  };
+
+  if (number >= 1_000_000_000) return formatter(number, 1_000_000_000, 'bil');
+  if (number >= 1_000_000) return formatter(number, 1_000_000, 'mil');
+  if (number >= 1_000) return (number / 1000).toFixed(1).replace(/\.0$/, '') + 'k'; 
+
+  return number.toLocaleString();
+};
+
 export const CostBreakdown = ({ total, nodesWithCost, t }: CostBreakdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [coords, setCoords] = useState<{ top: number; right: number } | null>(null);
 
-  // Calculate dropdown position (right-aligned)
   const updateCoords = () => {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      // Calculate the distance from the bottom of the button to the right end of the screen
       setCoords({
         top: rect.bottom + window.scrollY + 4,
         right: window.innerWidth - rect.right + window.scrollX,
@@ -38,7 +51,7 @@ export const CostBreakdown = ({ total, nodesWithCost, t }: CostBreakdownProps) =
   useEffect(() => {
     if (!isOpen) return;
     window.addEventListener('resize', updateCoords);
-    window.addEventListener('scroll', updateCoords, true); // Detect scroll in capturing mode
+    window.addEventListener('scroll', updateCoords, true);
     return () => {
       window.removeEventListener('resize', updateCoords);
       window.removeEventListener('scroll', updateCoords, true);
@@ -55,16 +68,13 @@ export const CostBreakdown = ({ total, nodesWithCost, t }: CostBreakdownProps) =
         title={t('toolbar.costBreakdown')}
       >
         <Calculator size={14} />
-        {total.toLocaleString()}€
+        {formatCompactNumber(total)}€
         {isOpen ? <ChevronUp size={12} className="opacity-70" /> : <ChevronDown size={12} className="opacity-70" />}
       </button>
 
       {isOpen && typeof document !== 'undefined' && createPortal(
         <>
-          {/* Background layer to close when clicking full screen */}
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          
-          {/* Dropdown content */}
           <div
             className="fixed z-50 w-64 rounded-lg border py-3 px-3 bg-[var(--editor-panel-bg)] border-[var(--editor-border)] shadow-[0_8px_16px_var(--editor-shadow-lg)]"
             style={{
@@ -83,7 +93,9 @@ export const CostBreakdown = ({ total, nodesWithCost, t }: CostBreakdownProps) =
                   {nodesWithCost.map((item) => (
                     <li key={item.id} className="flex justify-between items-center text-[11px]">
                       <span className="text-[var(--editor-text-secondary)] truncate pr-2">{item.name}</span>
-                      <span className="font-mono font-semibold text-[var(--editor-text)]">{item.cost.toLocaleString()}€</span>
+                      <span className="font-mono font-semibold text-[var(--editor-text)]">
+                        {formatCompactNumber(item.cost)}€
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -93,6 +105,11 @@ export const CostBreakdown = ({ total, nodesWithCost, t }: CostBreakdownProps) =
                 </div>
               )}
             </div>
+            {total >= 1000 && (
+              <div className="mt-2 pt-2 border-t border-[var(--editor-border)] text-[10px] text-right text-[var(--editor-text-secondary)]">
+                Total: {total.toLocaleString()}€
+              </div>
+            )}
           </div>
         </>,
         document.body

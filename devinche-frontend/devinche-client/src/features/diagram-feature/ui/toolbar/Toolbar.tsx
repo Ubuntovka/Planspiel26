@@ -55,15 +55,15 @@ interface ToolbarProps {
   backLabel?: string;
   diagramName?: string | null;
   onRenameDiagram?: (name: string) => Promise<void>;
-  
+
   // Auth & Permissions
   isLoggedIn?: boolean;
   isViewer?: boolean;
-  
+
   // Persistence
   onSave?: () => void | Promise<boolean>;
   onSaveAs?: (name: string) => Promise<string | null>;
-  
+
   // Editor Actions
   onUndo?: () => void;
   onRedo?: () => void;
@@ -72,7 +72,7 @@ interface ToolbarProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onFitView?: () => void;
-  
+
   // Diagram Data & Validation
   allNodes?: DiagramNode[];
   handleValidation?: () => void;
@@ -109,11 +109,14 @@ const Toolbar = (props: ToolbarProps) => {
   const [showSaveAsModal, setShowSaveAsModal] = useState(false);
   const [saveAsName, setSaveAsName] = useState("");
   const [saving, setSaving] = useState(false);
-  
+
   // Renaming State
   const [isEditingName, setIsEditingName] = useState(false);
   const [renameInput, setRenameInput] = useState(props.diagramName || "");
-  const [saveMessage, setSaveMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [saveMessage, setSaveMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const rdfInputRef = useRef<HTMLInputElement>(null);
@@ -145,11 +148,11 @@ const Toolbar = (props: ToolbarProps) => {
     try {
       const result = await props.onSave();
       if (result !== false) {
-        setSaveMessage({ text: "Saved", type: 'success' });
+        setSaveMessage({ text: "Saved", type: "success" });
         setTimeout(() => setSaveMessage(null), 3000);
       }
     } catch (err) {
-      setSaveMessage({ text: "Save Failed", type: 'error' });
+      setSaveMessage({ text: "Save Failed", type: "error" });
       setTimeout(() => setSaveMessage(null), 3000);
     } finally {
       setSaving(false);
@@ -168,7 +171,12 @@ const Toolbar = (props: ToolbarProps) => {
   };
 
   // Import/Export Handlers (Refactored logic kept)
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, importer: Function) => {
+  const handleImport = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    importer: (
+      event: React.ChangeEvent<HTMLInputElement>,
+    ) => Promise<string | null>,
+  ) => {
     try {
       const text = await importer(e);
       if (text && props.importFromJson) props.importFromJson(text);
@@ -217,7 +225,9 @@ const Toolbar = (props: ToolbarProps) => {
                   title="Back"
                 >
                   <ArrowLeft size={16} />
-                  <span className="text-sm font-medium">{props.backLabel ?? t("toolbar.diagrams")}</span>
+                  <span className="text-sm font-medium">
+                    {props.backLabel ?? t("toolbar.diagrams")}
+                  </span>
                 </button>
                 <ToolbarDivider />
               </>
@@ -235,9 +245,9 @@ const Toolbar = (props: ToolbarProps) => {
                   className="bg-[var(--editor-bg)] text-[var(--editor-text)] px-2 py-0.5 rounded border border-[var(--editor-accent)] focus:outline-none text-base font-semibold"
                 />
               ) : (
-                <span 
+                <span
                   onClick={() => !props.isViewer && setIsEditingName(true)}
-                  className={`font-semibold text-base text-[var(--editor-text)] truncate max-w-[240px] ${!props.isViewer ? 'cursor-pointer hover:bg-[var(--editor-surface-hover)] px-2 py-0.5 rounded' : ''}`}
+                  className={`font-semibold text-base text-[var(--editor-text)] truncate max-w-[240px] ${!props.isViewer ? "cursor-pointer hover:bg-[var(--editor-surface-hover)] px-2 py-0.5 rounded" : ""}`}
                 >
                   {props.diagramName || t("toolbar.untitledDiagram")}
                 </span>
@@ -252,7 +262,9 @@ const Toolbar = (props: ToolbarProps) => {
 
               {/* Save Feedback Message */}
               {saveMessage && (
-                <span className={`text-xs font-medium px-2 ${saveMessage.type === 'error' ? 'text-red-500' : 'text-[var(--editor-accent)]'}`}>
+                <span
+                  className={`text-xs font-medium px-2 ${saveMessage.type === "error" ? "text-red-500" : "text-[var(--editor-accent)]"}`}
+                >
                   {saveMessage.text}
                 </span>
               )}
@@ -309,7 +321,10 @@ const Toolbar = (props: ToolbarProps) => {
           )}
 
           {props.diagramId && props.getToken && !props.isViewer && (
-            <NotificationBell getToken={props.getToken} onNavigate={props.onNotificationNavigate} />
+            <NotificationBell
+              getToken={props.getToken}
+              onNavigate={props.onNotificationNavigate}
+            />
           )}
 
           <LanguageSwitcher />
@@ -321,7 +336,7 @@ const Toolbar = (props: ToolbarProps) => {
           >
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          
+
           <UserAvatarMenu />
         </div>
       </div>
@@ -335,7 +350,11 @@ const Toolbar = (props: ToolbarProps) => {
             isOpen={openMenu === "file"}
             onToggle={() => setOpenMenu(openMenu === "file" ? null : "file")}
           >
-            <DropdownItem icon={Save} onClick={handleSave} disabled={saving || props.isViewer}>
+            <DropdownItem
+              icon={Save}
+              onClick={handleSave}
+              disabled={saving || props.isViewer}
+            >
               {saving ? t("toolbar.saving") : t("toolbar.saveMenuItem")}
             </DropdownItem>
 
@@ -343,7 +362,9 @@ const Toolbar = (props: ToolbarProps) => {
               <DropdownItem
                 icon={FilePlus}
                 onClick={() => {
-                  setSaveAsName(props.diagramName || t("toolbar.untitledDiagram"));
+                  setSaveAsName(
+                    props.diagramName || t("toolbar.untitledDiagram"),
+                  );
                   setShowSaveAsModal(true);
                   setOpenMenu(null);
                 }}
@@ -356,12 +377,25 @@ const Toolbar = (props: ToolbarProps) => {
               <>
                 <div className="my-1 border-t border-[var(--editor-border)]" />
                 {props.onCommitVersion && (
-                  <DropdownItem icon={GitCommitHorizontal} onClick={() => { props.onCommitVersion!(); setOpenMenu(null); }} disabled={props.isViewer}>
+                  <DropdownItem
+                    icon={GitCommitHorizontal}
+                    onClick={() => {
+                      props.onCommitVersion!();
+                      setOpenMenu(null);
+                    }}
+                    disabled={props.isViewer}
+                  >
                     Save version
                   </DropdownItem>
                 )}
                 {props.onVersionHistory && (
-                  <DropdownItem icon={History} onClick={() => { props.onVersionHistory!(); setOpenMenu(null); }}>
+                  <DropdownItem
+                    icon={History}
+                    onClick={() => {
+                      props.onVersionHistory!();
+                      setOpenMenu(null);
+                    }}
+                  >
                     Version history
                   </DropdownItem>
                 )}
@@ -373,31 +407,79 @@ const Toolbar = (props: ToolbarProps) => {
                 <div className="my-1 border-t border-[var(--editor-border)]" />
                 <button
                   type="button"
-                  onClick={() => { setOpenMenu(null); props.onGenerateDocumentation!(); }}
+                  onClick={() => {
+                    setOpenMenu(null);
+                    props.onGenerateDocumentation!();
+                  }}
                   disabled={props.isGeneratingDocumentation}
                   className="w-full px-3 py-2 text-left hover:bg-[var(--editor-surface-hover)] disabled:opacity-50 flex items-center gap-2 text-sm text-[var(--editor-text)]"
                 >
                   {props.isGeneratingDocumentation ? (
-                    <><span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-1" /> Generating...</>
+                    <>
+                      <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-1" />{" "}
+                      Generating...
+                    </>
                   ) : (
-                    <><FileText size={14} /> Generate documentation</>
+                    <>
+                      <FileText size={14} /> Generate documentation
+                    </>
                   )}
                 </button>
               </>
             )}
 
             <div className="my-1 border-t border-[var(--editor-border)]" />
-            <DropdownItem icon={Upload} onClick={() => fileInputRef.current?.click()} disabled={props.isViewer}>
+            <DropdownItem
+              icon={Upload}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={props.isViewer}
+            >
               {t("toolbar.importJson")}
             </DropdownItem>
-            <DropdownItem icon={Upload} onClick={() => rdfInputRef.current?.click()} disabled={props.isViewer}>Import RDF</DropdownItem>
-            <DropdownItem icon={Upload} onClick={() => xmlInputRef.current?.click()} disabled={props.isViewer}>Import XML</DropdownItem>
+            <DropdownItem
+              icon={Upload}
+              onClick={() => rdfInputRef.current?.click()}
+              disabled={props.isViewer}
+            >
+              Import RDF
+            </DropdownItem>
+            <DropdownItem
+              icon={Upload}
+              onClick={() => xmlInputRef.current?.click()}
+              disabled={props.isViewer}
+            >
+              Import XML
+            </DropdownItem>
 
             <div className="my-1 border-t border-[var(--editor-border)]" />
-            <DropdownItem icon={Download} onClick={() => handleExport(exportDiagramToJson)}>{t("toolbar.exportJson")}</DropdownItem>
-            <DropdownItem icon={Image} onClick={() => { if(props.flowWrapperRef?.current) exportDiagramToPng(props.flowWrapperRef.current); setOpenMenu(null); }}>{t("toolbar.exportPng")}</DropdownItem>
-            <DropdownItem icon={FileCode} onClick={() => handleExport(exportDiagramToRdf)}>{t("toolbar.exportRdf")}</DropdownItem>
-            <DropdownItem icon={FileCode} onClick={() => handleExport(exportDiagramToXml)}>{t("toolbar.exportXml")}</DropdownItem>
+            <DropdownItem
+              icon={Download}
+              onClick={() => handleExport(exportDiagramToJson)}
+            >
+              {t("toolbar.exportJson")}
+            </DropdownItem>
+            <DropdownItem
+              icon={Image}
+              onClick={() => {
+                if (props.flowWrapperRef?.current)
+                  exportDiagramToPng(props.flowWrapperRef.current);
+                setOpenMenu(null);
+              }}
+            >
+              {t("toolbar.exportPng")}
+            </DropdownItem>
+            <DropdownItem
+              icon={FileCode}
+              onClick={() => handleExport(exportDiagramToRdf)}
+            >
+              {t("toolbar.exportRdf")}
+            </DropdownItem>
+            <DropdownItem
+              icon={FileCode}
+              onClick={() => handleExport(exportDiagramToXml)}
+            >
+              {t("toolbar.exportXml")}
+            </DropdownItem>
           </ToolbarDropDown>
 
           {/* Edit Menu */}
@@ -406,10 +488,24 @@ const Toolbar = (props: ToolbarProps) => {
             isOpen={openMenu === "edit"}
             onToggle={() => setOpenMenu(openMenu === "edit" ? null : "edit")}
           >
-            <DropdownItem icon={Undo} onClick={() => { props.onUndo?.(); setOpenMenu(null); }} disabled={!props.canUndo || props.isViewer}>
+            <DropdownItem
+              icon={Undo}
+              onClick={() => {
+                props.onUndo?.();
+                setOpenMenu(null);
+              }}
+              disabled={!props.canUndo || props.isViewer}
+            >
               {t("toolbar.undo")}
             </DropdownItem>
-            <DropdownItem icon={Redo} onClick={() => { props.onRedo?.(); setOpenMenu(null); }} disabled={!props.canRedo || props.isViewer}>
+            <DropdownItem
+              icon={Redo}
+              onClick={() => {
+                props.onRedo?.();
+                setOpenMenu(null);
+              }}
+              disabled={!props.canRedo || props.isViewer}
+            >
               {t("toolbar.redo")}
             </DropdownItem>
           </ToolbarDropDown>
@@ -420,37 +516,93 @@ const Toolbar = (props: ToolbarProps) => {
             isOpen={openMenu === "view"}
             onToggle={() => setOpenMenu(openMenu === "view" ? null : "view")}
           >
-            <DropdownItem icon={ZoomIn} onClick={() => { props.onZoomIn?.(); setOpenMenu(null); }}>{t("toolbar.zoomIn")}</DropdownItem>
-            <DropdownItem icon={ZoomOut} onClick={() => { props.onZoomOut?.(); setOpenMenu(null); }}>{t("toolbar.zoomOut")}</DropdownItem>
-            <DropdownItem icon={Maximize2} onClick={() => { props.onFitView?.(); setOpenMenu(null); }}>{t("toolbar.fitView")}</DropdownItem>
+            <DropdownItem
+              icon={ZoomIn}
+              onClick={() => {
+                props.onZoomIn?.();
+                setOpenMenu(null);
+              }}
+            >
+              {t("toolbar.zoomIn")}
+            </DropdownItem>
+            <DropdownItem
+              icon={ZoomOut}
+              onClick={() => {
+                props.onZoomOut?.();
+                setOpenMenu(null);
+              }}
+            >
+              {t("toolbar.zoomOut")}
+            </DropdownItem>
+            <DropdownItem
+              icon={Maximize2}
+              onClick={() => {
+                props.onFitView?.();
+                setOpenMenu(null);
+              }}
+            >
+              {t("toolbar.fitView")}
+            </DropdownItem>
           </ToolbarDropDown>
 
           {/* Diagram Menu */}
           <ToolbarDropDown
             label={t("toolbar.diagram")}
             isOpen={openMenu === "diagram"}
-            onToggle={() => setOpenMenu(openMenu === "diagram" ? null : "diagram")}
+            onToggle={() =>
+              setOpenMenu(openMenu === "diagram" ? null : "diagram")
+            }
           >
-            <DropdownItem icon={CheckCircle} onClick={() => { props.handleValidation?.(); setOpenMenu(null); }}>
+            <DropdownItem
+              icon={CheckCircle}
+              onClick={() => {
+                props.handleValidation?.();
+                setOpenMenu(null);
+              }}
+            >
               {t("toolbar.validate")}
             </DropdownItem>
           </ToolbarDropDown>
         </ScrollableMenuBar>
 
         {/* Cost Breakdown */}
-        <CostBreakdown total={costSummary.total} nodesWithCost={costSummary.nodesWithCost} t={t} />
+        <CostBreakdown
+          total={costSummary.total}
+          nodesWithCost={costSummary.nodesWithCost}
+          t={t}
+        />
       </div>
 
       {/* Hidden File Inputs */}
-      <input type="file" ref={fileInputRef} hidden accept="application/json" onChange={(e) => handleImport(e, importDiagramFromJSON)} />
-      <input type="file" ref={rdfInputRef} hidden accept=".rdf,.ttl" onChange={(e) => handleImport(e, importDiagramFromRdf)} />
-      <input type="file" ref={xmlInputRef} hidden accept=".xml" onChange={(e) => handleImport(e, importDiagramFromXml)} />
+      <input
+        type="file"
+        ref={fileInputRef}
+        hidden
+        accept="application/json"
+        onChange={(e) => handleImport(e, importDiagramFromJSON)}
+      />
+      <input
+        type="file"
+        ref={rdfInputRef}
+        hidden
+        accept=".rdf,.ttl"
+        onChange={(e) => handleImport(e, importDiagramFromRdf)}
+      />
+      <input
+        type="file"
+        ref={xmlInputRef}
+        hidden
+        accept=".xml"
+        onChange={(e) => handleImport(e, importDiagramFromXml)}
+      />
 
       {/* Save As Modal */}
       {showSaveAsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-[var(--editor-panel-bg)] border border-[var(--editor-border)] rounded-xl p-6 w-[400px] shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4 text-[var(--editor-text)]">{t("toolbar.saveAs")}</h3>
+            <h3 className="text-lg font-semibold mb-4 text-[var(--editor-text)]">
+              {t("toolbar.saveAs")}
+            </h3>
             <input
               type="text"
               value={saveAsName}
@@ -464,10 +616,17 @@ const Toolbar = (props: ToolbarProps) => {
               autoFocus
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowSaveAsModal(false)} className="px-3 py-2 rounded-lg text-sm border bg-[var(--editor-surface)] text-[var(--editor-text)] border-[var(--editor-border)]">
+              <button
+                onClick={() => setShowSaveAsModal(false)}
+                className="px-3 py-2 rounded-lg text-sm border bg-[var(--editor-surface)] text-[var(--editor-text)] border-[var(--editor-border)]"
+              >
                 {t("common.cancel")}
               </button>
-              <button onClick={handleSaveAs} disabled={saving || !saveAsName.trim()} className="px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 bg-[var(--editor-accent)] text-white">
+              <button
+                onClick={handleSaveAs}
+                disabled={saving || !saveAsName.trim()}
+                className="px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 bg-[var(--editor-accent)] text-white"
+              >
                 {saving ? t("toolbar.saving") : t("common.save")}
               </button>
             </div>
