@@ -9,7 +9,6 @@ import ThemeToggleButton from '@/components/ThemeToggleButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { login as apiLogin, getApiBase } from '@/features/auth-feature/api';
 
-// Minimal types for Google Identity Services (GIS) OAuth Code flow
 type GoogleOAuthCodeResponse = {
     code?: string;
     scope?: string;
@@ -104,7 +103,6 @@ export default function LoginPage() {
         });
     }, []);
 
-    // Initialize Google OAuth Code Client once (popup flow)
     useEffect(() => {
         let mounted = true;
         (async () => {
@@ -148,15 +146,12 @@ export default function LoginPage() {
                             },
                         });
                     } catch (e) {
-                        // no-op, will surface on click
                     }
                 }
             } catch {
-                // script load error handled on click
             }
         })();
         return () => { mounted = false; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleGoogleLogin = useCallback(async () => {
@@ -192,7 +187,7 @@ export default function LoginPage() {
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
             linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
           `,
-                    backgroundSize: '1cm 1cm'
+                    backgroundSize: '4cm 4cm'
                 }}
             />
 
@@ -217,7 +212,20 @@ export default function LoginPage() {
                 </div>
             </header>
 
-            <div className="fixed bottom-0 left-8 z-0">
+            <div className="md:hidden absolute bottom-0 left-0 z-0 pointer-events-none flex items-end justify-start opacity-20">
+                <div className="w-[180vw] max-w-[800px]">
+                    <Image
+                        src="/mona_2.svg"
+                        alt="Mona Lisa"
+                        width={800}
+                        height={800}
+                        className="w-full h-auto object-contain"
+                        priority
+                    />
+                </div>
+            </div>
+
+            <div className="hidden md:block fixed bottom-0 left-8 z-0">
                 <Image
                     src="/mona_2.svg"
                     alt="Mona Lisa"
@@ -227,26 +235,26 @@ export default function LoginPage() {
                 />
             </div>
 
-            <main className="relative min-h-[calc(100vh-88px)] flex items-start justify-end pr-95 pt-27 z-10">
-                <div className="w-120">
-                    <div className="relative rounded-3xl shadow-xl p-20 border border-white border-opacity-40 overflow-hidden">
-                        <div className="absolute inset-0 bg-[#FFC31D] opacity-15 backdrop-blur-xl" style={{
+            <main className="relative h-[calc(100vh-88px)] flex items-center justify-center pt-0 md:items-start md:justify-end md:pr-95 md:pt-27 z-10">
+                <div className="h-[70%] md:h-auto w-[90vw] max-w-[580px] sm:w-[90vw] md:w-120">
+                    <div className="h-full relative rounded-3xl shadow-xl p-8 sm:p-12 md:p-20 border border-white border-opacity-40 overflow-hidden">
+                        <div className="absolute inset-0 bg-[#FFC31D] opacity-20 backdrop-blur-xl" style={{
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',
                         }}></div>
 
                         <div className="relative z-10">
-                            <h1 className="text-4xl font-bold text-center mb-10 text-gray-900">
+                            <h1 className="text-[26px] sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8 md:mb-10 text-gray-900">
                                 Login
                             </h1>
 
                             {error && (
-                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-base md:text-sm">
                                     {error}
                                 </div>
                             )}
 
-                            <div className="space-y-6">
+                            <div className="space-y-4 sm:space-y-5 md:space-y-6">
                                 <div>
                                     <input
                                         type="email"
@@ -254,7 +262,7 @@ export default function LoginPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="Email"
-                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-sm bg-transparent"
+                                        className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                         required
                                         disabled={isLoading}
                                     />
@@ -269,7 +277,7 @@ export default function LoginPage() {
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             placeholder="Password"
-                                            className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-sm bg-transparent"
+                                            className="w-full px-4 py-2 border-b-4 border-white focus:outline-none focus:border-white placeholder:text-gray-800 placeholder:font-semibold text-base md:text-sm bg-transparent"
                                             required
                                             disabled={isLoading}
                                             onKeyDown={(e) => {
@@ -280,7 +288,7 @@ export default function LoginPage() {
                                         />
                                     </div>
                                     <div className="text-right mt-1">
-                                        <Link href="/forgot-password" className="text-xs text-gray-800 hover:text-gray-800">
+                                        <Link href="/forgot-password" className="text-sm md:text-xs text-gray-800 hover:text-gray-800">
                                             Forgot password?
                                         </Link>
                                     </div>
@@ -289,14 +297,14 @@ export default function LoginPage() {
                                 <button
                                     onClick={handleLogin}
                                     disabled={isLoading}
-                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-[#6b93c0] text-white py-3 rounded-full text-xl md:text-lg font-semibold hover:bg-[#5a7fa8] transition-colors shadow-md mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isLoading ? 'Logging in...' : 'Login'}
                                 </button>
                             </div>
 
                             <div className="mt-6">
-                                <p className="text-center text-sm text-gray-700 mb-4">
+                                <p className="text-center text-base md:text-sm text-gray-700 mb-4">
                                     Or log in with:
                                 </p>
                                 <div className="flex justify-center gap-4">
@@ -354,7 +362,10 @@ export default function LoginPage() {
               :global([data-theme="dark"]) [data-page="login"] h1 {
                 color: var(--editor-text);
               }
-              :global([data-theme="dark"]) [data-page="login"] .pointer-events-none {
+              :global([data-theme="dark"]) [data-page="login"] p {
+                color: var(--editor-text-secondary);
+              }
+              :global([data-theme="dark"]) [data-page="login"]  {
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
@@ -364,13 +375,11 @@ export default function LoginPage() {
               }
               :global([data-theme="dark"]) [data-page="login"] input {
                 color: var(--editor-text);
-                border-color: var(--editor-border-light) !important;
+                border-color: var(--editor-border) !important;
               }
-              :global([data-theme="dark"]) [data-page="login"] button.w-full {
-                background: var(--editor-accent) !important;
-              }
-              :global([data-theme="dark"]) [data-page="login"] button.w-full:hover {
-                background: var(--editor-accent-hover) !important;
+              :global([data-theme="dark"]) [data-page="login"] header a{
+                background: var(--editor-warning) !important;
+                color: #111827 !important;
               }
             `}</style>
         </div>

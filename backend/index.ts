@@ -9,6 +9,8 @@ import { attachCollaborationSocket } from './collaboration/socket';
 
 import userRoutes from './api/routes/userRoutes';
 import validationRoutes from './api/routes/validationRoutes';
+import exportRoutes from './api/routes/exportRoutes'
+import importRoutes from './api/routes/importRoutes'
 import diagramRoutes from './api/routes/diagramRoutes';
 import llmRoutes from './api/routes/llmRoutes';
 import notificationRoutes from './api/routes/notificationRoutes';
@@ -25,8 +27,8 @@ const port: number = config.port;
 // Security & parsing middleware
 app.use(helmet());
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '3mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '3mb' }));
 
 // Swagger setup
 const swaggerOptions = {
@@ -58,6 +60,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Routes
 app.use('/api/users/', userRoutes);
 app.use('/api/validation/', validationRoutes);
+app.use('/api/import/', importRoutes)
+app.use('/api/export/', exportRoutes)
 app.use('/api/diagrams/', diagramRoutes);
 app.use('/api/llm/', llmRoutes);
 app.use('/api/notifications', notificationRoutes);

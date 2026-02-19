@@ -3,154 +3,305 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const turtle = `
-@prefix wam:   <https://example.org/wam#> .
-@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
-@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix wam:   <https://devinche/schemas/rdf#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
-###########
-# Classes #
-###########
-
-wam:Diagram a rdfs:Class ;
-  rdfs:label "Diagram" .
-
-wam:Node a rdfs:Class ;
-  rdfs:label "Node" .
-
-wam:Edge a rdfs:Class ;
-  rdfs:label "Edge" .
-
-wam:ProcessUnitNode a rdfs:Class ;
+# Define Node classes
+wam:SecurityRealmNode rdf:type rdfs:Class ;
+  rdfs:label "Security Realm Node" ;
   rdfs:subClassOf wam:Node ;
-  rdfs:label "Process Unit Node" .
+  rdfs:comment "Node representing security realm components" .
 
-wam:DataProviderNode a rdfs:Class ;
-  rdfs:subClassOf wam:Node ;
-  rdfs:label "Data Provider Node" .
+wam:ApplicationNode rdf:type rdfs:Class ;
+  rdfs:label "Application Node" ;
+  rdfs:subClassOf wam:Node .
 
-wam:ApplicationNode a rdfs:Class ;
-  rdfs:subClassOf wam:Node ;
-  rdfs:label "Application Node" .
+wam:DataProviderNode rdf:type rdfs:Class ;
+  rdfs:label "Data Provider Node" ;
+  rdfs:subClassOf wam:Node .
 
-wam:ServiceNode a rdfs:Class ;
-  rdfs:subClassOf wam:Node ;
-  rdfs:label "Service Node" .
+wam:IdentityProviderNode rdf:type rdfs:Class ;
+  rdfs:label "Identity Provider Node" ;
+  rdfs:subClassOf wam:Node .
 
-wam:SecurityRealmNode a rdfs:Class ;
-  rdfs:subClassOf wam:Node ;
-  rdfs:label "Security Realm Node" .
+wam:ProcessUnitNode rdf:type rdfs:Class ;
+  rdfs:label "Process Unit Node" ;
+  rdfs:subClassOf wam:Node .
 
-wam:IdentityProviderNode a rdfs:Class ;
-  rdfs:subClassOf wam:Node ;
-  rdfs:label "Identity Provider Node" .
+wam:ServiceNode rdf:type rdfs:Class ;
+  rdfs:label "Service Node" ;
+  rdfs:subClassOf wam:Node .
 
-wam:InvocationEdge a rdfs:Class ;
-  rdfs:subClassOf wam:Edge ;
-  rdfs:label "Invocation Edge" .
+wam:DatasetNode rdf:type rdfs:Class ;
+  rdfs:label "Dataset Node" ;
+  rdfs:subClassOf wam:Node .
 
-wam:TrustEdge a rdfs:Class ;
-  rdfs:subClassOf wam:Edge ;
-  rdfs:label "Trust Edge" .
+wam:AiProcessNode rdf:type rdfs:Class ;
+  rdfs:label "AI Process Node" ;
+  rdfs:subClassOf wam:Node .
 
-wam:LegacyEdge a rdfs:Class ;
-  rdfs:subClassOf wam:Edge ;
-  rdfs:label "Legacy Edge" .
+wam:AiApplicationNode rdf:type rdfs:Class ;
+  rdfs:label "AI Application Node" ;
+  rdfs:subClassOf wam:Node .
 
-##############
-# Properties #
-##############
+wam:AiServiceNode rdf:type rdfs:Class ;
+  rdfs:label "AI Service Node" ;
+  rdfs:subClassOf wam:Node .
 
-wam:hasNode a rdf:Property ;
-  rdfs:domain wam:Diagram ;
+# Define Edge classes
+wam:TrustEdge rdf:type rdfs:Class ;
+  rdfs:label "Trust Edge" ;
+  rdfs:subClassOf wam:Edge .
+
+wam:InvocationEdge rdf:type rdfs:Class ;
+  rdfs:label "Invocation Edge" ;
+  rdfs:subClassOf wam:Edge .
+
+wam:LegacyEdge rdf:type rdfs:Class ;
+  rdfs:label "Legacy Edge" ;
+  rdfs:subClassOf wam:Edge .
+
+# Base Node class properties
+wam:Node rdf:type rdfs:Class ;
+  rdfs:label "Base Node Class" .
+
+wam:x rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:decimal ;
+  rdfs:label "X Position" .
+
+wam:y rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:decimal ;
+  rdfs:label "Y Position" .
+
+wam:width rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:decimal ;
+  rdfs:label "Width" .
+
+wam:height rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:decimal ;
+  rdfs:label "Height" .
+
+wam:name rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:string ;
+  rdfs:label "Node Name" .
+
+wam:type rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:string ;
+  rdfs:label "Node Type" .
+
+wam:cost rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:string ;
+  rdfs:label "Cost" .
+
+# Common properties across node types
+wam:location rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:string ;
+  rdfs:label "Location" .
+
+wam:certificateId rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range xsd:string ;
+  rdfs:label "Certificate ID" .
+
+# Node-specific properties
+wam:allocateIP rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:SecurityRealmNode ;
+  rdfs:range xsd:string .
+
+wam:encryptionType rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:SecurityRealmNode ;
+  rdfs:range xsd:string .
+
+wam:signInSupport rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:ApplicationNode ;
+  rdfs:range xsd:string .
+
+wam:sessionTimeout rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:ApplicationNode ;
+  rdfs:range xsd:string .
+
+wam:protocols rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:ServiceNode ;
+  rdfs:range xsd:string .
+
+wam:authenticationType rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:ServiceNode ;
+  rdfs:range xsd:string .
+
+wam:format rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:DatasetNode ;
+  rdfs:range xsd:string .
+
+wam:size rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:DatasetNode ;
+  rdfs:range xsd:string .
+
+wam:source rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:DatasetNode ;
+  rdfs:range xsd:string .
+
+wam:algorithm rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiProcessNode ;
+  rdfs:range xsd:string .
+
+wam:accuracy rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiProcessNode ;
+  rdfs:range xsd:string .
+
+wam:modelFamily rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiApplicationNode ;
+  rdfs:range xsd:string .
+
+wam:modelVersion rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiApplicationNode ;
+  rdfs:range xsd:string .
+
+wam:systemPrompt rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiApplicationNode ;
+  rdfs:range xsd:string .
+
+wam:temperature rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiApplicationNode ;
+  rdfs:range xsd:string .
+
+wam:maxTokens rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiApplicationNode ;
+  rdfs:range xsd:string .
+
+wam:knowledgeBase rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiApplicationNode ;
+  rdfs:range xsd:string .
+
+wam:provider rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiServiceNode ;
+  rdfs:range xsd:string .
+
+wam:apiQuota rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiServiceNode ;
+  rdfs:range xsd:string .
+
+wam:latencyTarget rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:AiServiceNode ;
+  rdfs:range xsd:string .
+
+# Base Edge class properties
+wam:Edge rdf:type rdfs:Class ;
+  rdfs:label "Base Edge Class" .
+
+wam:source rdf:type owl:ObjectProperty ;
+  rdfs:domain wam:Edge ;
   rdfs:range wam:Node ;
-  rdfs:label "has node" .
+  rdfs:label "Source Node" .
 
-wam:hasEdge a rdf:Property ;
-  rdfs:domain wam:Diagram ;
-  rdfs:range wam:Edge ;
-  rdfs:label "has edge" .
-
-wam:label a rdf:Property ;
-  rdfs:domain wam:Node ;
-  rdfs:range xsd:string ;
-  rdfs:label "label" .
-
-wam:xPos a rdf:Property ;
-  rdfs:domain wam:Node ;
-  rdfs:range xsd:decimal ;
-  rdfs:label "x position" .
-
-wam:yPos a rdf:Property ;
-  rdfs:domain wam:Node ;
-  rdfs:range xsd:decimal ;
-  rdfs:label "y position" .
-
-wam:width a rdf:Property ;
-  rdfs:domain wam:Node ;
-  rdfs:range xsd:decimal ;
-  rdfs:label "width" .
-
-wam:height a rdf:Property ;
-  rdfs:domain wam:Node ;
-  rdfs:range xsd:decimal ;
-  rdfs:label "height" .
-
-wam:source a rdf:Property ;
+wam:target rdf:type owl:ObjectProperty ;
   rdfs:domain wam:Edge ;
   rdfs:range wam:Node ;
-  rdfs:label "source node" .
+  rdfs:label "Target Node" .
 
-wam:target a rdf:Property ;
+wam:strokeColor rdf:type owl:DatatypeProperty ;
   rdfs:domain wam:Edge ;
+  rdfs:range xsd:string .
+
+wam:strokeWidth rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Edge ;
+  rdfs:range xsd:decimal .
+
+wam:markerType rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Edge ;
+  rdfs:range xsd:string .
+
+wam:markerColor rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Edge ;
+  rdfs:range xsd:string .
+
+wam:sourceHandle rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Edge ;
+  rdfs:range xsd:string .
+
+wam:targetHandle rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Edge ;
+  rdfs:range xsd:string .
+
+wam:label rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:Edge ;
+  rdfs:range xsd:string .
+
+# Edge-specific properties
+wam:authStrategy rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:TrustEdge ;
+  rdfs:range xsd:string .
+
+wam:issuer rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:TrustEdge ;
+  rdfs:range xsd:string .
+
+wam:scopes rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:TrustEdge ;
+  rdfs:range xsd:string .
+
+wam:verification rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:TrustEdge ;
+  rdfs:range xsd:string .
+
+wam:protocol rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:InvocationEdge ;
+  rdfs:range xsd:string .
+
+wam:path rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:InvocationEdge ;
+  rdfs:range xsd:string .
+
+wam:method rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:InvocationEdge ;
+  rdfs:range xsd:string .
+
+wam:timeout rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:InvocationEdge ;
+  rdfs:range xsd:string .
+
+wam:legacyProtocol rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:LegacyEdge ;
+  rdfs:range xsd:string .
+
+wam:certificateId rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:LegacyEdge ;
+  rdfs:range xsd:string .
+
+wam:connectionMethod rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:LegacyEdge ;
+  rdfs:range xsd:string .
+
+wam:maintenance rdf:type owl:DatatypeProperty ;
+  rdfs:domain wam:LegacyEdge ;
+  rdfs:range xsd:string .
+
+# Relationship predicates
+wam:trusts rdf:type owl:ObjectProperty ;
+  rdfs:domain wam:Node ;
   rdfs:range wam:Node ;
-  rdfs:label "target node" .
+  rdfs:label "Trusts relationship" .
 
-wam:sourceHandle a rdf:Property ;
-  rdfs:domain wam:Edge ;
-  rdfs:range xsd:string ;
-  rdfs:label "source handle" .
+wam:invokes rdf:type owl:ObjectProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range wam:Node ;
+  rdfs:label "Invokes relationship" .
 
-wam:targetHandle a rdf:Property ;
-  rdfs:domain wam:Edge ;
-  rdfs:range xsd:string ;
-  rdfs:label "target handle" .
+wam:legacyConnectsTo rdf:type owl:ObjectProperty ;
+  rdfs:domain wam:Node ;
+  rdfs:range wam:Node ;
+  rdfs:label "Legacy connects to relationship" .
 
-wam:strokeColor a rdf:Property ;
-  rdfs:domain wam:Edge ;
-  rdfs:range xsd:string ;
-  rdfs:label "stroke color" .
-
-wam:strokeWidth a rdf:Property ;
-  rdfs:domain wam:Edge ;
-  rdfs:range xsd:decimal ;
-  rdfs:label "stroke width" .
-
-wam:markerType a rdf:Property ;
-  rdfs:domain wam:Edge ;
-  rdfs:range xsd:string ;
-  rdfs:label "marker type" .
-
-wam:markerColor a rdf:Property ;
-  rdfs:domain wam:Edge ;
-  rdfs:range xsd:string ;
-  rdfs:label "marker color" .
-
-wam:zoom a rdf:Property ;
-  rdfs:domain wam:Diagram ;
-  rdfs:range xsd:decimal ;
-  rdfs:label "zoom level" .
-
-wam:viewX a rdf:Property ;
-  rdfs:domain wam:Diagram ;
-  rdfs:range xsd:decimal ;
-  rdfs:label "viewport X" .
-
-wam:viewY a rdf:Property ;
-  rdfs:domain wam:Diagram ;
-  rdfs:range xsd:decimal ;
-  rdfs:label "viewport Y" .
 `;
 
   return new NextResponse(turtle.trim(), {

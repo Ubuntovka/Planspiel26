@@ -94,6 +94,21 @@ export async function logout(token: string): Promise<void> {
 
 export { getApiBase };
 
+// Reset password (public, unauthenticated)
+export async function resetPassword(email: string, newPassword: string): Promise<{ message: string }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/users/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, newPassword }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as ErrorResponse).error || 'Reset password failed');
+  }
+  return data as { message: string };
+}
+
 // Update current user's profile
 export type UpdateUserPayload = Partial<{
   email: string;

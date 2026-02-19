@@ -1,10 +1,11 @@
-import express, {raw, Request, Response} from 'express'
+import express, {Request, Response} from 'express'
 import {IUser} from '../../models/User'
 import {
     loginUser,
     registerUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    resetPasswordByEmail,
 } from '../controllers/userController'
 import auth, {CustomRequest} from '../../middleware/auth'
 import {OAuth2Client} from 'google-auth-library'
@@ -617,3 +618,15 @@ router.post('/logoutall', auth, async (req: CustomRequest, res: Response) => {
 
 
 export default router
+
+/**
+ * Public: Reset password by email (no auth). Intended for "Forgot password" flow.
+ */
+router.post('/reset-password', async (req: Request, res: Response) => {
+    const { email, newPassword } = req.body || {}
+    const result = await resetPasswordByEmail(email, newPassword)
+    if ((result as any).error) {
+        return res.status(400).send(result)
+    }
+    return res.send(result)
+})

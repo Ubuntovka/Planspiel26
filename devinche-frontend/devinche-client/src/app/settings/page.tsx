@@ -105,7 +105,7 @@ export default function AccountPage() {
     };
 
     return (
-        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="account">
+        <div className={`min-h-screen bg-[#e8eaed] relative overflow-x-hidden overflow-y-auto md:overflow-visible ${inriaSerif.className}`} data-page="account">
             <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -113,7 +113,7 @@ export default function AccountPage() {
                         linear-gradient(to right, #d1d5db 1px, transparent 1px),
                         linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
                     `,
-                    backgroundSize: '1cm 1cm'
+                    backgroundSize: '4cm 4cm'
                 }}
             />
 
@@ -129,9 +129,9 @@ export default function AccountPage() {
                 </div>
             </header>
 
-            <main className="relative z-10 flex justify-center items-start pt-12 pb-20 px-4">
+            <main className="relative z-10 flex justify-center items-start pt-6 md:pt-12 pb-16 md:pb-20 px-4">
                 <div className="w-full max-w-[580px]">
-                    <div className="card relative rounded-3xl shadow-xl p-8 md:p-12 border border-white border-opacity-40 overflow-hidden">
+                    <div className="card relative rounded-3xl shadow-xl p-6 md:p-12 border border-white border-opacity-40 overflow-hidden">
                         <div className="card-overlay absolute inset-0 bg-[#FFC31D] opacity-15 backdrop-blur-xl" style={{
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',
@@ -249,26 +249,9 @@ export default function AccountPage() {
                     border-bottom: 1px solid var(--editor-border);
                 }
                 :global([data-theme="dark"]) [data-page="account"]{
-                    background: var(--editor-surface) !important;
-                    color: var(--editor-text) !important;
-                    border: 1px solid var(--editor-border);
-                }
-                :global([data-theme="dark"]) [data-page="account"]  {
-                    background: rgba(255,255,255,0.04) !important;
-                }
-                :global([data-theme="dark"]) [data-page="account"]  {
-                    background: var(--editor-surface);
-                    border-color: var(--editor-border);
-                }
-                :global([data-theme="dark"]) [data-page="account"]  {
-                    display: none; 
-                }
-                :global([data-theme="dark"]) [data-page="account"] input {
-                    color: var(--editor-text);
-                    border-color: var(--editor-border-light) !important;
-                }
-                :global([data-theme="dark"]) [data-page="account"] input::placeholder {
-                    color: var(--editor-text-secondary);
+                    background-image:
+                        linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                        linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
                 }
                 :global([data-theme="dark"]) [data-page="account"] h1 {
                     color: var(--editor-text);
@@ -277,9 +260,12 @@ export default function AccountPage() {
                 :global([data-theme="dark"]) [data-page="account"] p {
                     color: var(--editor-text-secondary);
                 }
-                :global([data-theme="dark"]) [data-page="account"] {
-                    border-color: var(--editor-border);
-                    opacity: 1;
+                :global([data-theme="dark"]) [data-page="account"] input {
+                    color: var(--editor-text);
+                    border-color: var(--editor-border) !important;
+                }
+                :global([data-theme="dark"]) [data-page="account"] input::placeholder {
+                    color: var(--editor-text-secondary);
                 }
             `}</style>
         </div>

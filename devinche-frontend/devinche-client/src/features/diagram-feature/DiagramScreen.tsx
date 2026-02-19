@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ReactFlowProvider } from "@xyflow/react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useDiagram } from "./hooks";
-import DiagramCanvas from "./ui/DiagramCanvas";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ReactFlowProvider } from '@xyflow/react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useDiagram } from './hooks/useDiagram';
+import DiagramCanvas from './ui/DiagramCanvas';
 import { ProcessUnitNode } from "./ui/nodes/ProcessUnitNode";
 import DataProviderNode from "./ui/nodes/DataProviderNode";
 import ApplicationNode from "./ui/nodes/ApplicationNode";
@@ -18,23 +19,26 @@ import TrustEdge from "./ui/edges/TrustEdge";
 import Invocation from "./ui/edges/Invocation";
 import Legacy from "./ui/edges/Legacy";
 // import Exports from './ui/exports/Exports';
-import Toolbar from "./ui/toolbar/Toolbar";
-import PalettePanel from "./ui/palette/PalettePanel";
-import PropertiesPanel from "./ui/properties/PropertiesPanel";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useReactFlow } from "@xyflow/react";
-import ValidationError from "./validation/ValidationError";
-import { DiagramEdge } from "@/types/diagram";
-import DatasetNode from "./ui/nodes/DatasetNode";
-import { AiProcessNode } from "./ui/nodes/AiProcessNode";
-import MonaChatFab from "./ui/MonaChatFab";
-import AiApplicationNode from "./ui/nodes/AiApplicationNode";
-import AiServiceNode from "./ui/nodes/AiServiceNode";
-import { generateDiagramFromPrompt } from "./api";
-import ShareDialog from "./ui/ShareDialog";
-import CommentsPanel from "./ui/comments/CommentsPanel";
-import NotificationBell from "./ui/notifications/NotificationBell";
-import { listComments, type CommentItem, type CommentAnchor } from "./api";
+import Toolbar from './ui/toolbar/Toolbar';
+import PalettePanel from './ui/palette/PalettePanel';
+import PropertiesPanel from './ui/properties/PropertiesPanel';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useReactFlow } from '@xyflow/react';
+import ValidationError from './validation/ValidationError';
+import { DiagramEdge } from '@/types/diagram';
+import DatasetNode from './ui/nodes/DatasetNode';
+import { AiProcessNode } from './ui/nodes/AiProcessNode';
+import MonaChatFab from './ui/MonaChatFab';
+import AiApplicationNode from './ui/nodes/AiApplicationNode';
+import AiServiceNode from './ui/nodes/AiServiceNode';
+import { generateDiagramFromPrompt } from './api';
+import ShareDialog from './ui/ShareDialog';
+import CommitDialog from './ui/CommitDialog';
+import VersionHistoryPanel from './ui/VersionHistoryPanel';
+import CommentsPanel from './ui/comments/CommentsPanel';
+import { listComments, type CommentItem, type CommentAnchor, createDiagramVersion, type DiagramVersionFull, generateDiagramDocumentation } from './api';
+import { useCollaboration } from './collaboration/useCollaboration';
+import { getDiagramAsPngDataUrl } from './imports-exports/exports';
 
 const nodeTypes: NodeTypes = {
   processUnitNode: ProcessUnitNode,
@@ -85,8 +89,6 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     closeMenu,
     onFlowInit,
     exportToJson,
-    exportToRdf,
-    exportToXml,
     importFromJson,
     setNodes,
     setEdges,
@@ -124,6 +126,13 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
       }, 10000);
     }, []),
   });
+  const { t } = useLanguage();
+  const collaborationEnabled = !!(diagramId && getToken?.());
+  const { cursors: collaborationCursors, sendCursor, myColor: collaborationMyColor, connected: collaborationConnected } = useCollaboration(
+    collaborationEnabled ? diagramId : null,
+    getToken ?? (() => null),
+    userDisplayName
+  );
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const isViewer = accessLevel === "viewer";
@@ -131,9 +140,10 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
-  const [commentAnchor, setCommentAnchor] = useState<CommentAnchor | null>(
-    null,
-  );
+  const [commentAnchor, setCommentAnchor] = useState<CommentAnchor | null>(null);
+  const [commitDialogOpen, setCommitDialogOpen] = useState(false);
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [isGeneratingDocumentation, setIsGeneratingDocumentation] = useState(false);
 
   const loadComments = useCallback(async () => {
     if (!diagramId || !getToken?.()) return;
@@ -163,11 +173,6 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   const contextMenuForCanvas = isViewer ? null : contextMenuProps;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
-  const [nameInput, setNameInput] = useState(diagramName ?? "Untitled Diagram");
-  useEffect(() => {
-    setNameInput(diagramName ?? "Untitled Diagram");
-  }, [diagramName]);
-
   const handleZoomIn = useCallback(() => {
     zoomIn();
   }, [zoomIn]);
@@ -184,6 +189,59 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     if (saveDiagram) return saveDiagram();
     return true;
   }, [saveDiagram]);
+
+  const handleCommit = useCallback(
+    async (message: string, description: string) => {
+      if (!diagramId || !getToken) throw new Error('No diagram or auth token');
+      const token = getToken();
+      if (!token) throw new Error('Not authenticated');
+      await createDiagramVersion(token, diagramId, message, description);
+    },
+    [diagramId, getToken]
+  );
+
+  const handleVersionRestore = useCallback(
+    (version: DiagramVersionFull) => {
+      importFromJson(
+        JSON.stringify({ nodes: version.nodes, edges: version.edges, viewport: version.viewport })
+      );
+      setVersionHistoryOpen(false);
+    },
+    [importFromJson]
+  );
+
+  const handleGenerateDocumentation = useCallback(async () => {
+    const json = exportToJson();
+    if (!json) return;
+    let diagramData: { nodes: any[]; edges: any[]; viewport?: any };
+    try {
+      diagramData = JSON.parse(json);
+    } catch {
+      return;
+    }
+    setIsGeneratingDocumentation(true);
+    try {
+      const { markdown, diagramName: docName } = await generateDiagramDocumentation(
+        diagramData,
+        diagramName ?? 'Untitled Diagram'
+      );
+      // Prepend the title and generate a download
+      const title = `# ${docName}\n\n`;
+      const blob = new Blob([title + markdown], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(docName || 'diagram').replace(/[^a-z0-9_-]/gi, '_').toLowerCase()}_documentation.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Documentation generation failed:', err);
+    } finally {
+      setIsGeneratingDocumentation(false);
+    }
+  }, [exportToJson, diagramName]);
 
   const handleSaveAs = useCallback(
     async (name: string) => {
@@ -238,9 +296,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
       const data = await response.json();
       const errors = data.errors.errors || [];
       const sources = data.errors.sources || [];
-      console.log(sources);
       const errorNodeIds = new Set(sources.map((item: { id: any }) => item.id));
-      console.log(errorNodeIds);
       setNodes((nds) =>
         nds.map((node) => ({
           ...node,
@@ -252,7 +308,6 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
       );
 
       const errorEdgeIds = new Set(sources.map((item: { id: any }) => item.id));
-      console.log(errorEdgeIds);
       setEdges((eds: DiagramEdge[]) =>
         eds.map((edge: DiagramEdge) => ({
           ...edge,
@@ -285,103 +340,16 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
 
   return (
     <div className="relative w-screen h-screen">
-      {diagramId && (
-        <div
-          className="flex items-center gap-2 px-3 py-1.5 shrink-0"
-          style={{
-            backgroundColor: "var(--editor-surface)",
-            borderBottom: "1px solid var(--editor-border)",
-          }}
-        >
-          <Link
-            href="/editor"
-            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-[var(--editor-surface-hover)] transition-colors"
-            style={{ color: "var(--editor-text-secondary)" }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Back
-          </Link>
-          {isViewer && (
-            <span
-              className="text-xs px-2 py-1 rounded"
-              style={{
-                backgroundColor: "var(--editor-surface-hover)",
-                color: "var(--editor-text-secondary)",
-              }}
-            >
-              View only
-            </span>
-          )}
-          {onRenameDiagram && !isViewer && (
-            <input
-              type="text"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              onBlur={async () => {
-                const val = nameInput.trim() || "Untitled Diagram";
-                if (val !== (diagramName ?? "Untitled Diagram")) {
-                  await onRenameDiagram(val);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") e.currentTarget.blur();
-              }}
-              className="flex-1 min-w-0 px-2 py-1 rounded border-0 bg-transparent font-medium focus:outline-none focus:ring-1"
-              style={{ color: "var(--editor-text)", maxWidth: 300 }}
-            />
-          )}
-          <div className="ml-auto flex items-center gap-1">
-            <NotificationBell
-              getToken={getToken!}
-              onNavigate={() => setCommentsPanelOpen(false)}
-            />
-            {!isViewer && (
-              <button
-                type="button"
-                onClick={() => setCommentsPanelOpen(true)}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-[var(--editor-surface-hover)] transition-colors text-sm"
-                style={{ color: "var(--editor-text-secondary)" }}
-                title="Comments"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                Comments
-                {comments.filter((c) => !c.resolved).length > 0 && (
-                  <span
-                    className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-medium text-white"
-                    style={{ backgroundColor: "var(--editor-accent)" }}
-                  >
-                    {comments.filter((c) => !c.resolved).length}
-                  </span>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
       <Toolbar
-        onBack={diagramId ? () => router.push("/editor") : undefined}
-        backLabel="Diagrams"
+        onBack={diagramId ? () => router.push('/editor') : undefined}
+        backLabel={t('toolbar.diagrams')}
         onSave={isViewer ? undefined : handleSave}
         onSaveAs={isViewer ? undefined : handleSaveAs}
-        diagramName={diagramName ?? "Untitled Diagram"}
+        diagramName={diagramName ?? 'Untitled Diagram'}
+        onRenameDiagram={!isViewer ? onRenameDiagram : undefined}
+        isViewer={isViewer}
+        getToken={getToken ?? undefined}
+        onNotificationNavigate={() => setCommentsPanelOpen(false)}
         isLoggedIn={isAuthenticated}
         onUndo={isViewer ? () => {} : onUndo}
         onRedo={isViewer ? () => {} : onRedo}
@@ -390,11 +358,9 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
-        exportToJson={exportToJson}
-        exportToRdf={exportToRdf}
-        exportToXml={exportToXml}
-        importFromJson={isViewer ? (_json: string) => {} : importFromJson}
         handleValidation={isViewer ? undefined : handleValidation}
+        exportToJson={exportToJson}
+        importFromJson={importFromJson}
         flowWrapperRef={flowWrapperRef}
         allNodes={nodes}
         canShare={isOwner}
@@ -404,6 +370,14 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
           !isViewer && diagramId ? () => setCommentsPanelOpen(true) : undefined
         }
         commentsUnresolvedCount={comments.filter((c) => !c.resolved).length}
+        activeUsers={collaborationCursors.map((c) => ({ id: c.id, displayName: c.displayName, color: c.color }))}
+        myColor={collaborationMyColor ?? undefined}
+        myDisplayName={userDisplayName}
+        collaborationConnected={collaborationConnected}
+        onCommitVersion={!isViewer && diagramId ? () => setCommitDialogOpen(true) : undefined}
+        onVersionHistory={diagramId && getToken?.() ? () => setVersionHistoryOpen(true) : undefined}
+        onGenerateDocumentation={handleGenerateDocumentation}
+        isGeneratingDocumentation={isGeneratingDocumentation}
       />
       {validationError && (
         <ValidationError
@@ -440,6 +414,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         diagramId={diagramId}
         getToken={getToken}
         userDisplayName={userDisplayName}
+        collaboration={{ cursors: collaborationCursors, sendCursor }}
         comments={comments}
         onCommentClick={() => setCommentsPanelOpen(true)}
         onAddCommentAtPoint={
@@ -475,6 +450,17 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
             };
           }}
           onApplyDiagram={importFromJson}
+          getCurrentDiagram={() => {
+            try {
+              const json = exportToJson();
+              if (!json) return null;
+              const obj = JSON.parse(json) as { nodes?: any[]; edges?: any[]; viewport?: { x: number; y: number; zoom: number } };
+              return { nodes: obj.nodes ?? [], edges: obj.edges ?? [], viewport: obj.viewport ?? { x: 0, y: 0, zoom: 1 } };
+            } catch {
+              return null;
+            }
+          }}
+          getDiagramImage={() => getDiagramAsPngDataUrl(flowWrapperRef.current)}
         />
       )}
       {shareDialogOpen && diagramId && getToken && (
@@ -482,6 +468,20 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
           diagramId={diagramId}
           getToken={getToken}
           onClose={() => setShareDialogOpen(false)}
+        />
+      )}
+      {commitDialogOpen && (
+        <CommitDialog
+          onClose={() => setCommitDialogOpen(false)}
+          onCommit={handleCommit}
+        />
+      )}
+      {versionHistoryOpen && diagramId && getToken && (
+        <VersionHistoryPanel
+          diagramId={diagramId}
+          getToken={getToken}
+          onClose={() => setVersionHistoryOpen(false)}
+          onRestore={handleVersionRestore}
         />
       )}
       {commentsPanelOpen && diagramId && getToken && user?._id && (

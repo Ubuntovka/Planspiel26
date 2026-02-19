@@ -24,6 +24,7 @@ export function useCollaboration(
 ) {
   const [cursors, setCursors] = useState<RemoteCursor[]>([]);
   const [connected, setConnected] = useState(false);
+  const [myColor, setMyColor] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const sendCursorRef = useRef<(x: number, y: number) => void>(() => {});
 
@@ -49,6 +50,7 @@ export function useCollaboration(
           console.warn('Collaboration join error:', res.error);
           return;
         }
+        setMyColor(res?.color ?? null);
         const others = (res?.others ?? []).map((o) => ({
           id: o.socketId,
           displayName: o.displayName,
@@ -100,6 +102,7 @@ export function useCollaboration(
       socketRef.current = null;
       setCursors([]);
       setConnected(false);
+      setMyColor(null);
     };
   }, [diagramId, getToken, userDisplayName]);
 
@@ -107,5 +110,5 @@ export function useCollaboration(
     sendCursorRef.current(x, y);
   }, []);
 
-  return { cursors, connected, sendCursor };
+  return { cursors, connected, sendCursor, myColor };
 }
