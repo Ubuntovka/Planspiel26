@@ -16,8 +16,8 @@
     "createDiagram": "Create Diagram",
     "myDiagrams": "My Diagrams",
     "letsGo": "Let's go",
-    "headline": "Difficult diagrams are easier with the Devinche's editor.",
-    "subheadline": "Space, where people work together to achieve the highest results."
+    "headline": "Difficult diagrams are easier\nwith the Devinche's editor.",
+    "subheadline": "Space, where people work together to achieve\nthe highest results."
   },
   "auth": {
     "signIn": "Sign In",
@@ -138,7 +138,8 @@
     "updating": "Updating…",
     "dangerZone": "Danger Zone",
     "dangerZoneWarning": "Once you delete your account, there is no going back. Please be certain.",
-    "photoSelectedHint": "Photo selected. Click \"Save Changes\" to update."
+    "photoSelectedHint": "Photo selected. Click \"Save Changes\" to update.",
+    "backToEditor": "Editor"
   },
   "editor": {
     "myDiagrams": "My Diagrams",
@@ -172,7 +173,15 @@
     "orLoginWith": "Or log in with:",
     "forgotPassword": "Forgot password?",
     "loginWithGoogle": "Login with Google",
-    "home": "Home"
+    "home": "Home",
+    "errorOccurred": "An error occurred. Please try again.",
+    "googleCodeMissing": "Google authorization code missing",
+    "googleLoginFailed": "Google login failed",
+    "failedGoogleLogin": "Failed to login with Google",
+    "googleNotInitialized": "Google client not initialized",
+    "googleNotReady": "Google code client not ready",
+    "failedInitGoogle": "Failed to initialize Google login",
+    "dontHaveAccount": "Don't you have an account?"
   },
   "contextMenu": {
     "canvas": "Canvas",

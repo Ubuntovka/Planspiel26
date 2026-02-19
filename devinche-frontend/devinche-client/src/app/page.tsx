@@ -4,14 +4,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
-import UserAvatarMenu from '@/components/UserAvatarMenu';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Home() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, logout } = useAuth();
     const { t } = useLanguage();
 
     useEffect(() => {
@@ -49,10 +48,16 @@ export default function Home() {
                     />
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* <LanguageSwitcher variant="darkHeader" /> */}
+                    <LanguageSwitcher variant="darkHeader" />
                     <ThemeToggleButton />
                     {isAuthenticated ? (
-                        <UserAvatarMenu />
+                        <button
+                            onClick={() => logout()}
+                            className="bg-white text-gray-800 px-8 py-2.5 rounded-full font-medium hover:bg-gray-100 transition-colors text-sm"
+                            aria-label={t('auth.signOut')}
+                        >
+                            {t('auth.signOut')}
+                        </button>
                     ) : (
                         <Link
                             href="/login"
@@ -72,7 +77,7 @@ export default function Home() {
                         transition: 'transform 0.1s ease-out'
                     }}
                 >
-                    <div className="relative w-full h-[75%]">
+                    <div className="relative w-full h-[55%] md:h-[75%]">
                         <Image
                             src="/bg.svg"
                             alt="Background illustrations"
@@ -83,18 +88,22 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="relative z-10 text-center px-4 max-w-3xl -mt-80 animate-content-in">
-                    <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
-                        {t('home.headline')}
+                <div className="relative z-10 text-center px-4 max-w-3xl mt-4 md:-mt-80">
+                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
+                        {t('home.headline').split('\n').map((line, i, arr) => (
+                            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                        ))}
                     </h1>
 
-                    <p className="text-base text-gray-700 mb-10">
-                        {t('home.subheadline')}
+                    <p className="text-base md:text-base text-gray-700 mb-8 md:mb-10">
+                        {t('home.subheadline').split('\n').map((line, i, arr) => (
+                            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                        ))}
                     </p>
 
                     <Link
                         href="/editor"
-                        className="inline-block bg-[#f5c842] text-gray-900 px-14 py-3.5 rounded-full text-base font-semibold hover:bg-[#f0c030] transition-colors"
+                        className="inline-block bg-[#f5c842] text-gray-900 px-8 md:px-14 py-3 rounded-full text-lg md:text-base font-semibold hover:bg-[#f0c030] transition-colors"
                     >
                         {t('home.letsGo')}
                     </Link>
@@ -115,11 +124,11 @@ export default function Home() {
               :global([data-theme="dark"]) [data-page="home"] p {
                 color: var(--editor-text-secondary);
               }
-              :global([data-theme="dark"]) [data-page="home"] a.inline-block {
+              :global([data-theme="dark"]) [data-page="home"] a{
                 background: var(--editor-warning);
                 color: #111827;
               }
-              :global([data-theme="dark"]) [data-page="home"] .pointer-events-none {
+              :global([data-theme="dark"]) [data-page="home"]{
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;

@@ -33,9 +33,12 @@ import AiApplicationNode from './ui/nodes/AiApplicationNode';
 import AiServiceNode from './ui/nodes/AiServiceNode';
 import { generateDiagramFromPrompt } from './api';
 import ShareDialog from './ui/ShareDialog';
+import CommitDialog from './ui/CommitDialog';
+import VersionHistoryPanel from './ui/VersionHistoryPanel';
 import CommentsPanel from './ui/comments/CommentsPanel';
-import { listComments, type CommentItem, type CommentAnchor } from './api';
+import { listComments, type CommentItem, type CommentAnchor, createDiagramVersion, type DiagramVersionFull, generateDiagramDocumentation } from './api';
 import { useCollaboration } from './collaboration/useCollaboration';
+import { getDiagramAsPngDataUrl } from './imports-exports/exports';
 
 const nodeTypes: NodeTypes = {
     processUnitNode: ProcessUnitNode,
@@ -84,8 +87,6 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     closeMenu,
     onFlowInit,
     exportToJson,
-    exportToRdf,
-    exportToXml,
     importFromJson,
     setNodes,
     setEdges,
@@ -128,6 +129,9 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [commentAnchor, setCommentAnchor] = useState<CommentAnchor | null>(null);
+  const [commitDialogOpen, setCommitDialogOpen] = useState(false);
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [isGeneratingDocumentation, setIsGeneratingDocumentation] = useState(false);
 
   const loadComments = useCallback(async () => {
     if (!diagramId || !getToken?.()) return;
@@ -173,6 +177,59 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     if (saveDiagram) return saveDiagram();
     return true;
   }, [saveDiagram]);
+
+  const handleCommit = useCallback(
+    async (message: string, description: string) => {
+      if (!diagramId || !getToken) throw new Error('No diagram or auth token');
+      const token = getToken();
+      if (!token) throw new Error('Not authenticated');
+      await createDiagramVersion(token, diagramId, message, description);
+    },
+    [diagramId, getToken]
+  );
+
+  const handleVersionRestore = useCallback(
+    (version: DiagramVersionFull) => {
+      importFromJson(
+        JSON.stringify({ nodes: version.nodes, edges: version.edges, viewport: version.viewport })
+      );
+      setVersionHistoryOpen(false);
+    },
+    [importFromJson]
+  );
+
+  const handleGenerateDocumentation = useCallback(async () => {
+    const json = exportToJson();
+    if (!json) return;
+    let diagramData: { nodes: any[]; edges: any[]; viewport?: any };
+    try {
+      diagramData = JSON.parse(json);
+    } catch {
+      return;
+    }
+    setIsGeneratingDocumentation(true);
+    try {
+      const { markdown, diagramName: docName } = await generateDiagramDocumentation(
+        diagramData,
+        diagramName ?? 'Untitled Diagram'
+      );
+      // Prepend the title and generate a download
+      const title = `# ${docName}\n\n`;
+      const blob = new Blob([title + markdown], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(docName || 'diagram').replace(/[^a-z0-9_-]/gi, '_').toLowerCase()}_documentation.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Documentation generation failed:', err);
+    } finally {
+      setIsGeneratingDocumentation(false);
+    }
+  }, [exportToJson, diagramName]);
 
   const handleSaveAs = useCallback(
     async (name: string) => {
@@ -293,11 +350,9 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
-        exportToJson={exportToJson}
-        exportToRdf={exportToRdf}
-        exportToXml={exportToXml}
-        importFromJson={isViewer ? (_json: string) => {} : importFromJson}
         handleValidation={isViewer ? undefined : handleValidation}
+        exportToJson={exportToJson}
+        importFromJson={importFromJson}
         flowWrapperRef={flowWrapperRef}
         allNodes={nodes}
         canShare={isOwner}
@@ -309,6 +364,10 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         myColor={collaborationMyColor ?? undefined}
         myDisplayName={userDisplayName}
         collaborationConnected={collaborationConnected}
+        onCommitVersion={!isViewer && diagramId ? () => setCommitDialogOpen(true) : undefined}
+        onVersionHistory={diagramId && getToken?.() ? () => setVersionHistoryOpen(true) : undefined}
+        onGenerateDocumentation={handleGenerateDocumentation}
+        isGeneratingDocumentation={isGeneratingDocumentation}
       />
       {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
 
@@ -387,6 +446,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
               return null;
             }
           }}
+          getDiagramImage={() => getDiagramAsPngDataUrl(flowWrapperRef.current)}
         />
       )}
       {shareDialogOpen && diagramId && getToken && (
@@ -394,6 +454,20 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
           diagramId={diagramId}
           getToken={getToken}
           onClose={() => setShareDialogOpen(false)}
+        />
+      )}
+      {commitDialogOpen && (
+        <CommitDialog
+          onClose={() => setCommitDialogOpen(false)}
+          onCommit={handleCommit}
+        />
+      )}
+      {versionHistoryOpen && diagramId && getToken && (
+        <VersionHistoryPanel
+          diagramId={diagramId}
+          getToken={getToken}
+          onClose={() => setVersionHistoryOpen(false)}
+          onRestore={handleVersionRestore}
         />
       )}
       {commentsPanelOpen && diagramId && getToken && user?._id && (
