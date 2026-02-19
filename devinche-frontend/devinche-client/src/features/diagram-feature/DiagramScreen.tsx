@@ -274,7 +274,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   }, []);
 
   return (
-    <div className="relative w-screen h-screen">
+    <div className="relative w-screen h-screen overflow-hidden bg-(--editor-bg)">
       <Toolbar
         onBack={diagramId ? () => router.push('/editor') : undefined}
         backLabel={t('toolbar.diagrams')}
@@ -351,6 +351,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
               }
             : undefined
         }
+        style={{ width: '100%', height: '100%' }}
       />
       {!isViewer && (
         <PalettePanel
