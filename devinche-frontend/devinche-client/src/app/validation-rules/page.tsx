@@ -44,7 +44,6 @@ export default function ValidationRulesPage() {
             <div className="text-left mt-10 p-6 bg-white/80 rounded-lg border border-gray-200 shadow-sm">
               <h1
                 className="text-5xl font-bold text-gray-900 mb-6 leading-tight"
-                style={{ fontFamily: "Inria Serif" }}
               >
                 The rules of WAM
               </h1>

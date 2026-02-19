@@ -39,10 +39,11 @@ const STORAGE_PTR_KEY = "diagram.flow.ptr";
 export interface UseDiagramOptions {
   diagramId?: string | null;
   getToken?: () => string | null;
+  onConnectionError?: (errors: string[]) => void;
 }
 
 export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
-  const { diagramId, getToken } = options || {};
+  const { diagramId, getToken, onConnectionError } = options || {};
   const useBackend = !!getToken; // when logged in, use backend (diagramId optional for auto mode)
   const currentDiagramIdRef = useRef<string | null>(diagramId ?? null);
   const [nodes, setNodes] = useState<DiagramNode[]>(initialNodes);
@@ -634,6 +635,9 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
       const errors = data.errors.errors || [];
       const sources = data.errors.sources || [];
 
+      if (errors.length > 0){
+        onConnectionError?.(errors);
+      }
       const errorEdgeIds = new Set(sources.map((item: { id: any }) => item.id));
       setEdges((eds: DiagramEdge[]) =>
         eds.map((edge: DiagramEdge) => ({
