@@ -29,7 +29,7 @@ import UserAvatarMenu from "@/components/UserAvatarMenu";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "../notifications/NotificationBell";
 
-// Imports & Exports 
+// Imports & Exports
 import {
   exportDiagramToJson,
   exportDiagramToPng,
@@ -65,7 +65,7 @@ interface ToolbarProps {
   onZoomOut?: () => void;
   onFitView?: () => void;
   allNodes?: DiagramNode[];
-  handleValidation?: () => void; 
+  handleValidation?: () => void;
   exportToJson?: () => string | null;
   importFromJson?: (json: string) => void;
   flowWrapperRef?: React.RefObject<HTMLDivElement>;
@@ -74,6 +74,10 @@ interface ToolbarProps {
   onVersionHistory?: () => void;
   onGenerateDocumentation?: () => void;
   isGeneratingDocumentation?: boolean;
+
+  diagramId?: string | null;
+  getToken?: () => string | null;
+  onNotificationNavigate?: () => void;
 }
 
 const Toolbar = (props: ToolbarProps) => {
@@ -205,10 +209,17 @@ const Toolbar = (props: ToolbarProps) => {
           </div>
         </ScrollableMenuBar>
 
-        {/* 우측 상단 고정 영역 (알림, 언어, 테마, 프로필) */}
+        {/* Pinned top right (notifications, language, theme, profile) */}
         <div className="flex items-center gap-2 px-4 h-full flex-shrink-0">
-          {props.isLoggedIn && !props.isViewer && <NotificationBell />}
+          {props.diagramId && props.getToken && !props.isViewer && (
+            <NotificationBell
+              getToken={props.getToken}
+              onNavigate={props.onNotificationNavigate}
+            />
+          )}
+
           <LanguageSwitcher />
+
           <button
             onClick={toggleTheme}
             className="p-1.5 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors"
