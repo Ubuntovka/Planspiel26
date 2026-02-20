@@ -67,7 +67,7 @@ interface ToolbarProps {
   exportToJson: () => string | null;
   importFromJson: (json: string) => void;
   handleValidation?: () => void;
-  flowWrapperRef: React.RefObject<HTMLDivElement>;
+  flowWrapperRef: React.RefObject<HTMLDivElement | null>;
   allNodes: DiagramNode[];
   /** Only owner can share; show Share button when true and diagramId is set. */
   canShare?: boolean;
@@ -242,7 +242,7 @@ const Toolbar = ({
     exportDiagramToJson(json)
   }
   const handlePngExport = () => {
-    exportDiagramToPng(flowWrapperRef.current)
+    if (flowWrapperRef.current) exportDiagramToPng(flowWrapperRef.current)
   }
   const handleRdfExport = () => {
     const json = exportToJson()

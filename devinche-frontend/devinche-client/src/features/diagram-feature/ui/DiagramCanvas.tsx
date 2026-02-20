@@ -20,7 +20,7 @@ import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram
 import type { CommentItem } from '../api';
 
 interface DiagramCanvasProps {
-  flowWrapperRef: React.RefObject<HTMLDivElement>;
+  flowWrapperRef: React.RefObject<HTMLDivElement | null>;
   nodes: DiagramNode[];
   edges: DiagramEdge[];
   nodeTypes: NodeTypes;
