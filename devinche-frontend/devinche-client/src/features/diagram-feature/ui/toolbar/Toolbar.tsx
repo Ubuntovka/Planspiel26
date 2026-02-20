@@ -265,12 +265,12 @@ const Toolbar = (props: ToolbarProps) => {
             {/* View Only Badge */}
             {props.isViewer && (
               <div title="View Only" className="flex-shrink-0">
-                <span className="hidden min-[440px]:inline-block px-2 py-0.5 rounded-full bg-[var(--editor-surface)] text-[var(--editor-text-secondary)] text-[10px] font-bold uppercase border border-[var(--editor-border)]">
+                <span className="hidden min-[700px]:inline-block px-2 py-0.5 rounded-full bg-[var(--editor-surface)] text-[var(--editor-text-secondary)] text-[10px] font-bold uppercase border border-[var(--editor-border)]">
                   View Only
                 </span>
                 <Lock
-                  size={14}
-                  className="min-[440px]:hidden block text-[var(--editor-text-secondary)]"
+                  size={18}
+                  className="min-[700px]:hidden min-[370px]:block hidden text-[var(--editor-text-secondary)]"
                 />
               </div>
             )}
@@ -278,12 +278,12 @@ const Toolbar = (props: ToolbarProps) => {
             {saveMessage && (
               <div className="flex items-center flex-shrink-0">
                 <span
-                  className={`text-xs font-medium px-1 hidden min-[540px]:inline-block ${saveMessage.type === "error" ? "text-red-500" : "text-[var(--editor-accent)]"}`}
+                  className={`text-xs font-medium px-1 hidden min-[700px]:inline-block ${saveMessage.type === "error" ? "text-red-500" : "text-[var(--editor-accent)]"}`}
                 >
                   {saveMessage.text}
                 </span>
                 <span
-                  className={`w-2 h-2 rounded-full min-[540px]:hidden block animate-pulse ${saveMessage.type === "error" ? "bg-red-500" : "bg-blue-500"}`}
+                  className={`w-2 h-2 rounded-full min-[700px]:hidden min-[370px]:block hidden animate-pulse ${saveMessage.type === "error" ? "bg-red-500" : "bg-blue-500"}`}
                   title={saveMessage.text}
                 />
               </div>
@@ -296,19 +296,32 @@ const Toolbar = (props: ToolbarProps) => {
           <div
             className={`flex items-center gap-1 sm:gap-2 ${isEditingName ? "max-[420px]:hidden" : ""}`}
           >
-            {/* Collaboration Avatars */}
+            {/* Collaboration Status */}
             {props.collaborationConnected && props.activeUsers && (
-              <div className="hidden sm:flex items-center -space-x-2 mr-2">
-                {props.activeUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="w-8 h-8 rounded-full border-2 border-[var(--editor-bar-bg)] flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
-                    style={{ backgroundColor: user.color }}
-                    title={user.displayName}
-                  >
-                    {user.displayName.charAt(0).toUpperCase()}
-                  </div>
-                ))}
+              <div className="flex items-center flex-shrink-0 mr-2">
+                <div
+                  className="hidden min-[700px]:flex items-center -space-x-2 cursor-help"
+                  title={`${props.activeUsers.length} users collaborating`}
+                >
+                  {props.activeUsers.slice(0, 1).map((user) => (
+                    <div
+                      key={user.id}
+                      className="w-8 h-8 rounded-full border-2 border-[var(--editor-bar-bg)] flex items-center justify-center text-[10px] font-bold text-white shadow-sm z-20"
+                      style={{ backgroundColor: user.color }}
+                    >
+                      {user.displayName.charAt(0).toUpperCase()}
+                    </div>
+                  ))}
+                  {props.activeUsers.length >= 2 && (
+                    <div className="w-8 h-8 rounded-full border-2 border-[var(--editor-bar-bg)] bg-[var(--editor-surface-hover)] flex items-center justify-center text-[10px] font-bold text-[var(--editor-text-secondary)] shadow-sm z-10">
+                      +{props.activeUsers.length - 1}
+                    </div>
+                  )}
+                </div>
+                <div
+                  className="w-2 h-2 rounded-full bg-green-500 animate-pulse min-[700px]:hidden min-[370px]:block hidden cursor-help"
+                  title={`${props.activeUsers.length} users collaborating`}
+                />
               </div>
             )}
 
