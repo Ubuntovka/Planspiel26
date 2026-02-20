@@ -61,7 +61,7 @@ const ToolbarDropDown = ({
         ref={buttonRef}
         type="button"
         onClick={onToggle}
-        className="px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5 transition-colors hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text)]"
+        className="px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5 transition-colors hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text)] hover:cursor-pointer"
         style={{ backgroundColor: isOpen ? 'var(--editor-surface-hover)' : 'transparent' }}
       >
         {Icon && <Icon size={14} />}

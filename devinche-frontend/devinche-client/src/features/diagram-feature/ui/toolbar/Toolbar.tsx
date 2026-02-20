@@ -20,6 +20,8 @@ import {
   FileText,
   GitCommitHorizontal,
   History,
+  Lock,
+  Edit3,
 } from "lucide-react";
 
 // Contexts & Components
@@ -215,128 +217,152 @@ const Toolbar = (props: ToolbarProps) => {
     <div className="absolute top-0 left-0 right-0 z-20 flex flex-col bg-[var(--editor-bar-bg)] border-b border-[var(--editor-bar-border)]">
       {/* Bar 1: Title Bar & Collaboration */}
       <div className="flex justify-between items-center h-12 border-b border-[var(--editor-bar-border)] shadow-sm">
-        <ScrollableMenuBar className="flex-1 h-full">
-          <div className="flex items-center h-full px-2 gap-2">
-            {props.onBack && (
-              <>
-                <button
-                  onClick={props.onBack}
-                  className="flex items-center gap-1.5 h-8 px-3.5 rounded-lg transition-colors border border-[var(--editor-bar-border)] text-[var(--editor-text-secondary)] hover:bg-[var(--editor-surface-hover)]"
-                  title="Back"
-                >
-                  <ArrowLeft size={16} />
-                  <span className="text-sm font-medium">
-                    {props.backLabel ?? t("toolbar.diagrams")}
+        {/* Left Side: Back + Title + Status */}
+        <div className="flex items-center gap-1 min-w-0 flex-1">
+          {props.onBack && (
+            <button
+              onClick={props.onBack}
+              className="flex items-center gap-1 h-8 pl-[9.5px] pr-1.5 sm:pl-3 sm:pr-3 rounded-lg transition-colors border border-[var(--editor-bar-border)] text-[var(--editor-text-secondary)] hover:bg-[var(--editor-surface-hover)] flex-shrink-0 ml-2"
+              title="Back"
+            >
+              <ArrowLeft size={16} />
+              <span className="hidden min-[540px]:inline text-sm font-medium">
+                {props.backLabel ?? t("toolbar.diagrams")}
+              </span>
+            </button>
+          )}
+
+          <div
+            className={`flex items-center gap-1.5 min-w-0 ml-0.5 sm:ml-1 ${isEditingName ? "flex-1" : ""}`}
+          >
+            {/* Editable Title */}
+            {isEditingName && !props.isViewer ? (
+              <input
+                autoFocus
+                value={renameInput}
+                onChange={(e) => setRenameInput(e.target.value)}
+                onBlur={handleRename}
+                onKeyDown={(e) => e.key === "Enter" && handleRename()}
+                className="bg-[var(--editor-bg)] text-[var(--editor-text)] px-2 py-0.5 rounded border border-[var(--editor-accent)] focus:outline-none text-sm font-semibold flex-1 w-full min-w-[120px] max-w-[400px] sm:max-w-[600px]"
+              />
+            ) : (
+              <div
+                onClick={() => !props.isViewer && setIsEditingName(true)}
+                className={`flex items-center gap-1.5 min-w-0 ${!props.isViewer ? "cursor-pointer hover:bg-[var(--editor-surface-hover)] px-1.5 py-1 rounded" : ""}`}
+              >
+                <span className="font-semibold text-sm sm:text-base text-[var(--editor-text)] truncate max-w-[60px] min-[440px]:max-w-[150px] sm:max-w-[240px]">
+                  <span className="min-[440px]:inline hidden">
+                    {props.diagramName || t("toolbar.untitledDiagram")}
                   </span>
-                </button>
-                <ToolbarDivider />
-              </>
+                  <Edit3
+                    size={16}
+                    className="min-[440px]:hidden block text-[var(--editor-text-secondary)]"
+                  />
+                </span>
+              </div>
             )}
 
-            {/* Editable Title */}
-            <div className="flex items-center gap-2 min-w-0">
-              {isEditingName && !props.isViewer ? (
-                <input
-                  autoFocus
-                  value={renameInput}
-                  onChange={(e) => setRenameInput(e.target.value)}
-                  onBlur={handleRename}
-                  onKeyDown={(e) => e.key === "Enter" && handleRename()}
-                  className="bg-[var(--editor-bg)] text-[var(--editor-text)] px-2 py-0.5 rounded border border-[var(--editor-accent)] focus:outline-none text-base font-semibold"
-                />
-              ) : (
-                <span
-                  onClick={() => !props.isViewer && setIsEditingName(true)}
-                  className={`font-semibold text-base text-[var(--editor-text)] truncate max-w-[240px] ${!props.isViewer ? "cursor-pointer hover:bg-[var(--editor-surface-hover)] px-2 py-0.5 rounded" : ""}`}
-                >
-                  {props.diagramName || t("toolbar.untitledDiagram")}
-                </span>
-              )}
-
-              {/* View Only Badge */}
-              {props.isViewer && (
-                <span className="px-2 py-0.5 rounded-full bg-[var(--editor-surface)] text-[var(--editor-text-secondary)] text-[10px] font-bold uppercase tracking-wider border border-[var(--editor-border)]">
+            {/* View Only Badge */}
+            {props.isViewer && (
+              <div title="View Only" className="flex-shrink-0">
+                <span className="hidden min-[440px]:inline-block px-2 py-0.5 rounded-full bg-[var(--editor-surface)] text-[var(--editor-text-secondary)] text-[10px] font-bold uppercase border border-[var(--editor-border)]">
                   View Only
                 </span>
-              )}
+                <Lock
+                  size={14}
+                  className="min-[440px]:hidden block text-[var(--editor-text-secondary)]"
+                />
+              </div>
+            )}
 
-              {/* Save Feedback Message */}
-              {saveMessage && (
+            {saveMessage && (
+              <div className="flex items-center flex-shrink-0">
                 <span
-                  className={`text-xs font-medium px-2 ${saveMessage.type === "error" ? "text-red-500" : "text-[var(--editor-accent)]"}`}
+                  className={`text-xs font-medium px-1 hidden min-[540px]:inline-block ${saveMessage.type === "error" ? "text-red-500" : "text-[var(--editor-accent)]"}`}
                 >
                   {saveMessage.text}
                 </span>
-              )}
-            </div>
+                <span
+                  className={`w-2 h-2 rounded-full min-[540px]:hidden block animate-pulse ${saveMessage.type === "error" ? "bg-red-500" : "bg-blue-500"}`}
+                  title={saveMessage.text}
+                />
+              </div>
+            )}
           </div>
-        </ScrollableMenuBar>
+        </div>
 
         {/* Top Right: Actions & Profile */}
-        <div className="flex items-center gap-2 px-4 h-full flex-shrink-0">
-          {/* Collaboration Avatars */}
-          {props.collaborationConnected && props.activeUsers && (
-            <div className="flex items-center -space-x-2 mr-2">
-              {props.activeUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="w-8 h-8 rounded-full border-2 border-[var(--editor-bar-bg)] flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
-                  style={{ backgroundColor: user.color }}
-                  title={user.displayName}
-                >
-                  {user.displayName.charAt(0).toUpperCase()}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Share & Comments */}
-          {!props.isViewer && (
-            <>
-              {props.onCommentsClick && (
-                <button
-                  onClick={props.onCommentsClick}
-                  className="relative p-2 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors"
-                  title="Comments"
-                >
-                  <MessageSquare size={18} />
-                  {Number(props.commentsUnresolvedCount) > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-[var(--editor-bar-bg)]">
-                      {props.commentsUnresolvedCount}
-                    </span>
-                  )}
-                </button>
-              )}
-              {props.canShare && props.onShareClick && (
-                <button
-                  onClick={props.onShareClick}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--editor-accent)] text-white hover:opacity-90 transition-opacity text-sm font-medium"
-                >
-                  <Share2 size={16} />
-                  <span>Share</span>
-                </button>
-              )}
-              <ToolbarDivider />
-            </>
-          )}
-
-          {props.diagramId && props.getToken && !props.isViewer && (
-            <NotificationBell
-              getToken={props.getToken}
-              onNavigate={props.onNotificationNavigate}
-            />
-          )}
-
-          <LanguageSwitcher />
-
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors"
-            title={theme === "dark" ? "Light mode" : "Dark mode"}
+        <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 h-full flex-shrink-0">
+          <div
+            className={`flex items-center gap-1 sm:gap-2 ${isEditingName ? "max-[420px]:hidden" : ""}`}
           >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+            {/* Collaboration Avatars */}
+            {props.collaborationConnected && props.activeUsers && (
+              <div className="hidden sm:flex items-center -space-x-2 mr-2">
+                {props.activeUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    className="w-8 h-8 rounded-full border-2 border-[var(--editor-bar-bg)] flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                    style={{ backgroundColor: user.color }}
+                    title={user.displayName}
+                  >
+                    {user.displayName.charAt(0).toUpperCase()}
+                  </div>
+                ))}
+              </div>
+            )}
 
+            {/* Share & Comments */}
+            {!props.isViewer && (
+              <>
+                {/* 1. Comments button */}
+                {props.onCommentsClick && (
+                  <button
+                    onClick={props.onCommentsClick}
+                    className="relative p-1.5 sm:p-2 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors hover:cursor-pointer"
+                    title="Comments"
+                  >
+                    <MessageSquare size={18} />
+                    {Number(props.commentsUnresolvedCount) > 0 && (
+                      <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-[var(--editor-bar-bg)]">
+                        {props.commentsUnresolvedCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+                {/* 2. Share button */}
+                {props.canShare && props.onShareClick && (
+                  <button
+                    onClick={props.onShareClick}
+                    className="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors hover:cursor-pointer"
+                    title="Share"
+                  >
+                    <Share2 size={18} />
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* 3. Notification button */}
+            {props.diagramId && props.getToken && !props.isViewer && (
+              <NotificationBell
+                getToken={props.getToken}
+                onNavigate={props.onNotificationNavigate}
+              />
+            )}
+
+            <div className="xs:block">
+              <LanguageSwitcher />
+            </div>
+
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors hover:cursor-pointer"
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          </div>
           <UserAvatarMenu />
         </div>
       </div>

@@ -45,7 +45,7 @@ export default function UserAvatarMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 border-white/80 hover:border-white transition-colors bg-white text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#4a5568]"
+        className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 border-white/80 hover:border-white transition-colors bg-white text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#4a5568] hover:cursor-pointer"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t('auth.userMenu')}
