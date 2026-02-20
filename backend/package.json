@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "dev": "nodemon index.ts",
     "test": "jest",
     "db:init": "ts-node scripts/dbInit.ts"
