@@ -98,14 +98,14 @@ export const CostBreakdown = ({ total, nodesWithCost, t }: CostBreakdownProps) =
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <h4 className="text-[10px] font-bold uppercase border-b pb-1 mb-2 text-[var(--editor-text-secondary)] border-[var(--editor-border)] select-none">
+          <h4 className="text-sm font-bold uppercase border-b pb-1 mb-2 text-[var(--editor-text-secondary)] border-[var(--editor-border)] select-none">
             {t('toolbar.costBreakdown')}
           </h4>
           <div className="max-h-48 overflow-y-auto custom-scrollbar">
             {nodesWithCost.length > 0 ? (
               <ul className="space-y-1.5">
                 {nodesWithCost.map((item) => (
-                  <li key={item.id} className="flex justify-between items-center text-[11px]">
+                  <li key={item.id} className="flex justify-between items-center text-sm">
                     <span className="text-[var(--editor-text-secondary)] truncate pr-2">{item.name}</span>
                     <span className="font-mono font-semibold text-[var(--editor-text)]">
                       {formatCompactNumber(item.cost)}€
@@ -120,7 +120,7 @@ export const CostBreakdown = ({ total, nodesWithCost, t }: CostBreakdownProps) =
             )}
           </div>
           {total >= 1000 && (
-            <div className="mt-2 pt-2 border-t border-[var(--editor-border)] text-[10px] text-right text-[var(--editor-text-secondary)]">
+            <div className="mt-2 pt-2 border-t border-[var(--editor-border)] font-bold text-sm text-right text-[var(--editor-text-secondary)]">
               Total: {total.toLocaleString()}€
             </div>
           )}
