@@ -86,12 +86,8 @@ const PalettePanel = ({
   const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
 
-    // ✨ 노드 클릭 시 실행될 래퍼 함수
   const handleNodeClick = (item: PaletteItem) => {
-    // 1. 기존 노드 추가 로직 실행
     onNodeClick?.(item);
-
-    // 2. 화면 넓이가 640px보다 작으면 패널 접기
     if (window.innerWidth < 640) {
       setCollapsed(true);
     }
@@ -225,6 +221,5 @@ const PalettePanel = ({
     </div>
   );
 };
-
 
 export default PalettePanel;
