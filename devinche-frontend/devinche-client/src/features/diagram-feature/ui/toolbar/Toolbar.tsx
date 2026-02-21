@@ -56,10 +56,12 @@ interface ToolbarProps {
   onBack?: () => void;
   backLabel?: string;
   diagramName?: string | null;
+  /** Rename diagram (when set, title in bar 1 is editable). */
   onRenameDiagram?: (name: string) => Promise<void>;
 
   // Auth & Permissions
   isLoggedIn?: boolean;
+  /** View-only mode: show "View only" badge and disable editing. */
   isViewer?: boolean;
 
   // Persistence
@@ -80,9 +82,10 @@ interface ToolbarProps {
   handleValidation?: () => void;
   exportToJson?: () => string | null;
   importFromJson?: (json: string) => void;
-  flowWrapperRef?: React.RefObject<HTMLDivElement>;
+  flowWrapperRef?: React.RefObject<HTMLDivElement | null>;
 
   // Versioning & Documentation
+  /** Called when user clicks "Save version" in the File menu. */
   onCommitVersion?: () => void;
   onVersionHistory?: () => void;
   onGenerateDocumentation?: () => void;
@@ -90,16 +93,25 @@ interface ToolbarProps {
 
   // Collaboration & UI
   diagramId?: string | null;
+  /** For NotificationBell in bar 1 (when diagram is open). */
   getToken?: () => string | null;
+  /** Called when user follows a notification (e.g. close comments panel). */
   onNotificationNavigate?: () => void;
+  /** Real-time: other users currently viewing this diagram (for "Active viewers" in bar). */
   activeUsers?: { id: string; displayName: string; color: string }[];
+  /** Current user's collaboration color (shown as "You" in active viewers). */
   myColor?: string;
+  /** Current user's display name for "You" label. */
   myDisplayName?: string;
+  /** Whether collaboration socket is connected. */
   collaborationConnected?: boolean;
-  onShareClick?: () => void;
-  onCommentsClick?: () => void;
-  commentsUnresolvedCount?: number;
+  /** Only owner can share; show Share button when true and diagramId is set. */
   canShare?: boolean;
+  onShareClick?: () => void;
+  /** Open comments panel (when diagram is open and user can comment). */
+  onCommentsClick?: () => void;
+  /** Unresolved comment count for badge. */
+  commentsUnresolvedCount?: number;
 }
 
 const Toolbar = (props: ToolbarProps) => {
@@ -172,7 +184,7 @@ const Toolbar = (props: ToolbarProps) => {
     }
   };
 
-  // Import/Export Handlers (Refactored logic kept)
+  // Import/Export Handlers 
   const handleImport = async (
     e: React.ChangeEvent<HTMLInputElement>,
     importer: (
