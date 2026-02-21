@@ -67,7 +67,7 @@ export default function UserAvatarMenu() {
             </span>
           )
         ) : (
-          <User size={20} strokeWidth={2.5} className="text-gray-500" />
+          <User size={17} strokeWidth={2.5} className="text-gray-500" />
         )}
       </button>
       {open && (
