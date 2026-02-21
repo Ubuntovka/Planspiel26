@@ -191,7 +191,7 @@ export default function ContextMenu({
     left: 0,
     right: 0,
     width: "100%",
-    zIndex: 2000,
+    zIndex: 3000,
     backgroundColor: "var(--bg-paper)",
     borderTopLeftRadius: "20px",
     borderTopRightRadius: "20px",
@@ -205,7 +205,7 @@ export default function ContextMenu({
     <>
       {isMobile && (
         <div
-          className="fixed inset-0 bg-black/50 z-[1999] animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/50 z-2999 animate-in fade-in duration-200"
           onClick={closeMenu}
         />
       )}
@@ -214,7 +214,7 @@ export default function ContextMenu({
         ref={isMobile ? null : refs.setFloating}
         className={`context-menu flex flex-col ${isMobile ? "mobile-bottom-sheet animate-in slide-in-from-bottom duration-300" : "absolute"}`}
         style={
-          isMobile ? mobileContainerStyle : { ...floatingStyles, zIndex: 1000 }
+          isMobile ? mobileContainerStyle : { ...floatingStyles, zIndex: 2500 }
         }
         {...props}
       >

@@ -167,10 +167,12 @@ const PropertiesPanel = ({
     right,
     bottom,
     position: top || left ? "absolute" : "relative",
+    zIndex: 1100,
   };
   return (
     <div
       className={`properties-modal-backdrop ${isMobile ? "flex items-end" : ""}`}
+      style={{ zIndex: 1100 }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
