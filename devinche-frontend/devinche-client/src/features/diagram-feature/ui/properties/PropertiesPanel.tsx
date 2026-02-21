@@ -12,6 +12,7 @@ import {
   Info,
 } from "lucide-react";
 import type { DiagramEdge, DiagramNode, NodeData } from "@/types/diagram";
+import { useIsMobile } from "../../hooks/useMobile";
 
 interface PropertiesPanelProps {
   selectedNode: DiagramNode | null;
@@ -40,6 +41,7 @@ const PropertiesPanel = ({
   right?: number;
   bottom?: number;
 }) => {
+  const isMobile = useIsMobile();
   const [name, setName] = useState<string>("");
   const [type, setType] = useState<string>("");
   const [cost, setCost] = useState<string>("");
@@ -101,7 +103,10 @@ const PropertiesPanel = ({
   };
 
   const handleSave = () => {
-    if (!isDirty) return;
+    if (!isDirty) {
+      onClose();
+      return;
+    }
     if (selectedEdge) {
       onUpdateEdge(selectedEdge.id, {
         label: name.trim() || undefined,
@@ -120,6 +125,7 @@ const PropertiesPanel = ({
       });
     }
     setIsDirty(false);
+    onClose();
   };
 
   const handleKeyDown = useCallback(
@@ -142,9 +148,29 @@ const PropertiesPanel = ({
     ? selectedEdge.type || "Connection"
     : selectedNode?.type?.replace(/([A-Z])/g, " $1").trim() || "Unknown";
 
+  const mobileContainerStyle: React.CSSProperties = {
+    position: "relative",
+    width: "90%",
+    maxWidth: "400px",
+    margin: "auto",
+    borderRadius: "20px",
+    maxHeight: "85vh",
+    zIndex: 2000,
+    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
+    display: "flex",
+    flexDirection: "column",
+  };
+
+  const desktopContainerStyle: React.CSSProperties = {
+    top,
+    left,
+    right,
+    bottom,
+    position: top || left ? "absolute" : "relative",
+  };
   return (
     <div
-      className="properties-modal-backdrop"
+      className={`properties-modal-backdrop ${isMobile ? "flex items-end" : ""}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -152,14 +178,10 @@ const PropertiesPanel = ({
       aria-modal="true"
     >
       <div
-        className="properties-modal relative flex flex-col"
-        style={{
-          top,
-          left,
-          right,
-          bottom,
-          position: top || left ? "absolute" : "relative",
-        }}
+        className={`properties-modal relative flex flex-col ${
+          isMobile ? "w-full animate-in slide-in-from-bottom duration-300" : ""
+        }`}
+        style={isMobile ? mobileContainerStyle : desktopContainerStyle}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="properties-modal__header">
@@ -182,7 +204,9 @@ const PropertiesPanel = ({
           </button>
         </header>
 
-        <div className="properties-modal__body custom-scrollbar">
+        <div
+          className={`properties-modal__body custom-scrollbar ${isMobile ? "pb-10" : ""}`}
+        >
           <PropertyInput
             label={isEdge ? "Label" : "Name"}
             icon={<Tag size={14} />}
@@ -212,7 +236,6 @@ const PropertiesPanel = ({
               {selectedNode?.type &&
                 ADDITIONAL_FIELDS[selectedNode.type]?.map((field) => {
                   const { key, ...fieldProps } = field;
-
                   return (
                     <PropertyInput
                       key={key}
@@ -243,15 +266,19 @@ const PropertiesPanel = ({
             })}
         </div>
 
-        <footer className="properties-modal__footer">
+        <footer
+          className={`properties-modal__footer ${isMobile ? "pb-8" : ""}`}
+        >
           <button
             type="button"
-            className="properties-modal__save"
+            className="properties-modal__save w-full flex justify-center py-4"
             onClick={handleSave}
             disabled={!isDirty}
           >
             <Save size={18} />
-            <span>{isDirty ? "Save changes" : "No changes"}</span>
+            <span className="ml-2">
+              {isDirty ? "Save changes" : "No changes"}
+            </span>
           </button>
         </footer>
       </div>
