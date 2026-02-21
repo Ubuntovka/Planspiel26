@@ -157,7 +157,7 @@ const PalettePanel = ({
       {/* Content Area */}
       {!collapsed && (
         <div className="p-2 overflow-y-auto custom-scrollbar flex-1">
-          <PaletteSection
+          {/* <PaletteSection
             title="Tools"
             items={Tools}
             renderItem={(item) => (
@@ -167,7 +167,7 @@ const PalettePanel = ({
                 displayLabel={item.label}
               />
             )}
-          />
+          /> */}
 
           <PaletteSection
             title="Nodes"
