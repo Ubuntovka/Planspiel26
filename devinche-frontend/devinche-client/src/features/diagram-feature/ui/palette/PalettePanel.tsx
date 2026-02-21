@@ -116,7 +116,7 @@ const PalettePanel = ({
         className={`flex items-center cursor-pointer transition-colors flex-shrink-0 ${
           collapsed
             ? "justify-center py-3"
-            : "justify-between px-4 py-3 border-b border-[var(--editor-panel-border)] bg-[var(--editor-panel-header)] hover:bg-[var(--editor-surface-hover)]"
+            : "justify-between px-4 py-3 border-[var(--editor-panel-border)] bg-[var(--editor-panel-header)] hover:bg-[var(--editor-surface-hover)]"
         }`}
         onClick={() => setCollapsed(!collapsed)}
         title={
