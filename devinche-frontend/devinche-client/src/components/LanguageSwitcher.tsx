@@ -1,16 +1,10 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { ChevronDown, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Locale } from "@/contexts/LanguageContext";
 
-/**
- * Supported locales. To add a language later:
- * 1. Add an entry here (value = locale code, label = display name).
- * 2. In LanguageContext: extend Locale type, import the new locale JSON, add to messages, and handle in setLocaleState/load.
- * 3. Add src/locales/{code}.json with the same key structure as en.json.
- */
 export const LOCALE_OPTIONS: { value: Locale; label: string }[] = [
   { value: "en", label: "English" },
   { value: "de", label: "Deutsch" },
@@ -28,7 +22,6 @@ export const LOCALE_OPTIONS: { value: Locale; label: string }[] = [
 
 interface LanguageSwitcherProps {
   className?: string;
-  /** For dark header (e.g. home): use light text. */
   variant?: "default" | "darkHeader";
 }
 
@@ -39,10 +32,8 @@ export default function LanguageSwitcher({
   const { locale, setLocale } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const isDark = variant === "darkHeader";
-
-  const currentLabel =
-    LOCALE_OPTIONS.find((o) => o.value === locale)?.label ?? locale;
+  
+  const isDarkHeader = variant === "darkHeader";
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -65,9 +56,23 @@ export default function LanguageSwitcher({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`p-1.5 sm:p-2 rounded-lg transition-colors hover:cursor-pointer flex items-center justify-center
-          ${open ? "bg-[var(--editor-surface-hover)]" : "hover:bg-[var(--editor-surface-hover)]"} 
-          text-[var(--editor-text-secondary)]`}
+        className={
+          isDarkHeader
+            ? "inline-flex items-center px-2.5 py-2 rounded-full border transition-colors"
+            : `p-1.5 sm:p-2 rounded-lg transition-colors hover:cursor-pointer flex items-center justify-center ${
+                open ? "bg-[var(--editor-surface-hover)]" : "hover:bg-[var(--editor-surface-hover)]"
+              } text-[var(--editor-text-secondary)]`
+        }
+        style={
+          isDarkHeader
+            ? {
+                background: "white",
+                color: "#1f2937",
+                borderColor: "#e5e7eb",
+              }
+            : undefined
+        }
+        data-lang-theme-aware={isDarkHeader ? "true" : undefined}
         title="Select Language"
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -116,6 +121,19 @@ export default function LanguageSwitcher({
             </li>
           ))}
         </ul>
+      )}
+
+      {isDarkHeader && (
+        <style jsx>{`
+          :global([data-theme="dark"]) [data-lang-theme-aware="true"] {
+            background: var(--editor-surface) !important;
+            color: var(--editor-text) !important;
+            border-color: var(--editor-border) !important;
+          }
+          :global([data-theme="dark"]) [data-lang-theme-aware="true"]:hover {
+            background: var(--editor-surface-hover) !important;
+          }
+        `}</style>
       )}
     </div>
   );
