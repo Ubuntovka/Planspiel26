@@ -42,7 +42,6 @@ interface ContextMenuProps extends ContextMenuState {
   }) => void;
 }
 
-// 아이콘 컴포넌트들
 const IconNode = () => <SquareRounded fontSize="small" />;
 const IconEdge = () => <Link fontSize="small" />;
 const IconDimensions = () => <AspectRatio fontSize="small" />;
