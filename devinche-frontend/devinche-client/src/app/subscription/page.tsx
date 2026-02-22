@@ -23,7 +23,7 @@ export default function SubscriptionPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#e8eaed] relative overflow-hidden" data-page="subscription">
+    <div className="min-h-screen bg-[#e8eaed] relative" data-page="subscription">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -88,7 +88,10 @@ export default function SubscriptionPage() {
         <section className="relative z-10 w-full max-w-6xl mt-10 md:mt-14">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-56 md:h-72 relative rounded-3xl shadow-xl p-8 md:p-10 border border-white border-opacity-40 overflow-hidden">
+              <div
+                key={i}
+                className={`${i === 0 ? 'min-h-[34rem]' : 'h-56 md:h-72'} relative rounded-3xl shadow-xl p-8 md:p-10 border border-white border-opacity-40 overflow-hidden`}
+              >
                 <div
                   className="absolute inset-0 bg-[#FFC31D] opacity-20 backdrop-blur-xl"
                   style={{
@@ -111,8 +114,49 @@ export default function SubscriptionPage() {
                   }}
                 />
 
-                <div className="relative z-10 w-full h-full flex items-center justify-center">
+                <div className={`relative z-10 w-full h-full flex ${i === 0 ? 'flex-col items-start justify-start gap-4' : 'items-center justify-center'}`}>
+                  {i === 0 ? (
+                    <>
+                      <div className="space-y-2">
+                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700">Student Exclusive</span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>100% Free for Students</h3>
+                        <p className="text-gray-800 text-base">Everything you need to master WAM modeling</p>
+                      </div>
 
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-2">
+                        <li className="bg-white/50 rounded-xl p-4 border border-white/60">
+                          <div className="font-semibold text-gray-900">Full Access</div>
+                          <div className="text-gray-700 text-sm">Unlimited diagrams, AI-powered modeling, semantic exports</div>
+                        </li>
+                        <li className="bg-white/50 rounded-xl p-4 border border-white/60">
+                          <div className="font-semibold text-gray-900">Team Collaboration</div>
+                          <div className="text-gray-700 text-sm">Real-time editing with classmates on group projects</div>
+                        </li>
+                        <li className="bg-white/50 rounded-xl p-4 border border-white/60">
+                          <div className="font-semibold text-gray-900">Premium Features</div>
+                          <div className="text-gray-700 text-sm">Access to WAM templates, validation, and priority support</div>
+                        </li>
+                        <li className="bg-white/50 rounded-xl p-4 border border-white/60">
+                          <div className="font-semibold text-gray-900">Learning Resources</div>
+                          <div className="text-gray-700 text-sm">Exclusive tutorials, guides, and WAM best practices</div>
+                        </li>
+                      </ul>
+
+                      <div className="mt-4">
+                        <Link
+                          href="/signup?student=1"
+                          className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors"
+                        >
+                          Verify Student Status & Start Free
+                        </Link>
+                        <div className="text-xs text-gray-700 mt-2">
+                          Requires valid university email or student ID verification
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-gray-700">Coming soon</div>
+                  )}
                 </div>
               </div>
             ))}

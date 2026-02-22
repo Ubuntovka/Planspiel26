@@ -86,11 +86,11 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Page transition: smooth fade + slide when switching routes */
 .page-transition-wrap {
   animation: pageIn 0.35s ease-out;
   min-height: 100vh;
