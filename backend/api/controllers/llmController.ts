@@ -419,7 +419,7 @@ export async function generateDiagramFromPrompt(
     let raw = await callLlm(prompt);
     let diagram = parseAndNormalize(raw);
     diagram.edges = ensureTrustBetweenRealmsWhenRequested(prompt, diagram.nodes, diagram.edges);
-    let diagramJson = { nodes: diagram.nodes, edges: diagram.edges, };
+    let diagramJson = JSON.stringify({ nodes: diagram.nodes, edges: diagram.edges, viewport: diagram.viewport });
     let validation = await validate(diagramJson);
 
     if (validation.errors.length > 0) {
@@ -429,10 +429,11 @@ export async function generateDiagramFromPrompt(
         raw = await callLlm(retryUser);
         diagram = parseAndNormalize(raw);
         diagram.edges = ensureTrustBetweenRealmsWhenRequested(prompt, diagram.nodes, diagram.edges);
-        diagramJson = {
+        diagramJson = JSON.stringify({
           nodes: diagram.nodes,
           edges: diagram.edges,
-        };
+          viewport: diagram.viewport,
+        });
         validation = await validate(diagramJson);
       } catch (_) {
         // If retry fails, send first result anyway; client can still show it
@@ -513,11 +514,11 @@ export async function buildDiagramFromSystemDescription(
     
     let raw = await callLlm(userMessage);
     let diagram = parseAndNormalize(raw);
-    let diagramJson = { 
+    let diagramJson = JSON.stringify({ 
       nodes: diagram.nodes, 
       edges: diagram.edges, 
       viewport: diagram.viewport 
-    }
+    });
     let validation = await validate(diagramJson);
 
     // If validation fails, try one retry with error feedback
@@ -528,11 +529,11 @@ export async function buildDiagramFromSystemDescription(
       try {
         raw = await callLlm(retryUser);
         diagram = parseAndNormalize(raw);
-        diagramJson = {
+        diagramJson = JSON.stringify({
           nodes: diagram.nodes,
           edges: diagram.edges,
           viewport: diagram.viewport,
-        }
+        });
         validation = await validate(diagramJson);
       } catch (_) {
         // If retry fails, send first result anyway; client can still show it
@@ -616,7 +617,7 @@ export async function explainDiagram(
   }).join('; ');
 
   // Validate the diagram server-side
-  const diagramJson = { nodes, edges, viewport }
+  const diagramJson = JSON.stringify({ nodes, edges, viewport });
   let validation: { valid: boolean; errors: string[] } = { valid: true, errors: [] } as any;
   try {
     const result = await validate(diagramJson);
@@ -745,7 +746,7 @@ export async function generateDocumentation(
   const diagramName: string = typeof req.body?.diagramName === 'string' ? req.body.diagramName.trim() : 'Untitled Diagram';
 
   // Validate the diagram server-side for inclusion in docs
-  const diagramJson = { nodes, edges, viewport }
+  const diagramJson = JSON.stringify({ nodes, edges, viewport });
   let validation: { valid: boolean; errors: string[] } = { valid: true, errors: [] };
   try {
     const result = await validate(diagramJson);
