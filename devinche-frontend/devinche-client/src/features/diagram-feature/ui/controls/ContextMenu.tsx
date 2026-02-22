@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo, useEffect, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -74,6 +74,17 @@ export default function ContextMenu({
     useReactFlow();
 
   const isCanvasMenu = type === "canvas";
+
+  const [copiedText, setCopiedText] = useState(null);
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedText(text); 
+
+    setTimeout(() => {
+      setCopiedText(null);
+    }, 600);
+  };
 
   // --- 1. Floating UI (desktop) ---
   const virtualReference = useMemo(
@@ -266,24 +277,43 @@ export default function ContextMenu({
               <div className="context-menu__section-label text-[10px] font-bold uppercase text-gray-400 mb-2 px-1">
                 {t("contextMenu.details")}
               </div>
-              <div className="context-menu__details bg-gray-50 dark:bg-gray-900/50 rounded-lg p-2 space-y-2">
-                <div className="context-menu__id-block">
-                  <div className="context-menu__id-label text-[10px] text-gray-400">
+              <div className="context-menu__details  dark:bg-gray-800 rounded-lg p-2 space-y-2 relative">
+                {copiedText && (
+                  <div
+                    className={`absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-md bg-gray-900 dark:bg-gray-700 text-white text-xs shadow-md transition-all duration-300 pointer-events-none ${
+                      copiedText
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 translate-y-2"
+                    }`}
+                  >
+                    {"Copied"}
+                  </div>
+                )}
+
+                <div
+                  className="context-menu__info-row flex justify-between items-start text-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1 rounded transition-colors"
+                  onClick={() => handleCopy(id)}
+                  title="Click to copy ID"
+                >
+                  <span className="context-menu__info-label text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase shrink-0">
                     {t("contextMenu.id")}
-                  </div>
-                  <div className="context-menu__id-value text-xs font-mono break-all">
+                  </span>
+                  <span className="context-menu__id-value font-mono break-all text-right ml-4 text-gray-700 dark:text-gray-300">
                     {id}
-                  </div>
+                  </span>
                 </div>
+
                 {elementData.map((item, idx) => (
                   <div
                     key={idx}
-                    className="context-menu__info-row flex justify-between text-xs"
+                    className="context-menu__info-row flex justify-between items-center text-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1 rounded transition-colors"
+                    onClick={() => handleCopy(item.value)}
+                    title={`Click to copy ${item.label}`}
                   >
-                    <span className="context-menu__info-label flex items-center gap-1 text-gray-500">
+                    <span className="context-menu__info-label flex items-center gap-1 text-gray-500 dark:text-gray-400 shrink-0">
                       {item.icon} {item.label}
                     </span>
-                    <span className="context-menu__info-value font-medium text-gray-700 dark:text-gray-300">
+                    <span className="context-menu__info-value font-medium text-gray-700 dark:text-gray-200 text-right">
                       {item.value}
                       {item.unit ? ` ${item.unit}` : ""}
                     </span>

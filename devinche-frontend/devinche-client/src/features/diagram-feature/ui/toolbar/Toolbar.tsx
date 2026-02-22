@@ -256,7 +256,7 @@ const Toolbar = (props: ToolbarProps) => {
               priority
               className="h-6 w-auto object-contain"
             />
-            <span className="ml-2 font-bold text-sm hidden sm:block">
+            <span className="ml-2 font-bold text-sm hidden sm:block text-[var(--editor-text-secondary)]">
               WAM Studio
             </span>
           </div>
