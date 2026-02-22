@@ -284,22 +284,22 @@ export default function SubscriptionPage() {
         :global([data-theme="dark"]) [data-page="subscription"] h3 {
           color: #f5f5f5 !important;
         }
-        :global([data-theme="dark"]) [data-page="subscription"] span. {
+        :global([data-theme="dark"]) [data-page="subscription"] span.uppercase {
           color: #e8e8e8 !important;
         }
         :global([data-theme="dark"]) [data-page="subscription"] p {
           color: var(--editor-text-secondary);
         }
-        :global([data-theme="dark"]) [data-page="subscription"] {
+        :global([data-theme="dark"]) [data-page="subscription"] .price-amount {
           color: #fafafa !important;
         }
-        :global([data-theme="dark"]) [data-page="subscription"] {
+        :global([data-theme="dark"]) [data-page="subscription"] .price-suffix {
           color: #e8e8e8 !important;
         }
-        :global([data-theme="dark"]) [data-page="subscription"]  {
+        :global([data-theme="dark"]) [data-page="subscription"] .price-note {
           color: #dddddd !important;
         }
-        :global([data-theme="dark"]) [data-page="subscription"] {
+        :global([data-theme="dark"]) [data-page="subscription"] .section-lead {
           color: #f3f3f3 !important;
         }
         :global([data-theme="dark"]) [data-page="subscription"] input,
@@ -316,11 +316,11 @@ export default function SubscriptionPage() {
           opacity: 0.9;
         }
         :global([data-theme="dark"]) [data-page="subscription"] label,
-        :global([data-theme="dark"]) [data-page="subscription"] {
+        :global([data-theme="dark"]) [data-page="subscription"] .form-label {
           color: var(--editor-text) !important;
         }
-        :global([data-theme="dark"]) [data-page="subscription"] ,
-        :global([data-theme="dark"]) [data-page="subscription"] {
+        :global([data-theme="dark"]) [data-page="subscription"] .form-help,
+        :global([data-theme="dark"]) [data-page="subscription"] .help-text {
           color: var(--editor-text-secondary) !important;
         }
         :global([data-theme="dark"]) [data-page="subscription"]{
