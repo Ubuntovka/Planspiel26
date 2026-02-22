@@ -90,7 +90,7 @@ export default function SubscriptionPage() {
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className={`${i === 0 ? 'min-h-[34rem]' : 'h-56 md:h-72'} relative rounded-3xl shadow-xl p-8 md:p-10 border border-white border-opacity-40 overflow-hidden`}
+                className={`${(i === 0 || i === 1 || i === 2) ? 'min-h-[34rem]' : 'h-56 md:h-72'} relative rounded-3xl shadow-xl p-8 md:p-10 border border-white border-opacity-40 overflow-hidden`}
               >
                 <div
                   className="absolute inset-0 bg-[#FFC31D] opacity-20 backdrop-blur-xl"
@@ -114,7 +114,7 @@ export default function SubscriptionPage() {
                   }}
                 />
 
-                <div className={`relative z-10 w-full h-full flex ${i === 0 ? 'flex-col items-start justify-start gap-4' : 'items-center justify-center'}`}>
+                <div className={`relative z-10 w-full h-full flex ${(i === 0 || i === 1 || i === 2) ? 'flex-col items-start justify-start gap-4' : 'items-center justify-center'}`}>
                   {i === 0 ? (
                     <>
                       <div className="space-y-2">
@@ -154,8 +154,105 @@ export default function SubscriptionPage() {
                         </div>
                       </div>
                     </>
+                  ) : i === 1 ? (
+                    <>
+                      <div className="space-y-2">
+                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700">Popular</span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>Standard</h3>
+                        <p className="text-gray-800 text-base">Perfect for individual professionals and freelancers who need fast, accurate WAM diagrams.</p>
+                      </div>
+
+                      <div className="mt-1">
+                        <div className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>€9<span className="text-base font-semibold text-gray-800">/month</span></div>
+                      </div>
+
+                      <ul className="grid grid-cols-1 gap-3 w-full mt-2">
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Unlimited diagrams & projects</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">AI-powered diagram generation</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Real-time WAM validation</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Semantic model exports</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Cloud storage & sync</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Standard support</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Export to PNG, SVG, PDF</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Personal workspace</li>
+                      </ul>
+
+                      <div className="mt-4 w-full">
+                        <button
+                          className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors w-full sm:w-auto"
+                        >
+                          Start Standard Plan
+                        </button>
+                      </div>
+                    </>
+                  ) : i === 1 ? (
+                    <>
+                      <div className="space-y-2">
+                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700">Popular</span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>Standard</h3>
+                        <p className="text-gray-800 text-base">Perfect for individual professionals and freelancers who need fast, accurate WAM diagrams.</p>
+                      </div>
+
+                      <div className="mt-1">
+                        <div className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>€9<span className="text-base font-semibold text-gray-800">/month</span></div>
+                      </div>
+
+                      <ul className="grid grid-cols-1 gap-3 w-full mt-2">
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Unlimited diagrams & projects</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">AI-powered diagram generation</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Real-time WAM validation</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Semantic model exports</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Cloud storage & sync</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Standard support</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Export to PNG, SVG, PDF</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Personal workspace</li>
+                      </ul>
+
+                      <div className="mt-4 w-full">
+                        <button
+                          className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors w-full sm:w-auto"
+                        >
+                          Start Standard Plan
+                        </button>
+                      </div>
+                    </>
                   ) : (
-                    <div className="text-gray-700">Coming soon</div>
+                    <>
+                      <div className="space-y-2">
+                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700">Enterprise</span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>Business</h3>
+                        <p className="text-gray-800 text-base">Built for teams and organizations that need collaboration, compliance, and control.</p>
+                      </div>
+
+                      <div className="mt-1">
+                        <div className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>€29<span className="text-base font-semibold text-gray-800">/user/mo</span></div>
+                        <div className="text-sm text-gray-800 mt-1">Minimum 5 users</div>
+                      </div>
+
+                      <div className="mt-2 text-sm font-semibold text-gray-900">Everything in Standard, plus:</div>
+
+                      <ul className="grid grid-cols-1 gap-3 w-full mt-2">
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Unlimited team members</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Advanced collaboration features</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Role-based access control</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Version history & rollback</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Priority support (24/7)</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Custom WAM templates library</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">SSO & advanced security</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">API access for integrations</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Dedicated account manager</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">On-boarding & training sessions</li>
+                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Usage analytics dashboard</li>
+                      </ul>
+
+                      <div className="mt-4 w-full">
+                        <button
+                          className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors w-full sm:w-auto"
+                        >
+                          Contact Sales
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
