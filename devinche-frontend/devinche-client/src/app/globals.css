@@ -30,7 +30,7 @@
   --editor-panel-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   --editor-panel-header: rgba(0, 0, 0, 0.04);
   /* Grid color - darker for light theme */
-  --editor-grid: #adb5bd;
+  --editor-grid: #3d3d3d;
   
   --background: var(--editor-bg);
   --foreground: var(--editor-text);
@@ -56,7 +56,6 @@
   --editor-panel-bg: rgba(37, 37, 38, 0.95);
   --editor-shadow: rgba(0, 0, 0, 0.3);
   --editor-shadow-lg: rgba(0, 0, 0, 0.5);
-  /* Editor chrome - dark theme (reuse surface) */
   --editor-bar-bg: var(--editor-surface);
   --editor-bar-border: var(--editor-border);
   --editor-bar-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
@@ -64,7 +63,6 @@
   --editor-panel-border: var(--editor-border);
   --editor-panel-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   --editor-panel-header: rgba(255, 255, 255, 0.04);
-  /* Grid color - lighter for dark theme */
   --editor-grid: #3e3e42;
   
   --background: var(--editor-bg);

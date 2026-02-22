@@ -26,6 +26,7 @@ export default function SubscriptionPage() {
     <div className="min-h-screen bg-[#e8eaed] relative" data-page="subscription">
       <div
         className="absolute inset-0 pointer-events-none"
+        data-grid="bg"
         style={{
           backgroundImage: `
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
@@ -76,11 +77,11 @@ export default function SubscriptionPage() {
         </div>
 
         <div className="relative z-10 text-center max-w-3xl mt-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>Devinche</h2>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mt-2 mb-4 md:mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>Devinche</h2>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mt-2 mb-4 md:mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
             Choose Your Plan
           </h1>
-          <p className="text-base md:text-base text-gray-700">
+          <p className="text-base md:text-base text-gray-700 dark:text-gray-300">
             Simple, fast, accurate WAM diagramming. Start free, upgrade when you need more.
           </p>
         </div>
@@ -118,27 +119,27 @@ export default function SubscriptionPage() {
                   {i === 0 ? (
                     <>
                       <div className="space-y-2">
-                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700">Student Exclusive</span>
-                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>100% Free for Students</h3>
-                        <p className="text-gray-800 text-base">Everything you need to master WAM modeling</p>
+                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700 dark:text-gray-400">Student Exclusive</span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>100% Free for Students</h3>
+                        <p className="text-gray-800 dark:text-gray-300 text-base">Everything you need to master WAM modeling</p>
                       </div>
 
-                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-2">
-                        <li className="bg-white/50 rounded-xl p-4 border border-white/60">
-                          <div className="font-semibold text-gray-900">Full Access</div>
-                          <div className="text-gray-700 text-sm">Unlimited diagrams, AI-powered modeling, semantic exports</div>
+                      <ul className="grid grid-cols-1 gap-4 w-full mt-2">
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-4 border border-white/60 dark:border-white/20">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">Full Access</div>
+                          <div className="text-gray-700 dark:text-gray-300 text-sm">Unlimited diagrams, AI-powered modeling, semantic exports</div>
                         </li>
-                        <li className="bg-white/50 rounded-xl p-4 border border-white/60">
-                          <div className="font-semibold text-gray-900">Team Collaboration</div>
-                          <div className="text-gray-700 text-sm">Real-time editing with classmates on group projects</div>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-4 border border-white/60 dark:border-white/20">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">Team Collaboration</div>
+                          <div className="text-gray-700 dark:text-gray-300 text-sm">Real-time editing with classmates on group projects</div>
                         </li>
-                        <li className="bg-white/50 rounded-xl p-4 border border-white/60">
-                          <div className="font-semibold text-gray-900">Premium Features</div>
-                          <div className="text-gray-700 text-sm">Access to WAM templates, validation, and priority support</div>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-4 border border-white/60 dark:border-white/20">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">Premium Features</div>
+                          <div className="text-gray-700 dark:text-gray-300 text-sm">Access to WAM templates, validation, and priority support</div>
                         </li>
-                        <li className="bg-white/50 rounded-xl p-4 border border-white/60">
-                          <div className="font-semibold text-gray-900">Learning Resources</div>
-                          <div className="text-gray-700 text-sm">Exclusive tutorials, guides, and WAM best practices</div>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-4 border border-white/60 dark:border-white/20">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">Learning Resources</div>
+                          <div className="text-gray-700 dark:text-gray-300 text-sm">Exclusive tutorials, guides, and WAM best practices</div>
                         </li>
                       </ul>
 
@@ -149,7 +150,7 @@ export default function SubscriptionPage() {
                         >
                           Verify Student Status & Start Free
                         </Link>
-                        <div className="text-xs text-gray-700 mt-2">
+                        <div className="text-xs text-gray-700 dark:text-gray-400 mt-2">
                           Requires valid university email or student ID verification
                         </div>
                       </div>
@@ -157,24 +158,27 @@ export default function SubscriptionPage() {
                   ) : i === 1 ? (
                     <>
                       <div className="space-y-2">
-                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700">Popular</span>
-                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>Standard</h3>
-                        <p className="text-gray-800 text-base">Perfect for individual professionals and freelancers who need fast, accurate WAM diagrams.</p>
+                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700 dark:text-gray-400">Popular</span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>Standard</h3>
+                        <p className="text-gray-800 dark:text-gray-300 text-base">Perfect for individual professionals and freelancers who need fast, accurate WAM diagrams.</p>
                       </div>
 
                       <div className="mt-1">
-                        <div className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>€9<span className="text-base font-semibold text-gray-800">/month</span></div>
+                        <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>
+                          <span className="price-amount">€9</span>
+                          <span className="text-base font-semibold text-gray-800 dark:text-gray-300 price-suffix">/month</span>
+                        </div>
                       </div>
 
                       <ul className="grid grid-cols-1 gap-3 w-full mt-2">
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Unlimited diagrams & projects</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">AI-powered diagram generation</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Real-time WAM validation</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Semantic model exports</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Cloud storage & sync</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Standard support</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Export to PNG, SVG, PDF</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Personal workspace</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Unlimited diagrams & projects</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">AI-powered diagram generation</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Real-time WAM validation</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Semantic model exports</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Cloud storage & sync</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Standard support</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Export to PNG, SVG, PDF</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Personal workspace</li>
                       </ul>
 
                       <div className="mt-4 w-full">
@@ -219,30 +223,33 @@ export default function SubscriptionPage() {
                   ) : (
                     <>
                       <div className="space-y-2">
-                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700">Enterprise</span>
-                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>Business</h3>
-                        <p className="text-gray-800 text-base">Built for teams and organizations that need collaboration, compliance, and control.</p>
+                        <span className="inline-block text-xs tracking-widest uppercase text-gray-700 dark:text-gray-400">Enterprise</span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>Business</h3>
+                        <p className="text-gray-800 dark:text-gray-300 text-base">Built for teams and organizations that need collaboration, compliance, and control.</p>
                       </div>
 
                       <div className="mt-1">
-                        <div className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>€29<span className="text-base font-semibold text-gray-800">/user/mo</span></div>
-                        <div className="text-sm text-gray-800 mt-1">Minimum 5 users</div>
+                        <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>
+                          <span className="price-amount">€29</span>
+                          <span className="text-base font-semibold text-gray-800 dark:text-gray-300 price-suffix">/user/mo</span>
+                        </div>
+                        <div className="text-sm text-gray-800 dark:text-gray-300 mt-1 price-note">Minimum 5 users</div>
                       </div>
 
-                      <div className="mt-2 text-sm font-semibold text-gray-900">Everything in Standard, plus:</div>
+                      <div className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100 section-lead">Everything in Standard, plus:</div>
 
                       <ul className="grid grid-cols-1 gap-3 w-full mt-2">
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Unlimited team members</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Advanced collaboration features</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Role-based access control</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Version history & rollback</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Priority support (24/7)</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Custom WAM templates library</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">SSO & advanced security</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">API access for integrations</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Dedicated account manager</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">On-boarding & training sessions</li>
-                        <li className="bg-white/50 rounded-xl p-3 border border-white/60 text-gray-900">Usage analytics dashboard</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Unlimited team members</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Advanced collaboration features</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Role-based access control</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Version history & rollback</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Priority support (24/7)</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Custom WAM templates library</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">SSO & advanced security</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">API access for integrations</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Dedicated account manager</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">On-boarding & training sessions</li>
+                        <li className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/20 text-gray-900 dark:text-gray-100">Usage analytics dashboard</li>
                       </ul>
 
                       <div className="mt-4 w-full">
@@ -274,10 +281,54 @@ export default function SubscriptionPage() {
         :global([data-theme="dark"]) [data-page="subscription"] h2 {
           color: var(--editor-text);
         }
+        :global([data-theme="dark"]) [data-page="subscription"] h3 {
+          color: #f5f5f5 !important;
+        }
+        :global([data-theme="dark"]) [data-page="subscription"] span. {
+          color: #e8e8e8 !important;
+        }
         :global([data-theme="dark"]) [data-page="subscription"] p {
           color: var(--editor-text-secondary);
         }
+        :global([data-theme="dark"]) [data-page="subscription"] {
+          color: #fafafa !important;
+        }
+        :global([data-theme="dark"]) [data-page="subscription"] {
+          color: #e8e8e8 !important;
+        }
+        :global([data-theme="dark"]) [data-page="subscription"]  {
+          color: #dddddd !important;
+        }
+        :global([data-theme="dark"]) [data-page="subscription"] {
+          color: #f3f3f3 !important;
+        }
+        :global([data-theme="dark"]) [data-page="subscription"] input,
+        :global([data-theme="dark"]) [data-page="subscription"] textarea,
+        :global([data-theme="dark"]) [data-page="subscription"] select {
+          color: var(--editor-text) !important;
+          caret-color: var(--editor-text);
+          background-color: rgba(0,0,0,0.15); 
+          border-color: var(--editor-border);
+        }
+        :global([data-theme="dark"]) [data-page="subscription"] input::placeholder,
+        :global([data-theme="dark"]) [data-page="subscription"] textarea::placeholder {
+          color: #ededed !important;
+          opacity: 0.9;
+        }
+        :global([data-theme="dark"]) [data-page="subscription"] label,
+        :global([data-theme="dark"]) [data-page="subscription"] {
+          color: var(--editor-text) !important;
+        }
+        :global([data-theme="dark"]) [data-page="subscription"] ,
+        :global([data-theme="dark"]) [data-page="subscription"] {
+          color: var(--editor-text-secondary) !important;
+        }
         :global([data-theme="dark"]) [data-page="subscription"]{
+          background-image:
+            linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+        }
+        :global([data-theme="dark"]) [data-page="subscription"] [data-grid="bg"]{
           background-image:
             linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
             linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;

@@ -63,6 +63,7 @@ export default function ForgotPasswordPage() {
     <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="forgot-password">
       <div
         className="absolute inset-0 pointer-events-none"
+        data-grid="bg"
         style={{
           backgroundImage: `
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
@@ -171,6 +172,11 @@ export default function ForgotPasswordPage() {
           border-bottom: 1px solid var(--editor-border);
         }
         :global([data-theme="dark"]) [data-page="forgot-password"]{
+          background-image:
+            linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+        }
+        :global([data-theme="dark"]) [data-page="forgot-password"] [data-grid="bg"]{
           background-image:
             linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
             linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;

@@ -182,6 +182,7 @@ export default function LoginPage() {
         <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="login">
             <div
                 className="absolute inset-0 pointer-events-none"
+                data-grid="bg"
                 style={{
                     backgroundImage: `
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
@@ -366,6 +367,11 @@ export default function LoginPage() {
                 color: var(--editor-text-secondary);
               }
               :global([data-theme="dark"]) [data-page="login"]  {
+                background-image:
+                  linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                  linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+              }
+              :global([data-theme="dark"]) [data-page="login"] [data-grid="bg"]{
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
