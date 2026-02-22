@@ -20,7 +20,7 @@ import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram
 import type { CommentItem } from '../api';
 
 interface DiagramCanvasProps {
-  flowWrapperRef: React.RefObject<HTMLDivElement>;
+  flowWrapperRef: React.RefObject<HTMLDivElement | null>;
   nodes: DiagramNode[];
   edges: DiagramEdge[];
   nodeTypes: NodeTypes;
@@ -92,7 +92,7 @@ const DiagramCanvas = ({
   onAddCommentAtPoint,
 }: DiagramCanvasProps) => {
   return (
-    <div style={{ width: '100vw', height: '100vh', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
+    <div style={{ width: '100%', height: '100%', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -65,6 +65,7 @@ export interface UseDiagramReturn {
   selectedEdgeType: string;
   setSelectedEdgeType: React.Dispatch<React.SetStateAction<string>>;
   onMoveEnd: (event: any, viewport: { x: number; y: number; zoom: number }) => void;
+  addNode: (data: any, position: { x: number; y: number }) => void;
   onDrop: (event: React.DragEvent) => void;
   onDragOver: (event: React.DragEvent) => void;
   onNodeDrag: (event: React.MouseEvent, node: Node) => void;
