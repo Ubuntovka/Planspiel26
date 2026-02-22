@@ -92,7 +92,7 @@ const DiagramCanvas = ({
   onAddCommentAtPoint,
 }: DiagramCanvasProps) => {
   return (
-    <div style={{ width: '100vw', height: '100vh', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
+    <div style={{ width: '100%', height: '100%', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

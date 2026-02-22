@@ -26,7 +26,11 @@ interface ContextMenuProps extends ContextMenuState {
   onOpenProperties?: (nodeId: string) => void;
   closeMenu?: () => void;
   flowWrapperRef?: React.RefObject<HTMLDivElement | null>;
-  onAddCommentAtPoint?: (anchor: { type: 'point'; x: number; y: number }) => void;
+  onAddCommentAtPoint?: (anchor: {
+    type: "point";
+    x: number;
+    y: number;
+  }) => void;
 }
 
 const IconNode = () => <SquareRounded fontSize="small" />;
@@ -60,7 +64,8 @@ export default function ContextMenu({
   ...props
 }: ContextMenuProps) {
   const { t } = useLanguage();
-  const { getNode, getEdges, deleteElements, setNodes, screenToFlowPosition } = useReactFlow();
+  const { getNode, getEdges, deleteElements, setNodes, screenToFlowPosition } =
+    useReactFlow();
 
   const elementType = type;
   const isCanvasMenu = elementType === "canvas";
@@ -80,8 +85,16 @@ export default function ContextMenu({
     } else if (elementType === "edge") {
       const edge = getEdges().find((e) => e.id === id);
       if (edge) {
-        data.push({ icon: <IconSource />, label: t("contextMenu.source"), value: edge.source });
-        data.push({ icon: <IconTarget />, label: t("contextMenu.target"), value: edge.target });
+        data.push({
+          icon: <IconSource />,
+          label: t("contextMenu.source"),
+          value: edge.source,
+        });
+        data.push({
+          icon: <IconTarget />,
+          label: t("contextMenu.target"),
+          value: edge.target,
+        });
       }
     }
     return data;
@@ -89,23 +102,23 @@ export default function ContextMenu({
 
   // duplicate node (HEAD logic)
   const duplicateNode = useCallback(() => {
-  if (elementType !== "node") return;
-  const node = getNode(id);
-  if (!node) return;
-  
-  const newNode = {
-    ...node,
-    id: uuidv4(), 
-    // id: `${node.type}-${Date.now()}`,
-    selected: false,
-    position: {
-      x: node.position.x + 50,
-      y: node.position.y + 50,
-    },
-  };
+    if (elementType !== "node") return;
+    const node = getNode(id);
+    if (!node) return;
 
-  setNodes((nds) => nds.concat(newNode)); 
-}, [id, getNode, setNodes, elementType]);
+    const newNode = {
+      ...node,
+      id: uuidv4(),
+      // id: `${node.type}-${Date.now()}`,
+      selected: false,
+      position: {
+        x: node.position.x + 50,
+        y: node.position.y + 50,
+      },
+    };
+
+    setNodes((nds) => nds.concat(newNode));
+  }, [id, getNode, setNodes, elementType]);
 
   // delete (HEAD logic)
   const deleteItem = useCallback(() => {
@@ -124,8 +137,14 @@ export default function ContextMenu({
     selectAllNodes?.();
   }, [selectAllNodes]);
 
-  const headerTitle = isCanvasMenu ? t("contextMenu.canvas") : elementType === "node" ? t("contextMenu.node") : t("contextMenu.edge");
-  const headerSubtitle = isCanvasMenu ? t("contextMenu.diagram") : t("contextMenu.element");
+  const headerTitle = isCanvasMenu
+    ? t("contextMenu.canvas")
+    : elementType === "node"
+      ? t("contextMenu.node")
+      : t("contextMenu.edge");
+  const headerSubtitle = isCanvasMenu
+    ? t("contextMenu.diagram")
+    : t("contextMenu.element");
 
   return (
     <div
@@ -136,7 +155,13 @@ export default function ContextMenu({
       {/* Header */}
       <div className="context-menu__header">
         <span className="context-menu__header-icon">
-          {isCanvasMenu ? <IconCanvas /> : elementType === "node" ? <IconNode /> : <IconEdge />}
+          {isCanvasMenu ? (
+            <IconCanvas />
+          ) : elementType === "node" ? (
+            <IconNode />
+          ) : (
+            <IconEdge />
+          )}
         </span>
         <div className="context-menu__title-wrap">
           <h3 className="context-menu__title">{headerTitle}</h3>
@@ -148,17 +173,23 @@ export default function ContextMenu({
         {/* Details: ID + Size / Source+Target */}
         {!isCanvasMenu && (
           <div className="context-menu__section">
-            <div className="context-menu__section-label">{t("contextMenu.details")}</div>
+            <div className="context-menu__section-label">
+              {t("contextMenu.details")}
+            </div>
             <div className="context-menu__details">
               <div className="context-menu__id-block">
-                <div className="context-menu__id-label">{t("contextMenu.id")}</div>
+                <div className="context-menu__id-label">
+                  {t("contextMenu.id")}
+                </div>
                 <div className="context-menu__id-value">{id}</div>
               </div>
               {elementData.length > 0 &&
                 elementData.map((item, idx) => (
                   <div key={idx} className="context-menu__info-row">
                     <span className="context-menu__info-label">
-                      <span className="context-menu__info-icon">{item.icon}</span>
+                      <span className="context-menu__info-icon">
+                        {item.icon}
+                      </span>
                       <span>{item.label}</span>
                     </span>
                     <span className="context-menu__info-value">
@@ -173,122 +204,140 @@ export default function ContextMenu({
 
         {/* Actions */}
         <div className="context-menu__section">
-          <div className="context-menu__section-label">{t("contextMenu.actions")}</div>
+          <div className="context-menu__section-label">
+            {t("contextMenu.actions")}
+          </div>
           <div className="context-menu__actions">
-          {isCanvasMenu && (
-            <>
-              {onAddCommentAtPoint && flowWrapperRef?.current != null && clientX != null && clientY != null && (
+            {isCanvasMenu && (
+              <>
+                {onAddCommentAtPoint && clientX != null && clientY != null && (
+                  <button
+                    type="button"
+                    className="context-menu-item"
+                    onClick={() => {
+                      // Check the ref here (inside the event handler), where it is safe!
+                      if (!flowWrapperRef?.current) return;
+
+                      const rect =
+                        flowWrapperRef.current.getBoundingClientRect();
+                      const rel = {
+                        x: clientX - rect.left,
+                        y: clientY - rect.top,
+                      };
+                      const flowPos = screenToFlowPosition(rel);
+
+                      onAddCommentAtPoint({
+                        type: "point",
+                        x: flowPos.x,
+                        y: flowPos.y,
+                      });
+                      closeMenu?.();
+                      onClick?.();
+                    }}
+                  >
+                    <span className="context-menu-item__icon">
+                      <ChatBubbleOutline />
+                    </span>
+                    <span>{t("contextMenu.addCommentHere")}</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="context-menu-item"
                   onClick={() => {
-                    const rect = flowWrapperRef.current!.getBoundingClientRect();
-                    const rel = { x: clientX - rect.left, y: clientY - rect.top };
-                    const flowPos = screenToFlowPosition(rel);
-                    onAddCommentAtPoint({ type: 'point', x: flowPos.x, y: flowPos.y });
-                    closeMenu?.();
+                    handleResetCanvas();
                     onClick?.();
                   }}
                 >
                   <span className="context-menu-item__icon">
-                    <ChatBubbleOutline />
+                    <IconPane />
                   </span>
-                  <span>{t("contextMenu.addCommentHere")}</span>
+                  <span>{t("contextMenu.resetCanvas")}</span>
                 </button>
-              )}
-              <button
-                type="button"
-                className="context-menu-item"
-                onClick={() => {
-                  handleResetCanvas();
-                  onClick?.();
-                }}
-              >
-                <span className="context-menu-item__icon">
-                  <IconPane />
-                </span>
-                <span>{t("contextMenu.resetCanvas")}</span>
-              </button>
-              <button
-                type="button"
-                className="context-menu-item"
-                onClick={() => {
-                  handleSelectAll();
-                  onClick?.();
-                }}
-              >
-                <span className="context-menu-item__icon">
-                  <IconSelectAll />
-                </span>
-                <span>{t("contextMenu.selectAll")}</span>
-              </button>
-            </>
-          )}
+                <button
+                  type="button"
+                  className="context-menu-item"
+                  onClick={() => {
+                    handleSelectAll();
+                    onClick?.();
+                  }}
+                >
+                  <span className="context-menu-item__icon">
+                    <IconSelectAll />
+                  </span>
+                  <span>{t("contextMenu.selectAll")}</span>
+                </button>
+              </>
+            )}
 
-          {elementType === "node" && (
-            <>
-              <button
-                type="button"
-                className="context-menu-item"
-                onClick={() => {
-                  onOpenProperties?.(id);
-                  onClick?.();
-                }}
-              >
-                <span className="context-menu-item__icon">
-                  <IconProperties />
-                </span>
-<span>{t("contextMenu.properties")}</span>
+            {elementType === "node" && (
+              <>
+                <button
+                  type="button"
+                  className="context-menu-item"
+                  onClick={() => {
+                    onOpenProperties?.(id);
+                    onClick?.();
+                  }}
+                >
+                  <span className="context-menu-item__icon">
+                    <IconProperties />
+                  </span>
+                  <span>{t("contextMenu.properties")}</span>
                 </button>
+                <button
+                  type="button"
+                  className="context-menu-item"
+                  onClick={() => {
+                    duplicateNode();
+                    onClick?.();
+                  }}
+                >
+                  <span className="context-menu-item__icon">
+                    <IconDuplicate />
+                  </span>
+                  <span>{t("contextMenu.duplicateNode")}</span>
+                </button>
+              </>
+            )}
+            {elementType === "edge" && (
+              <>
+                <button
+                  type="button"
+                  className="context-menu-item"
+                  onClick={() => {
+                    onOpenProperties?.(id);
+                    onClick?.();
+                  }}
+                >
+                  <span className="context-menu-item__icon">
+                    <IconProperties />
+                  </span>
+                  <span>{t("contextMenu.properties")}</span>
+                </button>
+              </>
+            )}
+            {!isCanvasMenu && (
               <button
                 type="button"
-                className="context-menu-item"
+                className="context-menu-item context-menu-item--danger"
                 onClick={() => {
-                  duplicateNode();
+                  deleteItem();
                   onClick?.();
+                  closeMenu?.();
                 }}
               >
                 <span className="context-menu-item__icon">
-                  <IconDuplicate />
+                  <IconDelete />
                 </span>
-                <span>{t("contextMenu.duplicateNode")}</span>
+                <span>
+                  {elementType === "node"
+                    ? t("contextMenu.deleteNode")
+                    : t("contextMenu.deleteEdge")}
+                </span>
               </button>
-            </>
-          )}
-          {elementType === "edge" && (
-            <>
-              <button
-                type="button"
-                className="context-menu-item"
-                onClick={() => {
-                  onOpenProperties?.(id);
-                  onClick?.();
-                }}
-              >
-                <span className="context-menu-item__icon">
-                  <IconProperties />
-                </span>
-<span>{t("contextMenu.properties")}</span>
-                </button>
-            </>
-          )}
-          {!isCanvasMenu && (
-            <button
-              type="button"
-              className="context-menu-item context-menu-item--danger"
-              onClick={() => {
-                deleteItem();
-                onClick?.();
-                closeMenu?.();
-              }}
-            >
-              <span className="context-menu-item__icon">
-                <IconDelete />
-              </span>
-              <span>{elementType === "node" ? t("contextMenu.deleteNode") : t("contextMenu.deleteEdge")}</span>
-            </button>
-          )}
-        </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
