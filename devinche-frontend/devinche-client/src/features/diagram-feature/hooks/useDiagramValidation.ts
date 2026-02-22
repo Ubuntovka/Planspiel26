@@ -5,7 +5,8 @@ export const useDiagramValidation = (
   getNodes: () => DiagramNode[],
   getEdges: () => DiagramEdge[],
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>,
-  setEdges: React.Dispatch<React.SetStateAction<DiagramEdge[]>>
+  setEdges: React.Dispatch<React.SetStateAction<DiagramEdge[]>>,
+  onConnectionError?: (errors: string[]) => void,
 ) => {
   const validate = useCallback(async (newEdge: DiagramEdge) => {
     const currentNodes = getNodes() as DiagramNode[];
@@ -17,7 +18,7 @@ export const useDiagramValidation = (
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/validation`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: { nodes: currentNodes, edges: edgesForValidation } }),
+        body: JSON.stringify({ nodes: currentNodes, edges: edgesForValidation }),
       });
 
       if (!response.ok) {
@@ -26,13 +27,16 @@ export const useDiagramValidation = (
       }
 
       const data = await response.json();
-      const sources = data.errors?.sources || [];
-      console.log('Validation Sources:', sources);
+      const errors = data.errors
+      const sources = errors?.sources || [];
+
+      if (errors.errors.length > 0) {
+        onConnectionError?.(errors.errors);
+      }
 
       const errorNodeIds = new Set(
         sources.map((item: { id: any; }) => item.id)
       );
-      console.log('Error Nodes:', errorNodeIds);
 
       setNodes((nds) => 
         nds.map((node) => ({
@@ -47,7 +51,6 @@ export const useDiagramValidation = (
       const errorEdgeIds = new Set(
         sources.map((item: { id: any; }) => item.id)
       );
-      console.log('Error Edges:', errorEdgeIds);
 
       setEdges((eds: DiagramEdge[]) => 
         eds.map((edge: DiagramEdge) => ({
