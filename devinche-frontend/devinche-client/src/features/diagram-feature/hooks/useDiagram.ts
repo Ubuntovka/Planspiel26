@@ -203,6 +203,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
     onDrop: dnd.onDrop,
     onNodeDrag: dnd.onNodeDrag,
     onNodeDragStop: dnd.onNodeDragStop,
+    addNode: dnd.addNode,
 
     // Actions
     resetCanvas,

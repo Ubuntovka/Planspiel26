@@ -88,6 +88,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     onFlowInit,
     exportToJson,
     importFromJson,
+    addNode,
     setNodes,
     setEdges,
     selectedEdgeType,
@@ -122,7 +123,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     userDisplayName
   );
 
-  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const { zoomIn, zoomOut, fitView, screenToFlowPosition } = useReactFlow();
   const isViewer = accessLevel === 'viewer';
   const isOwner = accessLevel === 'owner';
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -161,6 +162,15 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   const contextMenuForCanvas = isViewer ? null : contextMenuProps;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
+  const handlePaletteNodeClick = useCallback((item: any) => {
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const position = screenToFlowPosition({
+      x: centerX + (Math.random() * 40 - 20), 
+      y: centerY + (Math.random() * 40 - 20),
+    });
+    addNode(item, position);
+  }, [screenToFlowPosition, addNode]);
   const handleZoomIn = useCallback(() => {
     zoomIn();
   }, [zoomIn]);
@@ -331,7 +341,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   }, []);
 
   return (
-    <div className="relative w-screen h-screen">
+    <div className="relative w-screen h-screen overflow-hidden bg-(--editor-bg)">
       <Toolbar
         onBack={diagramId ? () => router.push('/editor') : undefined}
         backLabel={t('toolbar.diagrams')}
@@ -415,6 +425,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         <PalettePanel
           selectedEdgeType={selectedEdgeType}
           onEdgeTypeSelect={setSelectedEdgeType}
+          onNodeClick={handlePaletteNodeClick}
         />
       )}
       <PropertiesPanel

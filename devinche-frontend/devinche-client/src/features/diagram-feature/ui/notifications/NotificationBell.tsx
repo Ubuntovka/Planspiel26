@@ -99,7 +99,7 @@ export default function NotificationBell({ getToken, onNavigate }: NotificationB
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative p-2 rounded hover:bg-[var(--editor-surface-hover)] transition-colors"
+        className="relative p-2 rounded hover:bg-[var(--editor-surface-hover)] transition-colors hover:cursor-pointer"
         aria-label="Notifications"
       >
         <svg
@@ -125,7 +125,7 @@ export default function NotificationBell({ getToken, onNavigate }: NotificationB
       </button>
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 w-80 max-h-96 overflow-hidden rounded-lg border shadow-lg flex flex-col z-[100] custom-scrollbar"
+          className="fixed left-4 right-4 top-14 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-1 sm:w-80 max-h-[80vh] sm:max-h-96 overflow-hidden rounded-lg border shadow-lg flex flex-col z-[100] custom-scrollbar origin-top-right"
           style={{
             backgroundColor: 'var(--editor-panel-bg)',
             borderColor: 'var(--editor-border)',

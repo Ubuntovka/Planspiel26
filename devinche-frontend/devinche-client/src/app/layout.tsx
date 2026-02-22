@@ -22,11 +22,9 @@ export const metadata: Metadata = {
   description: "Professional diagram editor",
   icons: {
     icon: [
-      { url: "/devince_log.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/favicon.ico", sizes: "any" },
     ],
-    shortcut: [
-      { url: "/devince_log.svg", type: "image/svg+xml", sizes: "any" },
-    ],
+    shortcut: "/favicon.ico",
   },
 };
 
@@ -37,6 +35,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="shortcut icon" href="/favicon.ico?v=2" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />
+        <link rel="icon" type="image/png" href="/favicon.png?v=2" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
