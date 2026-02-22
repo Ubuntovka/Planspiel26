@@ -14,10 +14,10 @@ import SecurityRealmNode from "./ui/nodes/SecurityRealmNode";
 import ServiceNode from "./ui/nodes/ServiceNode";
 import IdentityProviderNode from "./ui/nodes/IdentityProviderNode";
 // import StepEdge from "./ui/edges/StepEdge";
-import type { NodeTypes, EdgeTypes } from "@xyflow/react";
-import TrustEdge from "./ui/edges/TrustEdge";
-import Invocation from "./ui/edges/Invocation";
-import Legacy from "./ui/edges/Legacy";
+import type { NodeTypes, EdgeTypes } from '@xyflow/react';
+import TrustEdge from './ui/edges/TrustEdge';
+import Invocation from './ui/edges/Invocation';
+import Legacy from './ui/edges/Legacy';
 // import Exports from './ui/exports/Exports';
 import Toolbar from './ui/toolbar/Toolbar';
 import PalettePanel from './ui/palette/PalettePanel';
@@ -41,23 +41,23 @@ import { useCollaboration } from './collaboration/useCollaboration';
 import { getDiagramAsPngDataUrl } from './imports-exports/exports';
 
 const nodeTypes: NodeTypes = {
-  processUnitNode: ProcessUnitNode,
-  aiProcessNode: AiProcessNode,
-  dataProviderNode: DataProviderNode,
-  datasetNode: DatasetNode,
-  applicationNode: ApplicationNode,
-  aiApplicationNode: AiApplicationNode,
-  securityRealmNode: SecurityRealmNode,
-  serviceNode: ServiceNode,
-  aiServiceNode: AiServiceNode,
-  identityProviderNode: IdentityProviderNode,
+    processUnitNode: ProcessUnitNode,
+    aiProcessNode: AiProcessNode,
+    dataProviderNode: DataProviderNode,
+    datasetNode: DatasetNode,
+    applicationNode: ApplicationNode,
+    aiApplicationNode: AiApplicationNode,
+    securityRealmNode: SecurityRealmNode,
+    serviceNode: ServiceNode,
+    aiServiceNode: AiServiceNode,
+    identityProviderNode: IdentityProviderNode,
 };
 
 const edgeTypes: EdgeTypes = {
-  // step: StepEdge,
-  trust: TrustEdge,
-  invocation: Invocation,
-  legacy: Legacy,
+    // step: StepEdge,
+    trust: TrustEdge,
+    invocation: Invocation,
+    legacy:Legacy
 };
 
 interface DiagramScreenContentProps {
@@ -67,10 +67,8 @@ interface DiagramScreenContentProps {
 const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   const { getToken, isAuthenticated, user } = useAuth();
   const userDisplayName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-      user.email ||
-      "Anonymous"
-    : "Anonymous";
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'Anonymous'
+    : 'Anonymous';
   const router = useRouter();
   const {
     nodes,
@@ -115,18 +113,8 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     saveDiagramAs,
     openProperties,
     accessLevel,
-  } = useDiagram({
-    diagramId: diagramId ?? undefined,
-    getToken,
-    onConnectionError: useCallback((errors: string[]) => {
-      setValidationError(errors);
-      if (hideTimeoutRef.current !== null) clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = window.setTimeout(() => {
-        setValidationError(null);
-        hideTimeoutRef.current = null;
-      }, 10000);
-    }, []),
-  });
+  } = useDiagram({ diagramId: diagramId ?? undefined, getToken });
+
   const { t } = useLanguage();
   const collaborationEnabled = !!(diagramId && getToken?.());
   const { cursors: collaborationCursors, sendCursor, myColor: collaborationMyColor, connected: collaborationConnected } = useCollaboration(
@@ -163,14 +151,14 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   }, [diagramId, loadComments]);
 
   const contextMenuProps = menu
-    ? {
-        ...menu,
-        resetCanvas,
-        selectAllNodes,
-        closeMenu,
-        onOpenProperties: (id: string) => openProperties(id, menu.type),
-      }
-    : null;
+  ? {
+      ...menu,
+      resetCanvas,
+      selectAllNodes,
+      closeMenu,
+      onOpenProperties: (id: string) => openProperties(id, menu.type),
+    }
+  : null;
   const contextMenuForCanvas = isViewer ? null : contextMenuProps;
   const [validationError, setValidationError] = useState<string[] | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
@@ -260,18 +248,18 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
       if (id) router.push(`/editor/${id}`);
       return id;
     },
-    [saveDiagramAs, router],
+    [saveDiagramAs, router]
   );
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         if (saveDiagram) saveDiagram();
       }
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [saveDiagram]);
 
   /**
@@ -288,57 +276,61 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     setValidationError(null);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/validation`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: json,
-        },
-      );
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/validation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: json }),
+      });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Validation failed: ${response.status}`,
-        );
+        throw new Error(errorData.message || `Validation failed: ${response.status}`);
       }
 
       const data = await response.json();
       const errors = data.errors.errors || [];
       const sources = data.errors.sources || [];
-      const errorNodeIds = new Set(sources.map((item: { id: any }) => item.id));
-      setNodes((nds) =>
-        nds.map((node) => ({
+      console.log(sources)
+      const errorNodeIds = new Set(
+        sources.map((item: { id: any; }) => item.id)
+      );
+      console.log(errorNodeIds)
+      setNodes(nds => 
+        nds.map(node => ({
           ...node,
           data: {
             ...node.data,
-            hasError: errorNodeIds.has(node.id),
-          },
-        })),
+            hasError: errorNodeIds.has(node.id)
+          }
+        }))
       );
 
-      const errorEdgeIds = new Set(sources.map((item: { id: any }) => item.id));
-      setEdges((eds: DiagramEdge[]) =>
+      const errorEdgeIds = new Set(
+        sources.map((item: { id: any; }) => item.id)
+      );
+      console.log(errorEdgeIds)
+      setEdges((eds: DiagramEdge[]) => 
         eds.map((edge: DiagramEdge) => ({
           ...edge,
           data: {
             ...edge.data,
-            hasError: errorEdgeIds.has(edge.id),
-          },
-        })),
+            hasError: errorEdgeIds.has(edge.id)
+          }
+        }))
       );
-
+      
       setValidationError(errors.length ? errors : []);
     } catch (error) {
       console.error("Validation error:", error);
       setValidationError(["Validation request failed. Please try again."]);
     } finally {
+
       hideTimeoutRef.current = window.setTimeout(() => {
         setValidationError(null);
         hideTimeoutRef.current = null;
-      }, 10000);
+      }, 60000);
     }
   }, [exportToJson]);
+
 
   const closeValidationError = useCallback(() => {
     if (hideTimeoutRef.current !== null) {
@@ -376,9 +368,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         canShare={isOwner}
         diagramId={diagramId}
         onShareClick={isOwner ? () => setShareDialogOpen(true) : undefined}
-        onCommentsClick={
-          !isViewer && diagramId ? () => setCommentsPanelOpen(true) : undefined
-        }
+        onCommentsClick={!isViewer && diagramId ? () => setCommentsPanelOpen(true) : undefined}
         commentsUnresolvedCount={comments.filter((c) => !c.resolved).length}
         activeUsers={collaborationCursors.map((c) => ({ id: c.id, displayName: c.displayName, color: c.color }))}
         myColor={collaborationMyColor ?? undefined}
@@ -389,12 +379,7 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
         onGenerateDocumentation={handleGenerateDocumentation}
         isGeneratingDocumentation={isGeneratingDocumentation}
       />
-      {validationError && (
-        <ValidationError
-          errors={validationError}
-          handleClose={closeValidationError}
-        />
-      )}
+      {validationError && <ValidationError errors={validationError} handleClose={closeValidationError} />}
 
       <DiagramCanvas
         flowWrapperRef={flowWrapperRef}
