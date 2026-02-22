@@ -13,10 +13,11 @@ import { useDiagramMenu } from "./useDiagramMenu";
 export interface UseDiagramOptions {
   diagramId?: string | null;
   getToken?: () => string | null;
+  onConnectionError?: (errors: string[]) => void;
 }
 
 export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
-  const { diagramId, getToken } = options || {};
+  const { diagramId, getToken, onConnectionError } = options || {};
   const useBackend = !!getToken;
 
   // 1. Core State
@@ -62,7 +63,7 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
   }, [state.rfInstance, persistence.pendingViewportRef, persistence.clearPendingViewport]);
 
   // 4. Validation
-  const { validate } = useDiagramValidation(state.getNodes, state.getEdges, setNodes, setEdges);
+  const { validate } = useDiagramValidation(state.getNodes, state.getEdges, setNodes, setEdges, options?.onConnectionError);
 
   // 5. Interactions (Connect, Updates)
   const onConnect = useCallback((params: Connection) => {
