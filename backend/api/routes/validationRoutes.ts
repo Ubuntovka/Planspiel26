@@ -3,21 +3,9 @@ import { Router, Request, Response } from 'express';
 
 const router: Router = Router();
 
-interface ValidationRequest extends Request {
-  body: {
-    data: string;
-  };
-}
-
-router.post('/', async (req: ValidationRequest, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
-    const { data } = req.body;
-
-    if (!data || typeof data !== 'string') {
-      return res.status(400).json({ 
-        errors: ['Invalid input: data must be a JSON string'] 
-      });
-    }
+    const data = req.body;
 
     const errors = await validate(data); 
     return res.status(200).json({ errors });

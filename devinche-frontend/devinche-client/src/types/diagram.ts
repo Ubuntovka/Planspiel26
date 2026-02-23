@@ -30,10 +30,6 @@ export interface DiagramEdge extends Edge {
 export interface ContextMenuState {
   id: string;
   type: 'node' | 'edge' | 'canvas';
-  top?: number;
-  left?: number;
-  right?: number;
-  bottom?: number;
   /** Pane right-click position (for "Add comment here") */
   clientX?: number;
   clientY?: number;
