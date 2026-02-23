@@ -28,6 +28,7 @@ export default function Home() {
         <div className="min-h-screen bg-[#e8eaed] relative overflow-hidden" data-page="home">
             <div
                 className="absolute inset-0 pointer-events-none"
+                data-grid="bg"
                 style={{
                     backgroundImage: `
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
@@ -89,7 +90,7 @@ export default function Home() {
                 </div>
 
                 <div className="relative z-10 text-center px-4 max-w-3xl mt-4 md:-mt-80">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
+                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
                         {t('home.headline').split('\n').map((line, i, arr) => (
                             <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
                         ))}
@@ -107,6 +108,14 @@ export default function Home() {
                     >
                         {t('home.letsGo')}
                     </Link>
+                    <div className="mt-4">
+                        <Link
+                            href="/subscription"
+                            className="inline-block bg-white text-gray-800 px-8 md:px-14 py-3 rounded-full text-lg md:text-base font-semibold hover:bg-gray-100 transition-colors border border-gray-200"
+                        >
+                            Buy subscription
+                        </Link>
+                    </div>
                 </div>
             </main>
             <style jsx>{`
@@ -129,6 +138,11 @@ export default function Home() {
                 color: #111827;
               }
               :global([data-theme="dark"]) [data-page="home"]{
+                background-image:
+                  linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                  linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+              }
+              :global([data-theme="dark"]) [data-page="home"] [data-grid="bg"]{
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;

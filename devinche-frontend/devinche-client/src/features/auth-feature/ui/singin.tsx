@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { login as apiLogin, getApiBase } from '@/features/auth-feature/api';
@@ -41,10 +40,6 @@ declare global {
     }
 }
 
-const inriaSerif = Inria_Serif({
-    weight: ['300', '400', '700'],
-    subsets: ['latin']
-});
 
 export default function LoginPage() {
     const router = useRouter();
@@ -179,9 +174,10 @@ export default function LoginPage() {
     };
 
     return (
-        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="login">
+        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden`} data-page="login">
             <div
                 className="absolute inset-0 pointer-events-none"
+                data-grid="bg"
                 style={{
                     backgroundImage: `
             linear-gradient(to right, #d1d5db 1px, transparent 1px),
@@ -366,6 +362,11 @@ export default function LoginPage() {
                 color: var(--editor-text-secondary);
               }
               :global([data-theme="dark"]) [data-page="login"]  {
+                background-image:
+                  linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                  linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+              }
+              :global([data-theme="dark"]) [data-page="login"] [data-grid="bg"]{
                 background-image:
                   linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                   linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;

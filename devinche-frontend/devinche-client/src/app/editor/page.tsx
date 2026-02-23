@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
 import UserAvatarMenu from '@/components/UserAvatarMenu';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -145,7 +146,9 @@ function DiagramsDashboard() {
       <header className="bg-[#4a5568] py-5 px-8 flex justify-between items-center relative z-20">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <Image src="/devince_log.svg" alt="Devinche" width={48} height={48} className="w-12 h-12" />
+            <Link href="/" aria-label="Go to home" className="inline-flex">
+              <Image src="/devince_log.svg" alt="Devinche" width={48} height={48} className="w-12 h-12 cursor-pointer" />
+            </Link>
             <h1 className="text-xl font-bold tracking-tight text-white">
               {t('editor.myDiagrams')}
             </h1>
