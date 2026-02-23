@@ -108,6 +108,14 @@ export default function Home() {
                     >
                         {t('home.letsGo')}
                     </Link>
+                    <div className="mt-4">
+                        <Link
+                            href="/subscription"
+                            className="inline-block bg-white text-gray-800 px-8 md:px-14 py-3 rounded-full text-lg md:text-base font-semibold hover:bg-gray-100 transition-colors border border-gray-200"
+                        >
+                            Buy subscription
+                        </Link>
+                    </div>
                 </div>
             </main>
             <style jsx>{`
