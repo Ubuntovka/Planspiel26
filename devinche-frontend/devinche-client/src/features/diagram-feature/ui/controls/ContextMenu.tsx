@@ -75,9 +75,9 @@ export default function ContextMenu({
 
   const isCanvasMenu = type === "canvas";
 
-  const [copiedText, setCopiedText] = useState(null);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
 
-  const handleCopy = (text) => {
+  const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedText(text); 
 
