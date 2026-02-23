@@ -7,6 +7,7 @@ import {
   shift,
   offset,
   autoUpdate,
+  type VirtualElement,
 } from "@floating-ui/react";
 import type { ContextMenuState } from "@/types/diagram";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -79,7 +80,7 @@ export default function ContextMenu({
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedText(text); 
+    setCopiedText(text);
 
     setTimeout(() => {
       setCopiedText(null);
@@ -87,16 +88,19 @@ export default function ContextMenu({
   };
 
   // --- 1. Floating UI (desktop) ---
-  const virtualReference = useMemo(
+  const virtualReference = useMemo<VirtualElement>(
     () => ({
       getBoundingClientRect() {
+        const x = clientX ?? 0;
+        const y = clientY ?? 0;
+
         return {
-          x: clientX,
-          y: clientY,
-          top: clientY,
-          left: clientX,
-          bottom: clientY,
-          right: clientX,
+          x,
+          y,
+          top: y,
+          left: x,
+          bottom: y,
+          right: x,
           width: 0,
           height: 0,
         };
