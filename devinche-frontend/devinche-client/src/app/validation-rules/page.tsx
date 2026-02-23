@@ -45,7 +45,7 @@ export default function ValidationRulesPage() {
 
             <main className="relative h-[calc(100vh-100px)] flex items-center justify-center">
                 <div className="relative z-10 text-center px-4 max-w-3xl -mt-80">
-                    <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                    <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
                         The rules of WAM
                     </h1>
                     <ol className='text-xl'>

@@ -12,12 +12,16 @@ import {
   type Connection,
   Node,
   Edge,
-} from '@xyflow/react';
-import ContextMenu from './controls/ContextMenu';
-import CollaborationCursors from './CollaborationCursors';
-import CommentMarkers from './comments/CommentMarkers';
-import type { DiagramNode, DiagramEdge, ContextMenuState } from '@/types/diagram';
-import type { CommentItem } from '../api';
+} from "@xyflow/react";
+import ContextMenu from "./controls/ContextMenu";
+import CollaborationCursors from "./CollaborationCursors";
+import CommentMarkers from "./comments/CommentMarkers";
+import type {
+  DiagramNode,
+  DiagramEdge,
+  ContextMenuState,
+} from "@/types/diagram";
+import type { CommentItem } from "../api";
 
 interface DiagramCanvasProps {
   flowWrapperRef: React.RefObject<HTMLDivElement | null>;
@@ -32,12 +36,22 @@ interface DiagramCanvasProps {
   onEdgeContextMenu: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: () => void;
   onCloseMenu?: () => void;
-  onPaneContextMenu: (event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => void;
-  menu: (ContextMenuState & { closeMenu?: () => void; onOpenProperties?: (nodeId: string) => void }) | null;
+  onPaneContextMenu: (
+    event: MouseEvent | React.MouseEvent<Element, MouseEvent>,
+  ) => void;
+  menu:
+    | (ContextMenuState & {
+        closeMenu?: () => void;
+        onOpenProperties?: (nodeId: string) => void;
+      })
+    | null;
   onFlowInit: (instance: ReactFlowInstance<DiagramNode, DiagramEdge>) => void;
   setNodes: React.Dispatch<React.SetStateAction<DiagramNode[]>>;
   selectedEdgeType: string;
-  onMoveEnd: (event: any, viewport: { x: number; y: number; zoom: number }) => void;
+  onMoveEnd: (
+    event: any,
+    viewport: { x: number; y: number; zoom: number },
+  ) => void;
   onDragOver: (event: React.DragEvent) => void;
   onDrop: (event: React.DragEvent) => void;
   onNodeDrag: (event: React.MouseEvent, node: Node) => void;
@@ -46,7 +60,16 @@ interface DiagramCanvasProps {
   /** When true, diagram is read-only (viewer mode): no drag, no connect, no drop. */
   readOnly?: boolean;
   /** For real-time collaboration: cursors and sendCursor from useCollaboration (if provided, CollaborationCursors uses these instead of its own hook). */
-  collaboration?: { cursors: { id: string; displayName: string; color: string; x: number; y: number }[]; sendCursor: (x: number, y: number) => void };
+  collaboration?: {
+    cursors: {
+      id: string;
+      displayName: string;
+      color: string;
+      x: number;
+      y: number;
+    }[];
+    sendCursor: (x: number, y: number) => void;
+  };
   diagramId?: string | null;
   getToken?: () => string | null;
   userDisplayName?: string;
@@ -54,9 +77,12 @@ interface DiagramCanvasProps {
   comments?: CommentItem[];
   onCommentClick?: (commentId: string) => void;
   /** For canvas context menu: "Add comment here" */
-  onAddCommentAtPoint?: (anchor: { type: 'point'; x: number; y: number }) => void;
+  onAddCommentAtPoint?: (anchor: {
+    type: "point";
+    x: number;
+    y: number;
+  }) => void;
 }
-
 
 const DiagramCanvas = ({
   flowWrapperRef,
@@ -86,13 +112,16 @@ const DiagramCanvas = ({
   collaboration,
   diagramId,
   getToken,
-  userDisplayName = 'Anonymous',
+  userDisplayName = "Anonymous",
   comments = [],
   onCommentClick,
   onAddCommentAtPoint,
 }: DiagramCanvasProps) => {
   return (
-    <div style={{ width: '100%', height: '100%', background: 'var(--editor-bg)' }} ref={flowWrapperRef}>
+    <div
+      style={{ width: "100%", height: "100%", background: "var(--editor-bg)" }}
+      ref={flowWrapperRef}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -118,47 +147,44 @@ const DiagramCanvas = ({
         nodesConnectable={!readOnly}
         elementsSelectable={!readOnly}
         defaultEdgeOptions={{
-          style: { stroke: 'var(--editor-border)', strokeWidth: 2 },
+          style: { stroke: "var(--editor-border)", strokeWidth: 2 },
           type: selectedEdgeType,
         }}
-        connectionLineStyle={{ stroke: 'var(--editor-accent)', strokeWidth: 2 }}
+        connectionLineStyle={{ stroke: "var(--editor-accent)", strokeWidth: 2 }}
         snapToGrid={true}
         snapGrid={[20, 20]}
       >
         {/* Major grid lines - every 100px - more prominent */}
-        <Background 
-          variant={BackgroundVariant.Lines} 
-          gap={100} 
+        <Background
+          variant={BackgroundVariant.Lines}
+          gap={100}
           lineWidth={1.5}
-          style={{ 
-            color: 'var(--editor-grid)',
-            opacity: 0.7 
+          style={{
+            color: "var(--editor-grid)",
+            opacity: 0.7,
           }}
         />
         {/* Minor grid lines - every 20px */}
-        <Background 
-          variant={BackgroundVariant.Lines} 
-          gap={20} 
+        <Background
+          variant={BackgroundVariant.Lines}
+          gap={20}
           lineWidth={0.8}
-          style={{ 
-            color: 'var(--editor-grid)',
-            opacity: 0.5 
+          style={{
+            color: "var(--editor-grid)",
+            opacity: 0.5,
           }}
         />
         {/* Grid dots for better visual reference at intersections */}
-        <Background 
-          variant={BackgroundVariant.Dots} 
-          gap={20} 
-          size={2} 
-          style={{ 
-            color: 'var(--editor-grid)',
-            opacity: 0.6 
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={2}
+          style={{
+            color: "var(--editor-grid)",
+            opacity: 0.6,
           }}
         />
-        <Controls 
-          position="bottom-right"
-          showInteractive={false}
-        />
+        <Controls position="bottom-right" showInteractive={false} />
         {menu && (
           <ContextMenu
             onClick={onCloseMenu ?? onPaneClick}
