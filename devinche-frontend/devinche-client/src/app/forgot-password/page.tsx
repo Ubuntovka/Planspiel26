@@ -3,14 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import React, { useState } from 'react';
-import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
 import { resetPassword } from '@/features/auth-feature/api';
-
-const inriaSerif = Inria_Serif({
-  weight: ['300', '400', '700'],
-  subsets: ['latin'],
-});
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -60,7 +54,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="forgot-password">
+    <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden`} data-page="forgot-password">
       <div
         className="absolute inset-0 pointer-events-none"
         data-grid="bg"

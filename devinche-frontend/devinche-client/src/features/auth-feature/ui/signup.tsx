@@ -4,15 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { register as apiRegister } from '@/features/auth-feature/api';
-
-const inriaSerif = Inria_Serif({
-    weight: ['300', '400', '700'],
-    subsets: ['latin']
-});
 
 export default function SignUpPage() {
     const router = useRouter();
@@ -64,7 +58,7 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden ${inriaSerif.className}`} data-page="signup">
+        <div className={`min-h-screen bg-[#e8eaed] relative overflow-hidden`} data-page="signup">
             <div
                 className="absolute inset-0 pointer-events-none"
                 data-grid="bg"

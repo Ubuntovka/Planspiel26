@@ -90,7 +90,7 @@ export default function Home() {
                 </div>
 
                 <div className="relative z-10 text-center px-4 max-w-3xl mt-4 md:-mt-80">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
+                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
                         {t('home.headline').split('\n').map((line, i, arr) => (
                             <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
                         ))}

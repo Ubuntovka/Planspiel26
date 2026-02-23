@@ -77,8 +77,8 @@ export default function SubscriptionPage() {
         </div>
 
         <div className="relative z-10 text-center max-w-3xl mt-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>Devinche</h2>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mt-2 mb-4 md:mb-6 leading-tight" style={{ fontFamily: 'Inria Serif' }}>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Devinche</h2>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mt-2 mb-4 md:mb-6 leading-tight">
             Choose Your Plan
           </h1>
           <p className="text-base md:text-base text-gray-700 dark:text-gray-300">
@@ -159,12 +159,12 @@ export default function SubscriptionPage() {
                     <>
                       <div className="space-y-2">
                         <span className="inline-block text-xs tracking-widest uppercase text-gray-700 dark:text-gray-400">Popular</span>
-                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>Standard</h3>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">Standard</h3>
                         <p className="text-gray-800 dark:text-gray-300 text-base">Perfect for individual professionals and freelancers who need fast, accurate WAM diagrams.</p>
                       </div>
 
                       <div className="mt-1">
-                        <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>
+                        <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
                           <span className="price-amount">€9</span>
                           <span className="text-base font-semibold text-gray-800 dark:text-gray-300 price-suffix">/month</span>
                         </div>
@@ -193,12 +193,12 @@ export default function SubscriptionPage() {
                     <>
                       <div className="space-y-2">
                         <span className="inline-block text-xs tracking-widest uppercase text-gray-700">Popular</span>
-                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>Standard</h3>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900">Standard</h3>
                         <p className="text-gray-800 text-base">Perfect for individual professionals and freelancers who need fast, accurate WAM diagrams.</p>
                       </div>
 
                       <div className="mt-1">
-                        <div className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: 'Inria Serif' }}>€9<span className="text-base font-semibold text-gray-800">/month</span></div>
+                        <div className="text-3xl md:text-4xl font-bold text-gray-900">€9<span className="text-base font-semibold text-gray-800">/month</span></div>
                       </div>
 
                       <ul className="grid grid-cols-1 gap-3 w-full mt-2">
@@ -224,12 +224,12 @@ export default function SubscriptionPage() {
                     <>
                       <div className="space-y-2">
                         <span className="inline-block text-xs tracking-widest uppercase text-gray-700 dark:text-gray-400">Enterprise</span>
-                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>Business</h3>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">Business</h3>
                         <p className="text-gray-800 dark:text-gray-300 text-base">Built for teams and organizations that need collaboration, compliance, and control.</p>
                       </div>
 
                       <div className="mt-1">
-                        <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style={{ fontFamily: 'Inria Serif' }}>
+                        <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
                           <span className="price-amount">€29</span>
                           <span className="text-base font-semibold text-gray-800 dark:text-gray-300 price-suffix">/user/mo</span>
                         </div>
