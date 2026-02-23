@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import NextImage from "next/image";
 import {
   Save,
   Undo,
@@ -30,6 +31,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import UserAvatarMenu from "@/components/UserAvatarMenu";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "../notifications/NotificationBell";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Imports & Exports
 import {
@@ -50,6 +52,7 @@ import DropdownItem from "./ToolbarDropDownItem";
 import { CostBreakdown } from "./CostBreakdown";
 import ScrollableMenuBar from "./ScrollableMenuBar";
 import ToolbarDivider from "./ToolbarDivider";
+import { useRouter } from "next/navigation";
 
 interface ToolbarProps {
   // Navigation & Title
@@ -115,6 +118,8 @@ interface ToolbarProps {
 }
 
 const Toolbar = (props: ToolbarProps) => {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
 
@@ -144,6 +149,14 @@ const Toolbar = (props: ToolbarProps) => {
   // ----------------------------------------------------
   // Handlers
   // ----------------------------------------------------
+  const handleLogoClick = () => {
+    if (isAuthenticated) {
+      router.push("/editor");
+    } else {
+      router.push("/");
+    }
+  };
+
   const handleRename = async () => {
     if (!props.onRenameDiagram || renameInput === props.diagramName) {
       setIsEditingName(false);
@@ -184,7 +197,7 @@ const Toolbar = (props: ToolbarProps) => {
     }
   };
 
-  // Import/Export Handlers 
+  // Import/Export Handlers
   const handleImport = async (
     e: React.ChangeEvent<HTMLInputElement>,
     importer: (
@@ -231,7 +244,24 @@ const Toolbar = (props: ToolbarProps) => {
       <div className="flex justify-between items-center h-12 border-b border-[var(--editor-bar-border)] shadow-sm">
         {/* Left Side: Back + Title + Status */}
         <div className="flex items-center gap-1 min-w-0 flex-1">
-          {props.onBack && (
+          <div
+            className="flex items-center px-3 mr-1 border-r border-[var(--editor-bar-border)] h-8 cursor-pointer hover:opacity-70 transition-opacity flex-shrink-0"
+            onClick={handleLogoClick}
+          >
+            <NextImage
+              src="/devince_log.svg"
+              alt="WAM Studio Logo"
+              width={100}
+              height={24}
+              priority
+              className="h-6 w-auto object-contain"
+            />
+            <span className="ml-2 font-bold text-sm hidden sm:block text-[var(--editor-text-secondary)]">
+              WAM Studio
+            </span>
+          </div>
+
+          {/* {props.onBack && (
             <button
               onClick={props.onBack}
               className="flex items-center gap-1 h-8 pl-[9.5px] pr-1.5 sm:pl-3 sm:pr-3 rounded-lg transition-colors border border-[var(--editor-bar-border)] text-[var(--editor-text-secondary)] hover:bg-[var(--editor-surface-hover)] flex-shrink-0 ml-2"
@@ -242,7 +272,7 @@ const Toolbar = (props: ToolbarProps) => {
                 {props.backLabel ?? t("toolbar.diagrams")}
               </span>
             </button>
-          )}
+          )} */}
 
           <div
             className={`flex items-center gap-1.5 min-w-0 ml-0.5 sm:ml-1 ${isEditingName ? "flex-1" : ""}`}
@@ -382,7 +412,7 @@ const Toolbar = (props: ToolbarProps) => {
 
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors hover:cursor-pointer"
+              className="hidden min-[375px]:block p-1.5 rounded-lg hover:bg-[var(--editor-surface-hover)] text-[var(--editor-text-secondary)] transition-colors hover:cursor-pointer"
               title={theme === "dark" ? "Light mode" : "Dark mode"}
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
