@@ -14,16 +14,10 @@ import { DiagramState, DiagramNode } from "../../types/diagramTypes";
  * @param diagramState Current diagram state as JSON string
  * @returns List of validation error messages
  */
-export async function validate(diagramState: string | null): Promise<{errors: string[], sources: any[]}> {
+export async function validate(diagramState: DiagramState): Promise<{errors: string[], sources: any[]}> {
     if (!diagramState || diagramState == null) return {errors: [], sources: []};
-    let diagramJson: DiagramState;
-    try {
-        diagramJson = JSON.parse(diagramState) as DiagramState;
-    } catch {
-        return {errors: ['Invalid diagram JSON'], sources: []};
-    }
 
-    const { nodes, edges } = diagramJson;
+    const { nodes, edges } = diagramState;
     const errors: string[] = [];
     const errorSources: any[] = [];
     for (const node of nodes) {
@@ -41,9 +35,6 @@ export async function validate(diagramState: string | null): Promise<{errors: st
         if (!sourceNode || !targetNode) {
             errors.push(`Source or target node not found for edge ${edge.id}.`);
             continue;
-        }
-        if(sourceNode.type === 'identityProviderNode' || targetNode.type === 'identityProviderNode') {
-            errors.push(`Invalid use of Identity Provider node in edge from ${sourceNode?.id} to ${targetNode?.id}.`);
         }
         if(edge.type === 'invocation') {
             const err = checkInvocationRelationships(sourceNode, targetNode);
