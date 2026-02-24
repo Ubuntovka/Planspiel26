@@ -89,7 +89,7 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="relative z-10 text-center px-4 max-w-3xl mt-4 md:-mt-80">
+                <div className="relative z-10 text-center px-4 max-w-3xl mt-4 md:-mt-80 translate-y-[40px]">
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
                         {t('home.headline').split('\n').map((line, i, arr) => (
                             <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
@@ -111,7 +111,7 @@ export default function Home() {
                     <div className="mt-4">
                         <Link
                             href="/subscription"
-                            className="inline-block bg-white text-gray-800 px-8 md:px-14 py-3 rounded-full text-lg md:text-base font-semibold hover:bg-gray-100 transition-colors border border-gray-200"
+                            className="inline-block bg-[#7997CF] text-white px-8 md:px-14 py-3 rounded-full text-lg md:text-base font-semibold hover:bg-[#6b89c0] transition-colors"
                         >
                             Buy subscription
                         </Link>

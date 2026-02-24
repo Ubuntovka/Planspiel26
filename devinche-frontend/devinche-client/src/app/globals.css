@@ -29,8 +29,8 @@
   --editor-panel-border: #e5e4e0;
   --editor-panel-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   --editor-panel-header: rgba(0, 0, 0, 0.04);
-  /* Grid color - darker for light theme */
-  --editor-grid: #3d3d3d;
+  /* Grid color - light theme (match home page grid) */
+  --editor-grid: #d1d5db;
   
   --background: var(--editor-bg);
   --foreground: var(--editor-text);
