@@ -3,16 +3,10 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Inria_Serif } from 'next/font/google';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateUser, deleteAccount, type UpdateUserPayload } from '@/features/auth-feature/api';
-
-const inriaSerif = Inria_Serif({
-    weight: ['300', '400', '700'],
-    subsets: ['latin']
-});
 
 export default function AccountPage() {
     const router = useRouter();
@@ -105,9 +99,10 @@ export default function AccountPage() {
     };
 
     return (
-        <div className={`min-h-screen bg-[#e8eaed] relative overflow-x-hidden overflow-y-auto md:overflow-visible ${inriaSerif.className}`} data-page="account">
+        <div className={`min-h-screen bg-[#e8eaed] relative overflow-x-hidden overflow-y-auto md:overflow-visible`} data-page="account">
             <div
                 className="absolute inset-0 pointer-events-none"
+                data-grid="bg"
                 style={{
                     backgroundImage: `
                         linear-gradient(to right, #d1d5db 1px, transparent 1px),
@@ -249,6 +244,11 @@ export default function AccountPage() {
                     border-bottom: 1px solid var(--editor-border);
                 }
                 :global([data-theme="dark"]) [data-page="account"]{
+                    background-image:
+                        linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
+                        linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
+                }
+                :global([data-theme="dark"]) [data-page="account"] [data-grid="bg"]{
                     background-image:
                         linear-gradient(to right, var(--editor-grid) 1px, transparent 1px),
                         linear-gradient(to bottom, var(--editor-grid) 1px, transparent 1px) !important;
