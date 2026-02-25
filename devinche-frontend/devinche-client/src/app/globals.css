@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import '@xyflow/react/dist/style.css';
 
+/* Tie Tailwind's `dark:` variant to our custom data-theme attribute
+   instead of the OS prefers-color-scheme media query.
+   This prevents macOS system dark mode from triggering Tailwind dark classes
+   independently of our ThemeContext. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   /* Light Theme Colors */
   --editor-bg: #ffffff;
@@ -29,8 +35,8 @@
   --editor-panel-border: #e5e4e0;
   --editor-panel-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   --editor-panel-header: rgba(0, 0, 0, 0.04);
-  /* Grid color - darker for light theme */
-  --editor-grid: #3d3d3d;
+  /* Grid color - light theme (match home page grid) */
+  --editor-grid: #d1d5db;
   
   --background: var(--editor-bg);
   --foreground: var(--editor-text);
