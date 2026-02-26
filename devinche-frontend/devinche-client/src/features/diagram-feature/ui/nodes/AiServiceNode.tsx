@@ -59,7 +59,7 @@ export function AiServiceNode({ data, selected }: NodeProps) {
         {hasName && data.name && (
           <text
             x="50%"
-            y="62%"
+            y="85%"
             fontSize="10"
             fill={textColor}
             textAnchor="middle"
