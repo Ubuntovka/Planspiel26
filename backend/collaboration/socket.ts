@@ -116,6 +116,14 @@ export function attachCollaborationSocket(httpServer: HttpServer): Server {
       });
     });
 
+    socket.on('diagram_update', (payload: { nodes?: any[]; edges?: any[] }) => {
+      if (!currentDiagramId) return;
+      const room = DIAGRAM_ROOM_PREFIX + currentDiagramId;
+      const nodes = Array.isArray(payload?.nodes) ? payload.nodes : [];
+      const edges = Array.isArray(payload?.edges) ? payload.edges : [];
+      socket.to(room).emit('diagram_update', { nodes, edges });
+    });
+
     socket.on('disconnect', () => {
       if (currentDiagramId) {
         socket.to(DIAGRAM_ROOM_PREFIX + currentDiagramId).emit('user_left', {
