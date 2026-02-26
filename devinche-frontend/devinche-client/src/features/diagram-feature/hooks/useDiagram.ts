@@ -9,6 +9,7 @@ import { useDiagramPersistence } from "./useDiagramPersistence";
 import { useDiagramDnD } from "./useDiagramDnD";
 import { useDiagramValidation } from "./useDiagramValidation";
 import { useDiagramMenu } from "./useDiagramMenu";
+import { DEFAULT_NODE_COSTS } from "../data/nodeCosts";
 
 export interface UseDiagramOptions {
   diagramId?: string | null;
@@ -147,7 +148,16 @@ export const useDiagram = (options?: UseDiagramOptions): UseDiagramReturn => {
   const importFromJson = useCallback((json: string) => {
     try {
         const obj = JSON.parse(json);
-        setNodes(obj.nodes ?? []);
+        const nodesWithCosts: DiagramNode[] = (obj.nodes ?? []).map((n: DiagramNode) => ({
+          ...n,
+          data: {
+            ...n.data,
+            cost: (n.data?.cost !== undefined && n.data?.cost !== null && n.data?.cost !== '')
+              ? n.data.cost
+              : (DEFAULT_NODE_COSTS[n.type ?? ''] ?? 0),
+          },
+        }));
+        setNodes(nodesWithCosts);
         setEdges(obj.edges ?? []);
         if (rfInstance && obj.viewport) rfInstance.setViewport(obj.viewport);
         setTimeout(handleChange, 0);
