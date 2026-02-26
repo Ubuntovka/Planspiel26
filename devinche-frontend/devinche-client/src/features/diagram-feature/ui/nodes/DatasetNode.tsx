@@ -85,7 +85,7 @@ const DatasetNode = ({ data, selected }: NodeProps) => {
         {hasName && data.name && (
           <text
             x="50%"
-            y="50%"
+            y="75%"
             fontSize="10"
             fill={textColor}
             textAnchor="middle"
