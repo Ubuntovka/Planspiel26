@@ -11,6 +11,11 @@ export interface RemoteCursor {
   y: number;
 }
 
+export interface DiagramUpdatePayload {
+  nodes: any[];
+  edges: any[];
+}
+
 function getSocketUrl(): string {
   if (typeof window === 'undefined') return '';
   const base = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE || '').replace(/\/$/, '');
@@ -20,13 +25,15 @@ function getSocketUrl(): string {
 export function useCollaboration(
   diagramId: string | null | undefined,
   getToken: (() => string | null) | undefined,
-  userDisplayName: string
+  userDisplayName: string,
+  onDiagramUpdate?: (payload: DiagramUpdatePayload) => void
 ) {
   const [cursors, setCursors] = useState<RemoteCursor[]>([]);
   const [connected, setConnected] = useState(false);
   const [myColor, setMyColor] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const sendCursorRef = useRef<(x: number, y: number) => void>(() => {});
+   const sendDiagramUpdateRef = useRef<(update: DiagramUpdatePayload) => void>(() => {});
 
   useEffect(() => {
     if (!diagramId || !getToken) return;
@@ -81,6 +88,13 @@ export function useCollaboration(
       );
     });
 
+    socket.on('diagram_update', (payload: { nodes?: any[]; edges?: any[] }) => {
+      if (!payload) return;
+      const nodes = Array.isArray(payload.nodes) ? payload.nodes : [];
+      const edges = Array.isArray(payload.edges) ? payload.edges : [];
+      onDiagramUpdate?.({ nodes, edges });
+    });
+
     socket.on('disconnect', () => setConnected(false));
 
     const throttleMs = 80;
@@ -92,11 +106,16 @@ export function useCollaboration(
       socket.emit('cursor', { x, y });
     };
 
+    sendDiagramUpdateRef.current = (update: DiagramUpdatePayload) => {
+      socket.emit('diagram_update', update);
+    };
+
     return () => {
       socket.off('connect');
       socket.off('user_joined');
       socket.off('user_left');
       socket.off('cursor');
+      socket.off('diagram_update');
       socket.off('disconnect');
       socket.disconnect();
       socketRef.current = null;
@@ -110,5 +129,9 @@ export function useCollaboration(
     sendCursorRef.current(x, y);
   }, []);
 
-  return { cursors, connected, sendCursor, myColor };
+  const sendDiagramUpdate = useCallback((update: DiagramUpdatePayload) => {
+    sendDiagramUpdateRef.current(update);
+  }, []);
+
+  return { cursors, connected, sendCursor, myColor, sendDiagramUpdate };
 }

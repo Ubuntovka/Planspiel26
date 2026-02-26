@@ -37,7 +37,7 @@ import CommitDialog from './ui/CommitDialog';
 import VersionHistoryPanel from './ui/VersionHistoryPanel';
 import CommentsPanel from './ui/comments/CommentsPanel';
 import { listComments, type CommentItem, type CommentAnchor, createDiagramVersion, type DiagramVersionFull, generateDiagramDocumentation } from './api';
-import { useCollaboration } from './collaboration/useCollaboration';
+import { useCollaboration, type DiagramUpdatePayload } from './collaboration/useCollaboration';
 import { getDiagramAsPngDataUrl } from './imports-exports/exports';
 
 const nodeTypes: NodeTypes = {
@@ -129,10 +129,35 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
   });
   const { t } = useLanguage();
   const collaborationEnabled = !!(diagramId && getToken?.());
-  const { cursors: collaborationCursors, sendCursor, myColor: collaborationMyColor, connected: collaborationConnected } = useCollaboration(
+  const isApplyingRemoteRef = useRef(false);
+  const sendDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSentSnapshotRef = useRef<string>('');
+
+  const handleRemoteDiagramUpdate = useCallback(
+    (payload: DiagramUpdatePayload) => {
+      isApplyingRemoteRef.current = true;
+      lastSentSnapshotRef.current = JSON.stringify({ nodes: payload.nodes, edges: payload.edges });
+      setNodes(payload.nodes as any);
+      setEdges(payload.edges as any);
+      // Keep "applying remote" so the send effect won't echo; clear after debounce window
+      setTimeout(() => {
+        isApplyingRemoteRef.current = false;
+      }, 400);
+    },
+    [setNodes, setEdges],
+  );
+
+  const {
+    cursors: collaborationCursors,
+    sendCursor,
+    myColor: collaborationMyColor,
+    connected: collaborationConnected,
+    sendDiagramUpdate,
+  } = useCollaboration(
     collaborationEnabled ? diagramId : null,
     getToken ?? (() => null),
-    userDisplayName
+    userDisplayName,
+    handleRemoteDiagramUpdate,
   );
 
   const { zoomIn, zoomOut, fitView, screenToFlowPosition } = useReactFlow();
@@ -262,6 +287,25 @@ const DiagramScreenContent = ({ diagramId }: DiagramScreenContentProps) => {
     },
     [saveDiagramAs, router],
   );
+
+  // Debounced broadcast: avoid sending on every drag step and avoid echo after remote apply
+  const DEBOUNCE_MS = 280;
+  useEffect(() => {
+    if (!collaborationEnabled || !sendDiagramUpdate) return;
+    if (sendDebounceRef.current) clearTimeout(sendDebounceRef.current);
+    sendDebounceRef.current = setTimeout(() => {
+      sendDebounceRef.current = null;
+      if (isApplyingRemoteRef.current) return;
+      const snapshot = JSON.stringify({ nodes, edges });
+      if (snapshot === lastSentSnapshotRef.current) return;
+      lastSentSnapshotRef.current = snapshot;
+      sendDiagramUpdate({ nodes: nodes as any[], edges: edges as any[] });
+    }, DEBOUNCE_MS);
+    return () => {
+      if (sendDebounceRef.current) clearTimeout(sendDebounceRef.current);
+      sendDebounceRef.current = null;
+    };
+  }, [nodes, edges, collaborationEnabled, sendDiagramUpdate]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
